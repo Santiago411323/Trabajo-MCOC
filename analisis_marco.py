@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ============================================================
 # DATOS GENERALES
@@ -94,6 +95,65 @@ def transformation(c, s):
     return T
 
 
+def dibujar_estructura_inicial():
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Elementos del marco
+    for eid, (n1, n2, A, I) in elements.items():
+        x1, y1 = nodes[n1]
+        x2, y2 = nodes[n2]
+        ax.plot([x1, x2], [y1, y2], color="black", linewidth=3)
+        ax.text((x1 + x2) / 2, (y1 + y2) / 2 + 0.12, f"E{eid}", fontsize=9)
+
+    # Nodos
+    for nid, (x, y) in nodes.items():
+        ax.plot(x, y, "ko", markersize=4)
+        ax.text(x + 0.08, y + 0.08, f"N{nid}", fontsize=9)
+
+    # Apoyo empotrado en la base
+    x0, y0 = nodes[0]
+    ax.plot([x0 - 0.35, x0 + 0.35], [y0, y0], color="black", linewidth=2)
+    for i in range(6):
+        xi = x0 - 0.3 + i * 0.12
+        ax.plot([xi, xi - 0.08], [y0, y0 - 0.18], color="black", linewidth=1)
+    ax.text(x0 - 0.55, y0 - 0.45, "Empotramiento", fontsize=9)
+
+    # Apoyo tipo pasador en el extremo derecho
+    x4, y4 = nodes[4]
+    ax.plot([x4 - 0.25, x4 + 0.25], [y4 - 0.35, y4 - 0.35], color="black", linewidth=2)
+    ax.plot([x4, x4 - 0.28, x4 + 0.28, x4], [y4, y4 - 0.35, y4 - 0.35, y4], color="black")
+    ax.text(x4 - 0.35, y4 - 0.65, "Pasador", fontsize=9)
+
+    # Carga distribuida horizontal en la columna superior
+    for y in np.linspace(nodes[1][1] + 0.25, nodes[2][1] - 0.25, 6):
+        ax.arrow(-0.75, y, 0.55, 0.0, head_width=0.08, head_length=0.12,
+                 length_includes_head=True, color="tab:red")
+    ax.text(-1.25, 3.55, f"q = {q_col:.0f} kN/m", color="tab:red", fontsize=10, rotation=90)
+
+    # Carga puntual vertical en la viga
+    xp, yp = nodes[3]
+    ax.arrow(xp, yp + 0.9, 0.0, -0.65, head_width=0.16, head_length=0.18,
+             length_includes_head=True, color="tab:blue")
+    ax.text(xp + 0.15, yp + 0.55, f"P = {P_beam:.0f} kN", color="tab:blue", fontsize=10)
+
+    # Cotas principales
+    ax.annotate("5 m", xy=(2.5, 1.65), ha="center", fontsize=9)
+    ax.annotate("3 m", xy=(6.5, 1.65), ha="center", fontsize=9)
+    ax.annotate("2 m", xy=(-0.45, 1.0), va="center", fontsize=9, rotation=90)
+    ax.annotate("3 m", xy=(-0.45, 3.5), va="center", fontsize=9, rotation=90)
+
+    ax.set_title("Estructura inicial del marco 2D")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, linestyle="--", alpha=0.35)
+    ax.set_xlim(-1.6, 8.8)
+    ax.set_ylim(-0.8, 5.8)
+    plt.tight_layout()
+    plt.savefig("estructura_inicial.png", dpi=200)
+    plt.show()
+
+
 # ============================================================
 # ENSAMBLAJE GLOBAL
 # ============================================================
@@ -184,6 +244,8 @@ R = K @ U - F
 # ============================================================
 # RESULTADOS
 # ============================================================
+
+dibujar_estructura_inicial()
 
 print("\n================ DESPLAZAMIENTOS NODALES ================")
 for nid in nodes:
