@@ -154,6 +154,123 @@ def dibujar_estructura_inicial():
     plt.show()
 
 
+def obtener_fuerzas_elementos(U):
+    fuerzas = {}
+
+    for eid, (n1, n2, A, I) in elements.items():
+        L, c, s = element_geometry(n1, n2)
+        T = transformation(c, s)
+        k_local = local_stiffness(E, A, I, L)
+        dofs = dof_map(n1, n2)
+
+        u_global = U[dofs]
+        u_local = T @ u_global
+        f_local = k_local @ u_local
+
+        if eid in fixed_loads_local:
+            f_local -= fixed_loads_local[eid]
+
+        fuerzas[eid] = f_local
+
+    return fuerzas
+
+
+def dibujar_deformada(U):
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    max_disp = max(np.hypot(U[3*nid], U[3*nid + 1]) for nid in nodes)
+    escala = 0.8 / max_disp if max_disp > 0 else 1.0
+
+    for n1, n2, A, I in elements.values():
+        x1, y1 = nodes[n1]
+        x2, y2 = nodes[n2]
+        ax.plot([x1, x2], [y1, y2], color="0.75", linewidth=2, linestyle="--")
+
+        xd1 = x1 + escala * U[3*n1]
+        yd1 = y1 + escala * U[3*n1 + 1]
+        xd2 = x2 + escala * U[3*n2]
+        yd2 = y2 + escala * U[3*n2 + 1]
+        ax.plot([xd1, xd2], [yd1, yd2], color="tab:blue", linewidth=3)
+
+    ax.set_title(f"Deformada del marco 2D, escala = {escala:.1f}x")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, linestyle="--", alpha=0.35)
+    ax.set_xlim(-1.0, 8.8)
+    ax.set_ylim(-0.8, 5.8)
+    plt.tight_layout()
+    plt.savefig("deformada.png", dpi=200)
+    plt.show()
+
+
+def dibujar_diagrama(fuerzas, tipo):
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    valores = []
+    diagramas = {}
+
+    for eid, (n1, n2, A, I) in elements.items():
+        L, c, s = element_geometry(n1, n2)
+        f = fuerzas[eid]
+        x_local = np.linspace(0, L, 40)
+
+        w = -q_col if eid in fixed_loads_local else 0.0
+
+        if tipo == "axial":
+            y_diag = np.full_like(x_local, f[0])
+            titulo = "Diagrama de fuerza axial"
+            archivo = "diagrama_axial.png"
+            etiqueta = "N [kN]"
+        elif tipo == "corte":
+            y_diag = f[1] + w * x_local
+            titulo = "Diagrama de corte"
+            archivo = "diagrama_corte.png"
+            etiqueta = "V [kN]"
+        else:
+            y_diag = f[2] - f[1] * x_local - 0.5 * w * x_local**2
+            titulo = "Diagrama de momento flector"
+            archivo = "diagrama_momento.png"
+            etiqueta = "M [kN*m]"
+
+        valores.extend(np.abs(y_diag))
+        diagramas[eid] = (x_local, y_diag)
+
+    max_valor = max(valores) if valores else 1.0
+    escala = 0.55 / max_valor if max_valor > 0 else 1.0
+
+    for eid, (n1, n2, A, I) in elements.items():
+        x1, y1 = nodes[n1]
+        x2, y2 = nodes[n2]
+        L, c, s = element_geometry(n1, n2)
+        nx, ny = -s, c
+
+        ax.plot([x1, x2], [y1, y2], color="black", linewidth=2)
+
+        x_local, y_diag = diagramas[eid]
+        xb = x1 + c * x_local
+        yb = y1 + s * x_local
+        xd = xb + nx * y_diag * escala
+        yd = yb + ny * y_diag * escala
+
+        ax.plot(xd, yd, color="tab:red", linewidth=2)
+        ax.fill(np.r_[xb, xd[::-1]], np.r_[yb, yd[::-1]], color="tab:red", alpha=0.18)
+
+        ax.text(xd[0], yd[0], f"{y_diag[0]:.1f}", fontsize=8, color="tab:red")
+        ax.text(xd[-1], yd[-1], f"{y_diag[-1]:.1f}", fontsize=8, color="tab:red")
+
+    ax.set_title(f"{titulo} ({etiqueta})")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]")
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, linestyle="--", alpha=0.35)
+    ax.set_xlim(-1.8, 9.0)
+    ax.set_ylim(-1.0, 6.0)
+    plt.tight_layout()
+    plt.savefig(archivo, dpi=200)
+    plt.show()
+
+
 # ============================================================
 # ENSAMBLAJE GLOBAL
 # ============================================================
@@ -249,6 +366,11 @@ R = K @ U - F
 # ============================================================
 
 dibujar_estructura_inicial()
+fuerzas_elementos = obtener_fuerzas_elementos(U)
+dibujar_deformada(U)
+dibujar_diagrama(fuerzas_elementos, "axial")
+dibujar_diagrama(fuerzas_elementos, "corte")
+dibujar_diagrama(fuerzas_elementos, "momento")
 
 print("\n================ DESPLAZAMIENTOS NODALES ================")
 for nid in nodes:
@@ -267,18 +389,7 @@ print("\n================ FUERZAS INTERNAS POR ELEMENTO ================")
 
 for eid, (n1, n2, A, I) in elements.items():
     L, c, s = element_geometry(n1, n2)
-    T = transformation(c, s)
-    k_local = local_stiffness(E, A, I, L)
-    dofs = dof_map(n1, n2)
-
-    u_global = U[dofs]
-    u_local = T @ u_global
-
-    f_local = k_local @ u_local
-
-    # Restar cargas fijas si el elemento tiene carga distribuida
-    if eid in fixed_loads_local:
-        f_local -= fixed_loads_local[eid]
+    f_local = fuerzas_elementos[eid]
 
     print(f"\nElemento {eid}: nodo {n1} -> nodo {n2}")
     print(f"Longitud = {L:.3f} m")
