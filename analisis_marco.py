@@ -124,11 +124,11 @@ def dibujar_estructura_inicial():
     ax.plot([x4, x4 - 0.28, x4 + 0.28, x4], [y4, y4 - 0.35, y4 - 0.35, y4], color="black")
     ax.text(x4 - 0.35, y4 - 0.65, "Pasador", fontsize=9)
 
-    # Carga distribuida horizontal en la columna superior
-    for y in np.linspace(nodes[1][1] + 0.25, nodes[2][1] - 0.25, 6):
+    # Carga distribuida horizontal en toda la columna vertical
+    for y in np.linspace(nodes[0][1] + 0.35, nodes[2][1] - 0.35, 9):
         ax.arrow(-0.75, y, 0.55, 0.0, head_width=0.08, head_length=0.12,
                  length_includes_head=True, color="tab:red")
-    ax.text(-1.25, 3.55, f"q = {q_col:.0f} kN/m", color="tab:red", fontsize=10, rotation=90)
+    ax.text(-1.25, 2.5, f"q = {q_col:.0f} kN/m", color="tab:red", fontsize=10, rotation=90)
 
     # Carga puntual vertical en la viga
     xp, yp = nodes[3]
@@ -181,37 +181,40 @@ for eid, (n1, n2, A, I) in elements.items():
 F[3*3 + 1] += -P_beam
 
 # ============================================================
-# CARGA DISTRIBUIDA EN COLUMNA SUPERIOR
-# Elemento 1: de nodo 1 a nodo 2
+# CARGA DISTRIBUIDA EN TODA LA COLUMNA VERTICAL
+# Elementos 0 y 1
 # Carga horizontal global +X de 17 kN/m
 # Como la columna es vertical, esa carga corresponde a carga local transversal.
 # ============================================================
 
-eid = 1
-n1, n2, A, I = elements[eid]
-L, c, s = element_geometry(n1, n2)
-T = transformation(c, s)
+fixed_loads_local = {}
 
-# Para elemento vertical de abajo hacia arriba:
-# eje local x va hacia arriba.
-# carga global +X equivale a carga local y negativa.
-w_local_y = -q_col
+for eid in [0, 1]:
+    n1, n2, A, I = elements[eid]
+    L, c, s = element_geometry(n1, n2)
+    T = transformation(c, s)
 
-f_fixed_local = np.array([
-    0,
-    w_local_y * L / 2,
-    w_local_y * L**2 / 12,
-    0,
-    w_local_y * L / 2,
-    -w_local_y * L**2 / 12
-])
+    # Para elementos verticales de abajo hacia arriba:
+    # eje local x va hacia arriba.
+    # carga global +X equivale a carga local y negativa.
+    w_local_y = -q_col
 
-# Vector equivalente global
-f_fixed_global = T.T @ f_fixed_local
+    f_fixed_local = np.array([
+        0,
+        w_local_y * L / 2,
+        w_local_y * L**2 / 12,
+        0,
+        w_local_y * L / 2,
+        -w_local_y * L**2 / 12
+    ])
+    fixed_loads_local[eid] = f_fixed_local
 
-dofs = dof_map(n1, n2)
-for i in range(6):
-    F[dofs[i]] += f_fixed_global[i]
+    # Vector equivalente global
+    f_fixed_global = T.T @ f_fixed_local
+
+    dofs = dof_map(n1, n2)
+    for i in range(6):
+        F[dofs[i]] += f_fixed_global[i]
 
 # ============================================================
 # CONDICIONES DE APOYO
@@ -274,8 +277,8 @@ for eid, (n1, n2, A, I) in elements.items():
     f_local = k_local @ u_local
 
     # Restar cargas fijas si el elemento tiene carga distribuida
-    if eid == 1:
-        f_local -= f_fixed_local
+    if eid in fixed_loads_local:
+        f_local -= fixed_loads_local[eid]
 
     print(f"\nElemento {eid}: nodo {n1} -> nodo {n2}")
     print(f"Longitud = {L:.3f} m")
