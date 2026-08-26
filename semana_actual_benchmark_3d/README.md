@@ -13,6 +13,7 @@ Entregable del laboratorio de benchmark 3D.
 - `diagrama_3d_momento.png`: diagrama simple de momento local `My`.
 - `estructura_3d_unity.json`: datos exportados para el visualizador Unity.
 - `DEFENSA_individual_3D.md`: guia para la defensa individual.
+- `sap2000_comparacion/`: guia y tablas para replicar el modelo en SAP2000.
 
 ## Version alternativa
 

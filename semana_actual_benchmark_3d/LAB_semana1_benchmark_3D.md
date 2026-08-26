@@ -74,6 +74,7 @@ El script revisa:
 - Equilibrio global en X, Y y Z
 - Fuerzas internas de cada elemento
 - Comparacion con valores de referencia en `resultados_verificacion_3d.md`
+- Comparacion externa propuesta en SAP2000 usando `sap2000_comparacion/README_SAP2000.md`
 
 Para ejecutar:
 
@@ -103,6 +104,7 @@ Tambien genera el archivo:
 - Diagramas de axial, corte y momento: `diagrama_3d_axial.png`, `diagrama_3d_corte.png`, `diagrama_3d_momento.png`
 - Archivo de resultados de verificacion: `resultados_verificacion_3d.md`
 - Guia de defensa individual: `DEFENSA_individual_3D.md`
+- Guia comparacion SAP2000: `sap2000_comparacion/README_SAP2000.md`
 
 ## Visualizador Unity
 
