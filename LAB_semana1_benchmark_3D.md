@@ -1,0 +1,83 @@
+# Semana 1 - LAB: benchmark 3D OpenSees
+
+## Objetivo
+
+Construir y verificar un caso estructural 3D en OpenSeesPy. El modelo corresponde a un marco tridimensional de un vano en direccion X y un vano en direccion Y, con una losa descargada como carga lineal sobre las vigas perimetrales.
+
+## Unidades
+
+- Longitud: m
+- Fuerza: kN
+- Momento: kN*m
+- Esfuerzo: kN/m2
+
+## Geometria
+
+- Vano en X: 6.0 m
+- Vano en Y: 5.0 m
+- Altura de piso: 3.2 m
+- Nodos inferiores: 1, 2, 3, 4
+- Nodos superiores: 5, 6, 7, 8
+- Columnas: 1-5, 2-6, 3-7, 4-8
+- Vigas superiores: 5-6, 6-7, 8-7, 5-8
+
+## Material
+
+Se considera acero ASTM A36 aproximado:
+
+- Modulo de elasticidad: E = 200e6 kN/m2
+- Coeficiente de Poisson: nu = 0.30
+- Modulo de corte: G = E / [2(1 + nu)]
+
+## Secciones
+
+Columnas:
+
+- Perfil tubular cuadrado 30 cm x 30 cm x 1.2 cm
+
+Vigas:
+
+- Seccion rectangular 25 cm x 40 cm
+
+## Apoyos
+
+Los cuatro nodos de base se consideran empotrados:
+
+- Ux = 0
+- Uy = 0
+- Uz = 0
+- Rx = 0
+- Ry = 0
+- Rz = 0
+
+## Cargas
+
+La losa se modela como carga superficial uniforme:
+
+- q_losa = 6.0 kN/m2
+
+La losa se descarga de forma aproximada sobre las cuatro vigas perimetrales. Se reparte la carga para que la carga lineal total sea igual a `q_losa * Lx * Ly`.
+
+- Vigas paralelas a X: w = q_losa * Ly / 4 = 7.5 kN/m
+- Vigas paralelas a Y: w = q_losa * Lx / 4 = 9.0 kN/m
+- Carga vertical total: 180 kN
+
+## Verificacion
+
+El script revisa:
+
+- Resultado del analisis estatico lineal
+- Desplazamientos nodales superiores
+- Reacciones en bases
+- Equilibrio global en X, Y y Z
+- Fuerzas internas de cada elemento
+
+Para ejecutar:
+
+```bat
+python benchmark_3d_opensees.py
+```
+
+El script genera la figura:
+
+- `benchmark_3d_modelo.png`
