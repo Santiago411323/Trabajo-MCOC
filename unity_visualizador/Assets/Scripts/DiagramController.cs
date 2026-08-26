@@ -14,7 +14,7 @@ public class DiagramController : MonoBehaviour
         Moment
     }
 
-    public float diagramScale = 0.035f;
+    public float diagramScale = 0.025f;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
@@ -78,6 +78,11 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in elements)
         {
+            if (mode == DiagramMode.Moment && element.data.type != "viga")
+            {
+                continue;
+            }
+
             CreateElementDiagram(element, mode);
         }
     }
@@ -87,15 +92,15 @@ public class DiagramController : MonoBehaviour
         int segments = 12;
         Vector3[] points = new Vector3[segments + 1];
         Vector3 axis = element.endPoint - element.startPoint;
-        Vector3 offsetDirection = GetOffsetDirection(axis);
+        Vector3 offsetDirection = GetOffsetDirection(axis, mode);
         float length = axis.magnitude;
 
         for (int i = 0; i <= segments; i++)
         {
             float t = i / (float)segments;
             Vector3 basePoint = Vector3.Lerp(element.startPoint, element.endPoint, t);
-            float value = GetValue(element.data, mode, t, length);
-            points[i] = basePoint + offsetDirection * value * diagramScale;
+            float value = GetValue(element.data, mode, t);
+            points[i] = basePoint + offsetDirection * value * ScaleFor(mode);
         }
 
         GameObject lineObject = new GameObject($"Diagrama_{mode}_E{element.data.id}");
@@ -108,11 +113,11 @@ public class DiagramController : MonoBehaviour
         line.material = CreateMaterial(GetColor(mode));
         diagramObjects.Add(lineObject);
 
-        CreateLabel(points[0], GetValue(element.data, mode, 0f, length), lineObject.transform);
-        CreateLabel(points[segments], GetValue(element.data, mode, 1f, length), lineObject.transform);
+        CreateLabel(points[0], GetValue(element.data, mode, 0f), lineObject.transform);
+        CreateLabel(points[segments], GetValue(element.data, mode, 1f), lineObject.transform);
     }
 
-    private float GetValue(ElementData data, DiagramMode mode, float t, float length)
+    private float GetValue(ElementData data, DiagramMode mode, float t)
     {
         if (mode == DiagramMode.Axial)
         {
@@ -124,19 +129,23 @@ public class DiagramController : MonoBehaviour
             return Mathf.Lerp(data.shearI, data.shearJ, t);
         }
 
-        float linearMoment = Mathf.Lerp(data.momentI, data.momentJ, t);
-        if (Mathf.Abs(data.uniformLoad) < 0.0001f)
-        {
-            return linearMoment;
-        }
-
-        float x = t * length;
-        float parabola = 0.5f * data.uniformLoad * x * (length - x);
-        return linearMoment + parabola;
+        return Mathf.Lerp(data.momentI, data.momentJ, t);
     }
 
-    private Vector3 GetOffsetDirection(Vector3 axis)
+    private float ScaleFor(DiagramMode mode)
     {
+        if (mode == DiagramMode.Axial) return diagramScale * 0.75f;
+        if (mode == DiagramMode.Shear) return diagramScale;
+        return diagramScale * 1.1f;
+    }
+
+    private Vector3 GetOffsetDirection(Vector3 axis, DiagramMode mode)
+    {
+        if (mode == DiagramMode.Moment && Mathf.Abs(axis.normalized.y) < 0.2f)
+        {
+            return Vector3.up;
+        }
+
         Vector3 direction = Vector3.Cross(axis.normalized, Vector3.forward).normalized;
         if (direction.sqrMagnitude < 0.01f)
         {
@@ -188,6 +197,10 @@ public class DiagramController : MonoBehaviour
     {
         string text = "Diagramas: 0 ocultar | 1 axial | 2 corte | 3 momento";
         text += $"\nActual: {currentMode}";
+        if (currentMode == DiagramMode.Moment)
+        {
+            text += " | solo vigas";
+        }
         GUI.Box(new Rect(20, 180, 360, 55), text);
     }
 }
