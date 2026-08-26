@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class ElementPicker : MonoBehaviour
 {
@@ -15,6 +18,19 @@ public class ElementPicker : MonoBehaviour
 
     private void Update()
     {
+#if ENABLE_INPUT_SYSTEM
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+        {
+            Pick(mouse.position.ReadValue());
+        }
+
+        Touchscreen touchscreen = Touchscreen.current;
+        if (touchscreen != null && touchscreen.primaryTouch.press.wasPressedThisFrame)
+        {
+            Pick(touchscreen.primaryTouch.position.ReadValue());
+        }
+#else
         if (Input.GetMouseButtonDown(0))
         {
             Pick(Input.mousePosition);
@@ -24,6 +40,7 @@ public class ElementPicker : MonoBehaviour
         {
             Pick(Input.GetTouch(0).position);
         }
+#endif
     }
 
     private void Pick(Vector2 screenPosition)

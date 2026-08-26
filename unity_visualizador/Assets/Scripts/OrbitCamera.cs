@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class OrbitCamera : MonoBehaviour
 {
@@ -25,6 +28,18 @@ public class OrbitCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+#if ENABLE_INPUT_SYSTEM
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.rightButton.isPressed)
+        {
+            Vector2 delta = mouse.delta.ReadValue();
+            x += delta.x * xSpeed * Time.deltaTime;
+            y -= delta.y * ySpeed * Time.deltaTime;
+            y = Mathf.Clamp(y, -10f, 80f);
+        }
+
+        float scroll = mouse != null ? mouse.scroll.ReadValue().y / 120f : 0f;
+#else
         if (Input.GetMouseButton(1))
         {
             x += Input.GetAxis("Mouse X") * xSpeed * Time.deltaTime;
@@ -33,6 +48,7 @@ public class OrbitCamera : MonoBehaviour
         }
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
+#endif
         distance = Mathf.Clamp(distance - scroll * zoomSpeed, 3f, 25f);
 
         UpdatePosition();
