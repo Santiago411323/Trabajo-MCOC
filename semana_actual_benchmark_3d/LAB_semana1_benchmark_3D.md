@@ -41,7 +41,7 @@ Vigas:
 
 ## Apoyos
 
-Los cuatro nodos de base se consideran empotrados:
+Los apoyos se definen individualmente en el diccionario `supports` del script `benchmark_3d_opensees.py`. Por defecto, los cuatro nodos de base se consideran empotrados:
 
 - Ux = 0
 - Uy = 0
@@ -49,6 +49,8 @@ Los cuatro nodos de base se consideran empotrados:
 - Rx = 0
 - Ry = 0
 - Rz = 0
+
+El orden usado en el codigo es `(Ux, Uy, Uz, Rx, Ry, Rz)`, donde `1` significa restringido y `0` significa libre.
 
 ## Cargas
 

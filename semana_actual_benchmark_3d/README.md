@@ -25,3 +25,27 @@ Desde la raiz del repositorio:
 ```bat
 python semana_actual_benchmark_3d\benchmark_3d_opensees.py
 ```
+
+## Cambiar apoyos
+
+En `benchmark_3d_opensees.py`, buscar `supports`:
+
+```python
+supports = {
+    1: (1, 1, 1, 1, 1, 1),
+    2: (1, 1, 1, 1, 1, 1),
+    3: (1, 1, 1, 1, 1, 1),
+    4: (1, 1, 1, 1, 1, 1),
+}
+```
+
+Cada fila corresponde a un nodo de apoyo y el orden es `(Ux, Uy, Uz, Rx, Ry, Rz)`.
+
+- `1` significa restringido.
+- `0` significa libre.
+
+Ejemplo de pasador en el nodo 2:
+
+```python
+2: (1, 1, 1, 0, 0, 0),
+```

@@ -91,6 +91,19 @@ beams_y = {
 
 elements = {**columns, **beams_x, **beams_y}
 
+# Apoyos por nodo: (Ux, Uy, Uz, Rx, Ry, Rz)
+# 1 = restringido, 0 = libre
+# Ejemplos:
+# - Empotrado:       (1, 1, 1, 1, 1, 1)
+# - Pasador 3D:      (1, 1, 1, 0, 0, 0)
+# - Apoyo vertical:  (0, 0, 1, 0, 0, 0)
+supports = {
+    1: (1, 1, 1, 1, 1, 1),
+    2: (1, 1, 1, 1, 1, 1),
+    3: (1, 1, 1, 1, 1, 1),
+    4: (1, 1, 1, 1, 1, 1),
+}
+
 
 def elemento_vector_unitario(ni, nj):
     xi, yi, zi = nodes[ni]
@@ -129,9 +142,9 @@ def build_model():
     for tag, coord in nodes.items():
         ops.node(tag, *coord)
 
-    # Bases empotradas
-    for tag in [1, 2, 3, 4]:
-        ops.fix(tag, 1, 1, 1, 1, 1, 1)
+    # Apoyos configurables por nodo
+    for tag, fixity in supports.items():
+        ops.fix(tag, *fixity)
 
     # Transformaciones geometricas.
     # En vigas horizontales se usa vecxz vertical para que el eje local z quede vertical.
