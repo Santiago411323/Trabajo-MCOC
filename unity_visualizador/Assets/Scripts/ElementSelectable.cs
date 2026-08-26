@@ -15,6 +15,11 @@ public class ElementSelectable : MonoBehaviour
         float axial = Mathf.Lerp(data.axialI, data.axialJ, t);
         float shear = Mathf.Lerp(data.shearI, data.shearJ, t);
         float moment = Mathf.Lerp(data.momentI, data.momentJ, t);
+        if (data.type == "viga")
+        {
+            float length = axis.magnitude;
+            moment += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
+        }
 
         return $"Elemento {data.id} ({data.type})\n" +
                $"Posicion: {t * 100f:0}%\n" +

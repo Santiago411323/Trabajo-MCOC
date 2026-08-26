@@ -54,7 +54,7 @@ Formato usado:
 - `Vz`: corte local vertical usado para la carga de losa.
 - `My`: momento local asociado a la flexion vertical de las vigas.
 
-El diagrama de momento del visualizador Unity se muestra simplificado entre valores de extremo para que sea legible en 3D. Los diagramas completos generados con Python estan en `semana_actual_benchmark_3d`.
+El diagrama de momento del visualizador Unity se muestra parabolico en las vigas y normalizado para que sea legible en 3D. Los diagramas completos generados con Python estan en `semana_actual_benchmark_3d`.
 
 ## Nota
 
