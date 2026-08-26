@@ -71,6 +71,7 @@ El script revisa:
 - Reacciones en bases
 - Equilibrio global en X, Y y Z
 - Fuerzas internas de cada elemento
+- Comparacion con valores de referencia en `resultados_verificacion_3d.md`
 
 Para ejecutar:
 
@@ -81,3 +82,18 @@ python benchmark_3d_opensees.py
 El script genera la figura:
 
 - `benchmark_3d_modelo.png`
+
+Tambien genera el archivo:
+
+- `resultados_verificacion_3d.md`
+
+## Archivos del entregable
+
+- Modelo OpenSeesPy: `benchmark_3d_opensees.py`
+- Script reproducible: `benchmark_3d_opensees.py`
+- Extraccion de desplazamientos: impresa en consola y documentada en `resultados_verificacion_3d.md`
+- Reacciones: impresas en consola y usadas para equilibrio global
+- Fuerzas de elementos: impresas como `localForces`
+- Visualizacion de geometria y ejes: `benchmark_3d_modelo.png`
+- Archivo de resultados de verificacion: `resultados_verificacion_3d.md`
+- Guia de defensa individual: `DEFENSA_individual_3D.md`

@@ -155,6 +155,22 @@ def draw_model():
     ax.plot(xs, ys, zs, color="tab:green", linewidth=1.5)
     ax.text(Lx / 2, Ly / 2, H + 0.15, f"Losa q = {q_losa:.1f} kN/m2", color="tab:green")
 
+    # Ejes globales
+    ax.quiver(-0.8, -0.8, 0.0, 0.7, 0.0, 0.0, color="red", arrow_length_ratio=0.2)
+    ax.quiver(-0.8, -0.8, 0.0, 0.0, 0.7, 0.0, color="green", arrow_length_ratio=0.2)
+    ax.quiver(-0.8, -0.8, 0.0, 0.0, 0.0, 0.7, color="blue", arrow_length_ratio=0.2)
+    ax.text(0.0, -0.8, 0.0, "X global", color="red")
+    ax.text(-0.8, 0.0, 0.0, "Y global", color="green")
+    ax.text(-0.8, -0.8, 0.8, "Z global", color="blue")
+
+    # Ejes locales representativos del elemento 5. x local va de N5 a N6.
+    ax.quiver(0.5, 0.15, H + 0.15, 0.7, 0.0, 0.0, color="darkred", arrow_length_ratio=0.2)
+    ax.quiver(0.5, 0.15, H + 0.15, 0.0, 0.7, 0.0, color="darkgreen", arrow_length_ratio=0.2)
+    ax.quiver(0.5, 0.15, H + 0.15, 0.0, 0.0, 0.7, color="darkblue", arrow_length_ratio=0.2)
+    ax.text(1.25, 0.15, H + 0.15, "x local E5", color="darkred", fontsize=8)
+    ax.text(0.5, 0.9, H + 0.15, "y local E5", color="darkgreen", fontsize=8)
+    ax.text(0.5, 0.15, H + 0.9, "z local E5", color="darkblue", fontsize=8)
+
     ax.set_title("Benchmark 3D OpenSees - geometria y losa")
     ax.set_xlabel("X [m]")
     ax.set_ylabel("Y [m]")
@@ -165,8 +181,93 @@ def draw_model():
     plt.show()
 
 
-def print_results(resultado):
+def obtener_resultados_verificacion(resultado):
     ops.reactions()
+
+    carga_lineal_total = -2 * w_vigas_x * Lx - 2 * w_vigas_y * Ly
+    carga_losa_total = -q_losa * Lx * Ly
+    reaccion_z_total = sum(ops.nodeReaction(tag, 3) for tag in [1, 2, 3, 4])
+    reaccion_z_nodo_1 = ops.nodeReaction(1, 3)
+    uz_nodo_5 = ops.nodeDisp(5, 3)
+    fuerzas_locales_e1 = ops.eleResponse(1, "localForces")
+    fuerzas_locales_e5 = ops.eleResponse(5, "localForces")
+
+    # Referencias por estimacion manual/simetria del caso simetrico.
+    carga_ref = -q_losa * Lx * Ly
+    reaccion_z_ref = q_losa * Lx * Ly
+    reaccion_base_ref = reaccion_z_ref / 4
+    uz_ref = -reaccion_base_ref * H / (A_col * E)
+    axial_e1_ref = reaccion_base_ref
+    momento_e5_ref_estimado = -w_vigas_x * Lx**2 / 12
+
+    return {
+        "resultado": resultado,
+        "carga_lineal_total": carga_lineal_total,
+        "carga_losa_total": carga_losa_total,
+        "carga_ref": carga_ref,
+        "reaccion_z_total": reaccion_z_total,
+        "reaccion_z_ref": reaccion_z_ref,
+        "reaccion_z_nodo_1": reaccion_z_nodo_1,
+        "reaccion_base_ref": reaccion_base_ref,
+        "uz_nodo_5": uz_nodo_5,
+        "uz_ref": uz_ref,
+        "axial_e1": fuerzas_locales_e1[0],
+        "axial_e1_ref": axial_e1_ref,
+        "momento_e5_my_i": fuerzas_locales_e5[4],
+        "momento_e5_ref_estimado": momento_e5_ref_estimado,
+        "fuerzas_locales_e1": fuerzas_locales_e1,
+        "fuerzas_locales_e5": fuerzas_locales_e5,
+    }
+
+
+def error_relativo(valor, referencia):
+    if abs(referencia) < 1e-12:
+        return abs(valor - referencia)
+    return abs((valor - referencia) / referencia)
+
+
+def escribir_archivo_verificacion(datos):
+    lineas = [
+        "# Resultados de verificacion - Benchmark 3D OpenSees",
+        "",
+        "## Estado del analisis",
+        "",
+        f"- Resultado OpenSees: `{datos['resultado']}`",
+        "- `0` significa que el analisis termino sin error numerico.",
+        "",
+        "## Comparacion con referencias",
+        "",
+        "| Verificacion | OpenSees | Referencia/estimacion | Error relativo |",
+        "|---|---:|---:|---:|",
+        f"| Suma de cargas verticales aplicadas [kN] | {datos['carga_lineal_total']:.6f} | {datos['carga_ref']:.6f} | {error_relativo(datos['carga_lineal_total'], datos['carga_ref']):.3e} |",
+        f"| Suma de reacciones verticales [kN] | {datos['reaccion_z_total']:.6f} | {datos['reaccion_z_ref']:.6f} | {error_relativo(datos['reaccion_z_total'], datos['reaccion_z_ref']):.3e} |",
+        f"| Desplazamiento Uz nodo 5 [m] | {datos['uz_nodo_5']:.9e} | {datos['uz_ref']:.9e} | {error_relativo(datos['uz_nodo_5'], datos['uz_ref']):.3e} |",
+        f"| Fuerza axial local elemento 1, extremo i [kN] | {datos['axial_e1']:.6f} | {datos['axial_e1_ref']:.6f} | {error_relativo(datos['axial_e1'], datos['axial_e1_ref']):.3e} |",
+        f"| Momento local My elemento 5, extremo i [kN*m] | {datos['momento_e5_my_i']:.6f} | {datos['momento_e5_ref_estimado']:.6f} | {error_relativo(datos['momento_e5_my_i'], datos['momento_e5_ref_estimado']):.3e} |",
+        "",
+        "## Notas de referencia",
+        "",
+        "- La suma de cargas se calcula con `q_losa * Lx * Ly`.",
+        "- La reaccion vertical por base se estima por simetria: `q_losa * Lx * Ly / 4`.",
+        "- El desplazamiento vertical de referencia del nodo 5 se estima como acortamiento axial de la columna: `P*H/(A*E)`.",
+        "- El axial local del elemento 1 se compara con la reaccion vertical por simetria.",
+        "- El momento de extremo de la viga 5 se compara con una estimacion de viga empotrada-empotrada `wL^2/12`; no es identico porque el marco 3D tiene nudos flexibles y columnas deformables.",
+        "",
+        "## Fuerzas locales usadas",
+        "",
+        "Formato local 3D: `[P_i, Vy_i, Vz_i, T_i, My_i, Mz_i, P_j, Vy_j, Vz_j, T_j, My_j, Mz_j]`.",
+        "",
+        f"- Elemento 1: `{[round(v, 6) for v in datos['fuerzas_locales_e1']]}`",
+        f"- Elemento 5: `{[round(v, 6) for v in datos['fuerzas_locales_e5']]}`",
+        "",
+    ]
+
+    with open("resultados_verificacion_3d.md", "w", encoding="utf-8") as archivo:
+        archivo.write("\n".join(lineas))
+
+
+def print_results(resultado):
+    datos = obtener_resultados_verificacion(resultado)
 
     print("\n================ BENCHMARK 3D OPENSEES ================")
     print(f"Resultado del analisis: {resultado}")
@@ -222,11 +323,14 @@ def print_results(resultado):
     print(f"Carga vertical total de losa = {-q_losa * Lx * Ly:.3f} kN")
 
     print("\n--- Fuerzas internas por elemento ---")
-    print("Formato OpenSees 3D: [P_i, Vy_i, Vz_i, T_i, My_i, Mz_i, P_j, Vy_j, Vz_j, T_j, My_j, Mz_j]")
+    print("Formato local 3D: [P_i, Vy_i, Vz_i, T_i, My_i, Mz_i, P_j, Vy_j, Vz_j, T_j, My_j, Mz_j]")
     for ele in sorted(elements):
-        valores = ops.eleForce(ele)
+        valores = ops.eleResponse(ele, "localForces")
         valores_txt = ", ".join(f"{v:.3f}" for v in valores)
         print(f"Elemento {ele}: [{valores_txt}]")
+
+    escribir_archivo_verificacion(datos)
+    print("\nArchivo generado: resultados_verificacion_3d.md")
 
 
 if __name__ == "__main__":
