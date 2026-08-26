@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
+from pathlib import Path
+
+
+BASE_DIR = Path(__file__).resolve().parent
 
 
 # ============================================================
@@ -177,7 +181,7 @@ def draw_model():
     ax.set_zlabel("Z [m]")
     ax.set_box_aspect((Lx, Ly, H))
     plt.tight_layout()
-    plt.savefig("benchmark_3d_modelo.png", dpi=200)
+    plt.savefig(BASE_DIR / "benchmark_3d_modelo.png", dpi=200)
     plt.show()
 
 
@@ -262,7 +266,7 @@ def escribir_archivo_verificacion(datos):
         "",
     ]
 
-    with open("resultados_verificacion_3d.md", "w", encoding="utf-8") as archivo:
+    with open(BASE_DIR / "resultados_verificacion_3d.md", "w", encoding="utf-8") as archivo:
         archivo.write("\n".join(lineas))
 
 
