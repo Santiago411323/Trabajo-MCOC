@@ -101,3 +101,13 @@ Tambien genera el archivo:
 - Diagramas de axial, corte y momento: `diagrama_3d_axial.png`, `diagrama_3d_corte.png`, `diagrama_3d_momento.png`
 - Archivo de resultados de verificacion: `resultados_verificacion_3d.md`
 - Guia de defensa individual: `DEFENSA_individual_3D.md`
+
+## Visualizador Unity
+
+Se agrego una base para visualizar la estructura en Unity:
+
+- Datos exportados: `estructura_3d_unity.json`
+- Scripts Unity: `../unity_visualizador/Assets/Scripts/`
+- Instrucciones: `../unity_visualizador/README_Unity.md`
+
+El visualizador permite tocar o hacer click sobre una barra para mostrar axial, corte local `Vz` y momento local `My` del elemento.

@@ -6,6 +6,7 @@ Codigos en Python para analisis estructural 2D y 3D.
 
 - `semana_pasada_marco_2d/`: trabajo anterior del marco 2D, con reacciones, axial, corte, momento, deformada y diagramas.
 - `semana_actual_benchmark_3d/`: entregable actual del benchmark 3D OpenSeesPy con informe, verificacion, defensa e imagen del modelo.
+- `unity_visualizador/`: scripts C# para visualizar la estructura 3D en Unity y seleccionar elementos.
 - `requirements.txt`: dependencias de Python.
 
 ## Ejecutar

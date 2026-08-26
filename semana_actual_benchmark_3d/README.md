@@ -11,6 +11,7 @@ Entregable del laboratorio de benchmark 3D.
 - `diagrama_3d_axial.png`: diagrama simple de fuerza axial local.
 - `diagrama_3d_corte.png`: diagrama simple de corte local `Vz`.
 - `diagrama_3d_momento.png`: diagrama simple de momento local `My`.
+- `estructura_3d_unity.json`: datos exportados para el visualizador Unity.
 - `DEFENSA_individual_3D.md`: guia para la defensa individual.
 
 ## Version alternativa

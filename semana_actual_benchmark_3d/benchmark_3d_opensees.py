@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import json
 import math
 import openseespy.opensees as ops
 from pathlib import Path
@@ -364,6 +365,36 @@ def escribir_archivo_verificacion(datos):
         archivo.write("\n".join(lineas))
 
 
+def exportar_datos_unity():
+    datos = {
+        "units": "m, kN, kN*m",
+        "nodes": [],
+        "elements": [],
+    }
+
+    for tag, (x, y, z) in nodes.items():
+        datos["nodes"].append({"id": tag, "x": x, "y": y, "z": z})
+
+    for ele, (ni, nj) in sorted(elements.items()):
+        fuerzas = ops.eleResponse(ele, "localForces")
+        tipo = "columna" if ele in columns else "viga"
+        datos["elements"].append({
+            "id": ele,
+            "type": tipo,
+            "nodeI": ni,
+            "nodeJ": nj,
+            "axialI": fuerzas[0],
+            "axialJ": -fuerzas[6],
+            "shearI": fuerzas[2],
+            "shearJ": fuerzas[8],
+            "momentI": fuerzas[4],
+            "momentJ": fuerzas[10],
+        })
+
+    with open(BASE_DIR / "estructura_3d_unity.json", "w", encoding="utf-8") as archivo:
+        json.dump(datos, archivo, indent=2)
+
+
 def print_results(resultado):
     datos = obtener_resultados_verificacion(resultado)
 
@@ -438,5 +469,6 @@ if __name__ == "__main__":
     draw_diagram_3d("axial")
     draw_diagram_3d("corte")
     draw_diagram_3d("momento")
+    exportar_datos_unity()
     print_results(resultado)
     ops.wipe()
