@@ -41,6 +41,13 @@ semana_actual_benchmark_3d\estructura_3d_unity.json
 
 Al hacer click o tocar una barra, aparece un cuadro con los resultados interpolados en esa posicion del elemento.
 
+Teclas para diagramas:
+
+- `0`: ocultar diagramas.
+- `1`: mostrar axial `N`.
+- `2`: mostrar corte `Vz`.
+- `3`: mostrar momento `My`.
+
 Formato usado:
 
 - `N`: fuerza axial local del elemento.

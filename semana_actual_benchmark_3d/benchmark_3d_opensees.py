@@ -391,11 +391,19 @@ def exportar_datos_unity():
     for ele, (ni, nj) in sorted(elements.items()):
         fuerzas = ops.eleResponse(ele, "localForces")
         tipo = "columna" if ele in columns else "viga"
+        if ele in beams_x:
+            carga_distribuida = -w_vigas_x
+        elif ele in beams_y:
+            carga_distribuida = -w_vigas_y
+        else:
+            carga_distribuida = 0.0
+
         datos["elements"].append({
             "id": ele,
             "type": tipo,
             "nodeI": ni,
             "nodeJ": nj,
+            "uniformLoad": carga_distribuida,
             "axialI": fuerzas[0],
             "axialJ": -fuerzas[6],
             "shearI": fuerzas[2],

@@ -24,6 +24,7 @@ public class ElementData
     public string type;
     public int nodeI;
     public int nodeJ;
+    public float uniformLoad;
     public float axialI;
     public float axialJ;
     public float shearI;

@@ -17,6 +17,8 @@ public class StructureViewer : MonoBehaviour
     private Material defaultSupportMaterial;
 
     private readonly Dictionary<int, Vector3> nodes = new Dictionary<int, Vector3>();
+    private readonly List<ElementSelectable> selectables = new List<ElementSelectable>();
+    private DiagramController diagramController;
 
     private void Start()
     {
@@ -33,6 +35,7 @@ public class StructureViewer : MonoBehaviour
         CreateElements(data);
         CreateSupports();
         CreateGlobalAxes();
+        CreateDiagramController();
     }
 
     private void CreateNodes(StructureData data)
@@ -66,7 +69,14 @@ public class StructureViewer : MonoBehaviour
             selectable.data = element;
             selectable.startPoint = start;
             selectable.endPoint = end;
+            selectables.Add(selectable);
         }
+    }
+
+    private void CreateDiagramController()
+    {
+        diagramController = gameObject.AddComponent<DiagramController>();
+        diagramController.Initialize(selectables);
     }
 
     private void CreateSupports()
