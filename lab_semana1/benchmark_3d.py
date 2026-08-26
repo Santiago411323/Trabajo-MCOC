@@ -138,19 +138,20 @@ for i, (nodo_i, nodo_f) in enumerate([(1,5), (2,6), (3,7), (4,8)], start=1):
     ops.element('elasticBeamColumn', i, nodo_i, nodo_f,
                 A_col, Ec, Gc, J_col, Iy_col, Iz_col, 1)
 
-# Vigas en X: 5(5-6), 6(6-7), 7(7-8), 8(8-5)
-for i, (nodo_i, nodo_f) in enumerate([(5,6), (6,7), (7,8), (8,5)], start=5):
+# Vigas en X: 5(5-6), 6(7-8) - perimetro
+for i, (nodo_i, nodo_f) in enumerate([(5,6), (7,8)], start=5):
     ops.element('elasticBeamColumn', i, nodo_i, nodo_f,
                 A_vx, Es, Gs, J_vx, Iy_vx, Iz_vx, 2)
 
-# Vigas en Y: 9(5-8), 10(6-7)
-ops.element('elasticBeamColumn', 9, 5, 8, A_vy, Es, Gs, J_vy, Iy_vy, Iz_vy, 3)
-ops.element('elasticBeamColumn', 10, 6, 7, A_vy, Es, Gs, J_vy, Iy_vy, Iz_vy, 3)
+# Vigas en Y: 7(6-7), 8(8-5) - perimetro
+for i, (nodo_i, nodo_f) in enumerate([(6,7), (8,5)], start=7):
+    ops.element('elasticBeamColumn', i, nodo_i, nodo_f,
+                A_vy, Es, Gs, J_vy, Iy_vy, Iz_vy, 3)
 
 print("Elementos:")
 print("  Columnas: 1(1-5), 2(2-6), 3(3-7), 4(4-8)")
-print("  Vigas X:  5(5-6), 6(6-7), 7(7-8), 8(8-5)")
-print("  Vigas Y:  9(5-8), 10(6-7)")
+print("  Vigas X:  5(5-6), 6(7-8)")
+print("  Vigas Y:  7(6-7), 8(8-5)")
 print()
 
 # -----------------------------------------------------------
@@ -304,12 +305,12 @@ print()
 
 nombres_elem = {
     1: "Col 1 (1-5)", 2: "Col 2 (2-6)", 3: "Col 3 (3-7)", 4: "Col 4 (4-8)",
-    5: "VigaX 5 (5-6)", 6: "VigaX 6 (6-7)", 7: "VigaX 7 (7-8)", 8: "VigaX 8 (8-5)",
-    9: "VigaY 9 (5-8)", 10: "VigaY 10 (6-7)"
+    5: "VigaX 5 (5-6)", 6: "VigaX 6 (7-8)",
+    7: "VigaY 7 (6-7)", 8: "VigaY 8 (8-5)"
 }
 
 fuerzas_elementos = {}
-for ele in range(1, 11):
+for ele in range(1, 9):
     f = ops.eleForce(ele)
     fuerzas_elementos[ele] = list(f)
     print(f"  Elemento {ele} - {nombres_elem[ele]}:")

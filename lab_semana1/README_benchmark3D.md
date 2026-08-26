@@ -70,11 +70,9 @@ Modelo estructural 3D de un marco portal de un solo vano en cada direccion (X e 
 | 3 | Columna | 3 | 7 | 0.35x0.35 | Concreto |
 | 4 | Columna | 4 | 8 | 0.35x0.35 | Concreto |
 | 5 | Viga X | 5 | 6 | 0.25x0.50 | Acero |
-| 6 | Viga Y | 6 | 7 | 0.25x0.50 | Acero |
-| 7 | Viga X | 7 | 8 | 0.25x0.50 | Acero |
+| 6 | Viga X | 7 | 8 | 0.25x0.50 | Acero |
+| 7 | Viga Y | 6 | 7 | 0.25x0.50 | Acero |
 | 8 | Viga Y | 8 | 5 | 0.25x0.50 | Acero |
-| 9 | Viga Y | 5 | 8 | 0.25x0.50 | Acero |
-| 10 | Viga Y | 6 | 7 | 0.25x0.50 | Acero |
 
 ---
 
