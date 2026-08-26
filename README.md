@@ -2,33 +2,40 @@
 
 Codigos en Python para analisis estructural 2D y 3D.
 
-## Archivos
+## Estructura
 
-- `analisis_marco.py`: analiza el marco de la imagen y entrega desplazamientos, reacciones, axial, corte y momento.
-- `benchmark_3d_opensees.py`: benchmark 3D en OpenSeesPy con marco de un vano en X, un vano en Y, losa descargada a vigas, apoyos, cargas y resultados.
-- `LAB_semana1_benchmark_3D.md`: ficha del problema 3D con geometria, secciones, materiales, apoyos, cargas y verificacion.
-- `marco_2d.py`: modelo de marco 2D con OpenSeesPy.
-- `modelo_2d_minimo.py`: ejemplo minimo de viga 2D con OpenSeesPy.
+- `semana_pasada_marco_2d/`: trabajo anterior del marco 2D, con reacciones, axial, corte, momento, deformada y diagramas.
+- `semana_actual_benchmark_3d/`: entregable actual del benchmark 3D OpenSeesPy con informe, verificacion, defensa e imagen del modelo.
+- `requirements.txt`: dependencias de Python.
 
 ## Ejecutar
 
+Marco 2D de la semana pasada:
+
 ```bat
-python analisis_marco.py
+python semana_pasada_marco_2d\analisis_marco.py
 ```
 
 Si `python` no funciona en Windows:
 
 ```bat
-py analisis_marco.py
+py semana_pasada_marco_2d\analisis_marco.py
 ```
 
-Para ejecutar el benchmark 3D:
+Benchmark 3D de esta semana:
 
 ```bat
-python benchmark_3d_opensees.py
+python semana_actual_benchmark_3d\benchmark_3d_opensees.py
 ```
 
-El benchmark 3D genera la imagen `benchmark_3d_modelo.png` y muestra desplazamientos, reacciones, equilibrio global y fuerzas internas.
+El benchmark 3D genera `semana_actual_benchmark_3d\benchmark_3d_modelo.png`, `semana_actual_benchmark_3d\resultados_verificacion_3d.md` y muestra desplazamientos, reacciones, equilibrio global y fuerzas internas.
+
+## Entrega Canvas
+
+- Repositorio: `https://github.com/Santiago411323/Trabajo-MCOC`
+- Informe Markdown: `semana_actual_benchmark_3d/LAB_semana1_benchmark_3D.md`
+- Archivo de verificacion: `semana_actual_benchmark_3d/resultados_verificacion_3d.md`
+- Guia de defensa: `semana_actual_benchmark_3d/DEFENSA_individual_3D.md`
 
 ## Instalar dependencias
 

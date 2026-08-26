@@ -1,5 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+
+BASE_DIR = Path(__file__).resolve().parent
 
 # ============================================================
 # DATOS GENERALES
@@ -150,7 +154,7 @@ def dibujar_estructura_inicial():
     ax.set_xlim(-1.6, 8.8)
     ax.set_ylim(-0.8, 5.8)
     plt.tight_layout()
-    plt.savefig("estructura_inicial.png", dpi=200)
+    plt.savefig(BASE_DIR / "estructura_inicial.png", dpi=200)
     plt.show()
 
 
@@ -200,7 +204,7 @@ def dibujar_deformada(U):
     ax.set_xlim(-1.0, 8.8)
     ax.set_ylim(-0.8, 5.8)
     plt.tight_layout()
-    plt.savefig("deformada.png", dpi=200)
+    plt.savefig(BASE_DIR / "deformada.png", dpi=200)
     plt.show()
 
 
@@ -267,7 +271,7 @@ def dibujar_diagrama(fuerzas, tipo):
     ax.set_xlim(-1.8, 9.0)
     ax.set_ylim(-1.0, 6.0)
     plt.tight_layout()
-    plt.savefig(archivo, dpi=200)
+    plt.savefig(BASE_DIR / archivo, dpi=200)
     plt.show()
 
 
