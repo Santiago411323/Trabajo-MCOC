@@ -82,6 +82,9 @@ python benchmark_3d_opensees.py
 El script genera la figura:
 
 - `benchmark_3d_modelo.png`
+- `diagrama_3d_axial.png`
+- `diagrama_3d_corte.png`
+- `diagrama_3d_momento.png`
 
 Tambien genera el archivo:
 
@@ -95,5 +98,6 @@ Tambien genera el archivo:
 - Reacciones: impresas en consola y usadas para equilibrio global
 - Fuerzas de elementos: impresas como `localForces`
 - Visualizacion de geometria y ejes: `benchmark_3d_modelo.png`
+- Diagramas de axial, corte y momento: `diagrama_3d_axial.png`, `diagrama_3d_corte.png`, `diagrama_3d_momento.png`
 - Archivo de resultados de verificacion: `resultados_verificacion_3d.md`
 - Guia de defensa individual: `DEFENSA_individual_3D.md`

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import math
 import openseespy.opensees as ops
 from pathlib import Path
 
@@ -90,6 +91,36 @@ beams_y = {
 elements = {**columns, **beams_x, **beams_y}
 
 
+def elemento_vector_unitario(ni, nj):
+    xi, yi, zi = nodes[ni]
+    xj, yj, zj = nodes[nj]
+    dx = xj - xi
+    dy = yj - yi
+    dz = zj - zi
+    largo = math.sqrt(dx**2 + dy**2 + dz**2)
+    return dx / largo, dy / largo, dz / largo, largo
+
+
+def vector_diagrama(ni, nj):
+    ux, uy, uz, largo = elemento_vector_unitario(ni, nj)
+
+    if abs(uz) > 0.9:
+        return 0.45, 0.0, 0.0
+
+    return 0.0, 0.0, 0.45
+
+
+def configurar_ejes_3d(ax, titulo):
+    ax.set_title(titulo)
+    ax.set_xlabel("X [m]")
+    ax.set_ylabel("Y [m]")
+    ax.set_zlabel("Z [m]")
+    ax.set_box_aspect((Lx, Ly, H))
+    ax.set_xlim(-1.2, Lx + 1.2)
+    ax.set_ylim(-1.2, Ly + 1.2)
+    ax.set_zlim(-0.6, H + 1.4)
+
+
 def build_model():
     ops.wipe()
     ops.model("basic", "-ndm", 3, "-ndf", 6)
@@ -152,6 +183,12 @@ def draw_model():
         ax.scatter(x, y, z, color="black", s=20)
         ax.text(x, y, z + 0.08, f"N{tag}", fontsize=8)
 
+    # Apoyos empotrados en la base
+    for tag in [1, 2, 3, 4]:
+        x, y, z = nodes[tag]
+        ax.scatter(x, y, z - 0.08, marker="s", s=120, color="tab:orange")
+        ax.text(x + 0.12, y + 0.12, z - 0.25, "Emp.", color="tab:orange", fontsize=8)
+
     # Losa representada como plano semitransparente
     xs = [0, Lx, Lx, 0, 0]
     ys = [0, 0, Ly, Ly, 0]
@@ -175,13 +212,70 @@ def draw_model():
     ax.text(0.5, 0.9, H + 0.15, "y local E5", color="darkgreen", fontsize=8)
     ax.text(0.5, 0.15, H + 0.9, "z local E5", color="darkblue", fontsize=8)
 
-    ax.set_title("Benchmark 3D OpenSees - geometria y losa")
-    ax.set_xlabel("X [m]")
-    ax.set_ylabel("Y [m]")
-    ax.set_zlabel("Z [m]")
-    ax.set_box_aspect((Lx, Ly, H))
+    configurar_ejes_3d(ax, "Benchmark 3D OpenSees - geometria, apoyos, losa y ejes")
     plt.tight_layout()
     plt.savefig(BASE_DIR / "benchmark_3d_modelo.png", dpi=200)
+    plt.show()
+
+
+def obtener_fuerzas_locales():
+    return {ele: ops.eleResponse(ele, "localForces") for ele in sorted(elements)}
+
+
+def valores_diagrama(ele, fuerzas, tipo):
+    f = fuerzas[ele]
+
+    if tipo == "axial":
+        return f[0], -f[6], "Diagrama axial local P", "diagrama_3d_axial.png", "P [kN]"
+
+    if tipo == "corte":
+        return f[2], f[8], "Diagrama de corte local Vz", "diagrama_3d_corte.png", "Vz [kN]"
+
+    return f[4], f[10], "Diagrama de momento local My", "diagrama_3d_momento.png", "My [kN*m]"
+
+
+def draw_diagram_3d(tipo):
+    fuerzas = obtener_fuerzas_locales()
+    datos = {ele: valores_diagrama(ele, fuerzas, tipo) for ele in elements}
+    max_valor = max(max(abs(vi), abs(vj)) for vi, vj, titulo, archivo, etiqueta in datos.values())
+    escala = 0.75 / max_valor if max_valor > 0 else 1.0
+    titulo = next(iter(datos.values()))[2]
+    archivo = next(iter(datos.values()))[3]
+    etiqueta = next(iter(datos.values()))[4]
+
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection="3d")
+
+    for ele, (ni, nj) in elements.items():
+        xi, yi, zi = nodes[ni]
+        xj, yj, zj = nodes[nj]
+        ax.plot([xi, xj], [yi, yj], [zi, zj], color="0.35", linewidth=2)
+
+        vi, vj, _, _, _ = datos[ele]
+        vx, vy, vz = vector_diagrama(ni, nj)
+        di = vi * escala
+        dj = vj * escala
+
+        xdi = xi + vx * di
+        ydi = yi + vy * di
+        zdi = zi + vz * di
+        xdj = xj + vx * dj
+        ydj = yj + vy * dj
+        zdj = zj + vz * dj
+
+        ax.plot([xdi, xdj], [ydi, ydj], [zdi, zdj], color="tab:red", linewidth=2)
+        ax.plot([xi, xdi], [yi, ydi], [zi, zdi], color="tab:red", linewidth=1)
+        ax.plot([xj, xdj], [yj, ydj], [zj, zdj], color="tab:red", linewidth=1)
+        ax.text(xdi, ydi, zdi, f"{vi:.1f}", color="tab:red", fontsize=7)
+        ax.text(xdj, ydj, zdj, f"{vj:.1f}", color="tab:red", fontsize=7)
+
+    for tag in [1, 2, 3, 4]:
+        x, y, z = nodes[tag]
+        ax.scatter(x, y, z - 0.08, marker="s", s=80, color="tab:orange")
+
+    configurar_ejes_3d(ax, f"{titulo} ({etiqueta})")
+    plt.tight_layout()
+    plt.savefig(BASE_DIR / archivo, dpi=200)
     plt.show()
 
 
@@ -341,5 +435,8 @@ if __name__ == "__main__":
     build_model()
     resultado = run_analysis()
     draw_model()
+    draw_diagram_3d("axial")
+    draw_diagram_3d("corte")
+    draw_diagram_3d("momento")
     print_results(resultado)
     ops.wipe()

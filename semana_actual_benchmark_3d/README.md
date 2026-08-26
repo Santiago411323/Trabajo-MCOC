@@ -8,6 +8,9 @@ Entregable del laboratorio de benchmark 3D.
 - `LAB_semana1_benchmark_3D.md`: informe Markdown del caso.
 - `resultados_verificacion_3d.md`: comparacion con referencias y verificaciones obligatorias.
 - `benchmark_3d_modelo.png`: visualizacion simple de geometria, losa y ejes.
+- `diagrama_3d_axial.png`: diagrama simple de fuerza axial local.
+- `diagrama_3d_corte.png`: diagrama simple de corte local `Vz`.
+- `diagrama_3d_momento.png`: diagrama simple de momento local `My`.
 - `DEFENSA_individual_3D.md`: guia para la defensa individual.
 
 ## Version alternativa
