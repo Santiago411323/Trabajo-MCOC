@@ -156,5 +156,47 @@
       "momentJ": 10.017296184963289
     }
   ],
-  "pointLoads": []
+  "pointLoads": [],
+  "supports": [
+    {
+      "node": 1,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 2,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 3,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 4,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    }
+  ]
 }

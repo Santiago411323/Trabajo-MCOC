@@ -7,6 +7,20 @@ public class StructureData
     public NodeData[] nodes;
     public ElementData[] elements;
     public PointLoadData[] pointLoads;
+    public SupportData[] supports;
+}
+
+[Serializable]
+public class SupportData
+{
+    public int node;
+    public string type;
+    public int ux;
+    public int uy;
+    public int uz;
+    public int rx;
+    public int ry;
+    public int rz;
 }
 
 [Serializable]

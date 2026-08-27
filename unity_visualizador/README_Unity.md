@@ -6,6 +6,8 @@ Este visualizador permite cargar la estructura 3D exportada desde OpenSeesPy y t
 - Corte local `Vz`
 - Momento local `My`
 
+Los apoyos se dibujan automaticamente segun el diccionario `supports` de `benchmark_3d_opensees.py`: empotrado, pasador, apoyo vertical, rodillo en X, rodillo en Y o personalizado.
+
 ## 1. Generar datos desde Python
 
 Desde la raiz del repositorio:

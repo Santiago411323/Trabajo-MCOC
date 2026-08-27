@@ -33,7 +33,7 @@ public class StructureViewer : MonoBehaviour
         StructureData data = JsonUtility.FromJson<StructureData>(structureJson.text);
         CreateNodes(data);
         CreateElements(data);
-        CreateSupports();
+        CreateSupports(data);
         CreatePointLoads(data);
         CreateGlobalAxes();
         CreateDiagramController();
@@ -80,19 +80,77 @@ public class StructureViewer : MonoBehaviour
         diagramController.Initialize(selectables);
     }
 
-    private void CreateSupports()
+    private void CreateSupports(StructureData data)
     {
-        for (int id = 1; id <= 4; id++)
+        if (data.supports == null || data.supports.Length == 0)
+        {
+            return;
+        }
+
+        foreach (SupportData supportData in data.supports)
+        {
+            if (!nodes.ContainsKey(supportData.node))
+            {
+                continue;
+            }
+
+            CreateSupportSymbol(supportData);
+        }
+    }
+
+    private void CreateSupportSymbol(SupportData supportData)
+    {
+        Vector3 node = nodes[supportData.node];
+        string supportType = supportData.type;
+
+        if (supportType == "fixed")
         {
             GameObject support = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            support.name = $"Apoyo_Empotrado_N{id}";
+            support.name = $"Apoyo_Empotrado_N{supportData.node}";
             support.transform.SetParent(transform);
-            support.transform.position = nodes[id] + Vector3.down * 0.08f;
-            support.transform.localScale = new Vector3(0.45f, 0.12f, 0.45f);
-
-            Renderer renderer = support.GetComponent<Renderer>();
-            renderer.material = SupportMaterial();
+            support.transform.position = node + Vector3.down * 0.08f;
+            support.transform.localScale = new Vector3(0.55f, 0.14f, 0.55f);
+            support.GetComponent<Renderer>().material = SupportMaterial();
+            return;
         }
+
+        if (supportType == "pinned")
+        {
+            GameObject support = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            support.name = $"Apoyo_Pasador_N{supportData.node}";
+            support.transform.SetParent(transform);
+            support.transform.position = node + Vector3.down * 0.16f;
+            support.transform.localScale = new Vector3(0.28f, 0.28f, 0.28f);
+            support.GetComponent<Renderer>().material = CreateMaterial(new Color(0.45f, 0.2f, 0.9f));
+
+            GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plate.name = $"Base_Pasador_N{supportData.node}";
+            plate.transform.SetParent(transform);
+            plate.transform.position = node + Vector3.down * 0.34f;
+            plate.transform.localScale = new Vector3(0.5f, 0.08f, 0.5f);
+            plate.GetComponent<Renderer>().material = CreateMaterial(new Color(0.45f, 0.2f, 0.9f));
+            return;
+        }
+
+        CreateRollerSupport(supportData, supportType, node);
+    }
+
+    private void CreateRollerSupport(SupportData supportData, string supportType, Vector3 node)
+    {
+        GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        plate.name = $"Apoyo_{supportType}_N{supportData.node}";
+        plate.transform.SetParent(transform);
+        plate.transform.position = node + Vector3.down * 0.08f;
+        plate.transform.localScale = new Vector3(0.5f, 0.08f, 0.5f);
+        plate.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.55f, 0.1f));
+
+        GameObject roller = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        roller.name = $"Rodillo_N{supportData.node}";
+        roller.transform.SetParent(transform);
+        roller.transform.position = node + Vector3.down * 0.22f;
+        roller.transform.rotation = supportType == "roller_y" ? Quaternion.Euler(0f, 0f, 90f) : Quaternion.Euler(90f, 0f, 0f);
+        roller.transform.localScale = new Vector3(0.12f, 0.28f, 0.12f);
+        roller.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.35f, 0.12f));
     }
 
     private void CreatePointLoads(StructureData data)
