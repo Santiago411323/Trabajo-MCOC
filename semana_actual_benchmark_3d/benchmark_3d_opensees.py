@@ -139,6 +139,31 @@ def support_label(fixity):
     return labels[support_type(fixity)]
 
 
+def support_style(fixity):
+    tipo = support_type(fixity)
+
+    if tipo == "fixed":
+        return "s", "tab:orange", 150
+    if tipo == "pinned":
+        return "^", "tab:purple", 150
+    if tipo in ["vertical", "roller_x", "roller_y"]:
+        return "o", "tab:brown", 130
+
+    return "D", "tab:gray", 130
+
+
+def draw_supports_3d(ax, show_labels=True):
+    for tag, fixity in supports.items():
+        x, y, z = nodes[tag]
+        marker, color, size = support_style(fixity)
+        ax.scatter(x, y, z - 0.08, marker=marker, s=size, color=color)
+
+        if show_labels:
+            label = support_label(fixity)
+            fixity_text = "".join(str(value) for value in fixity)
+            ax.text(x + 0.12, y + 0.12, z - 0.28, f"{label}\n{fixity_text}", color=color, fontsize=8)
+
+
 def elemento_vector_unitario(ni, nj):
     xi, yi, zi = nodes[ni]
     xj, yj, zj = nodes[nj]
@@ -234,14 +259,7 @@ def draw_model():
         ax.scatter(x, y, z, color="black", s=20)
         ax.text(x, y, z + 0.08, f"N{tag}", fontsize=8)
 
-    # Apoyos configurados en supports
-    for tag, fixity in supports.items():
-        x, y, z = nodes[tag]
-        tipo = support_type(fixity)
-        marker = "s" if tipo == "fixed" else "^" if tipo == "pinned" else "o"
-        color = "tab:orange" if tipo == "fixed" else "tab:purple" if tipo == "pinned" else "tab:brown"
-        ax.scatter(x, y, z - 0.08, marker=marker, s=140, color=color)
-        ax.text(x + 0.12, y + 0.12, z - 0.25, support_label(fixity), color=color, fontsize=8)
+    draw_supports_3d(ax)
 
     # Losa representada como plano semitransparente
     xs = [0, Lx, Lx, 0, 0]
@@ -332,12 +350,7 @@ def draw_diagram_3d(tipo):
         ax.text(xdi, ydi, zdi, f"{vi:.1f}", color="tab:red", fontsize=7)
         ax.text(xdj, ydj, zdj, f"{vj:.1f}", color="tab:red", fontsize=7)
 
-    for tag, fixity in supports.items():
-        x, y, z = nodes[tag]
-        tipo = support_type(fixity)
-        marker = "s" if tipo == "fixed" else "^" if tipo == "pinned" else "o"
-        color = "tab:orange" if tipo == "fixed" else "tab:purple" if tipo == "pinned" else "tab:brown"
-        ax.scatter(x, y, z - 0.08, marker=marker, s=80, color=color)
+    draw_supports_3d(ax, show_labels=False)
 
     configurar_ejes_3d(ax, f"{titulo} ({etiqueta})")
     plt.tight_layout()

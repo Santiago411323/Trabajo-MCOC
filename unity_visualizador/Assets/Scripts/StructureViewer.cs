@@ -111,6 +111,7 @@ public class StructureViewer : MonoBehaviour
             support.transform.position = node + Vector3.down * 0.08f;
             support.transform.localScale = new Vector3(0.55f, 0.14f, 0.55f);
             support.GetComponent<Renderer>().material = SupportMaterial();
+            CreateSupportLabel(supportData, "Empotrado", node);
             return;
         }
 
@@ -129,10 +130,33 @@ public class StructureViewer : MonoBehaviour
             plate.transform.position = node + Vector3.down * 0.34f;
             plate.transform.localScale = new Vector3(0.5f, 0.08f, 0.5f);
             plate.GetComponent<Renderer>().material = CreateMaterial(new Color(0.45f, 0.2f, 0.9f));
+            CreateSupportLabel(supportData, "Pasador", node);
             return;
         }
 
         CreateRollerSupport(supportData, supportType, node);
+        CreateSupportLabel(supportData, SupportLabel(supportType), node);
+    }
+
+    private string SupportLabel(string supportType)
+    {
+        if (supportType == "vertical") return "Vertical";
+        if (supportType == "roller_x") return "Rodillo X";
+        if (supportType == "roller_y") return "Rodillo Y";
+        return "Custom";
+    }
+
+    private void CreateSupportLabel(SupportData supportData, string label, Vector3 node)
+    {
+        GameObject labelObject = new GameObject($"Etiqueta_Apoyo_N{supportData.node}");
+        labelObject.transform.SetParent(transform);
+        labelObject.transform.position = node + new Vector3(0.15f, 0.25f, 0.15f);
+
+        TextMesh text = labelObject.AddComponent<TextMesh>();
+        text.text = $"N{supportData.node}\n{label}";
+        text.characterSize = 0.18f;
+        text.anchor = TextAnchor.MiddleCenter;
+        text.color = Color.yellow;
     }
 
     private void CreateRollerSupport(SupportData supportData, string supportType, Vector3 node)
