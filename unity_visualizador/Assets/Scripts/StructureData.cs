@@ -6,6 +6,19 @@ public class StructureData
     public string units;
     public NodeData[] nodes;
     public ElementData[] elements;
+    public PointLoadData[] pointLoads;
+}
+
+[Serializable]
+public class PointLoadData
+{
+    public int node;
+    public float fx;
+    public float fy;
+    public float fz;
+    public float mx;
+    public float my;
+    public float mz;
 }
 
 [Serializable]

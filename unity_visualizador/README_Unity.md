@@ -20,6 +20,8 @@ Esto genera:
 semana_actual_benchmark_3d\estructura_3d_unity.json
 ```
 
+Si cambias cargas en `benchmark_3d_opensees.py`, debes guardar el archivo y volver a correr este comando para que Unity reciba los datos nuevos.
+
 ## 2. Crear proyecto Unity
 
 1. Abrir Unity Hub.

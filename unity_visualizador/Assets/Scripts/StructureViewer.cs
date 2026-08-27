@@ -34,6 +34,7 @@ public class StructureViewer : MonoBehaviour
         CreateNodes(data);
         CreateElements(data);
         CreateSupports();
+        CreatePointLoads(data);
         CreateGlobalAxes();
         CreateDiagramController();
     }
@@ -91,6 +92,43 @@ public class StructureViewer : MonoBehaviour
 
             Renderer renderer = support.GetComponent<Renderer>();
             renderer.material = SupportMaterial();
+        }
+    }
+
+    private void CreatePointLoads(StructureData data)
+    {
+        if (data.pointLoads == null)
+        {
+            return;
+        }
+
+        foreach (PointLoadData load in data.pointLoads)
+        {
+            if (!nodes.ContainsKey(load.node) || Mathf.Abs(load.fz) < 0.001f)
+            {
+                continue;
+            }
+
+            Vector3 node = nodes[load.node];
+            float sign = load.fz < 0f ? -1f : 1f;
+            Vector3 start = node + Vector3.up * sign * 0.9f;
+            Vector3 end = node + Vector3.up * sign * 0.15f;
+            Vector3 direction = end - start;
+
+            GameObject arrow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            arrow.name = $"Carga_Puntual_N{load.node}";
+            arrow.transform.SetParent(transform);
+            arrow.transform.position = (start + end) * 0.5f;
+            arrow.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
+            arrow.transform.localScale = new Vector3(0.035f, direction.magnitude * 0.5f, 0.035f);
+            arrow.GetComponent<Renderer>().material = CreateMaterial(Color.red);
+
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = $"Punta_Carga_N{load.node}";
+            head.transform.SetParent(transform);
+            head.transform.position = end;
+            head.transform.localScale = new Vector3(0.18f, 0.18f, 0.18f);
+            head.GetComponent<Renderer>().material = CreateMaterial(Color.red);
         }
     }
 

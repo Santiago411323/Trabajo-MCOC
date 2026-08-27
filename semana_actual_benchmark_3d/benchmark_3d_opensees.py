@@ -104,6 +104,14 @@ supports = {
     4: (1, 1, 1, 1, 1, 1),
 }
 
+# Cargas puntuales por nodo: (nodo, Fx, Fy, Fz, Mx, My, Mz)
+# Importante: usar nodos libres/superiores, por ejemplo 5, 6, 7 u 8.
+# Si aplicas una carga en un apoyo fijo, solo cambia la reaccion y no se nota en la deformada.
+point_loads = [
+    # Ejemplo: carga vertical de 20 kN hacia abajo en el nodo 7.
+    # (7, 0.0, 0.0, -20.0, 0.0, 0.0, 0.0),
+]
+
 
 def elemento_vector_unitario(ni, nj):
     xi, yi, zi = nodes[ni]
@@ -163,6 +171,9 @@ def build_model():
     ops.timeSeries("Linear", 1)
     ops.pattern("Plain", 1, 1)
 
+    for node_tag, fx, fy, fz, mx, my, mz in point_loads:
+        ops.load(node_tag, fx, fy, fz, mx, my, mz)
+
     # Carga de losa descargada a las vigas. En este modelo el eje local z de las
     # vigas horizontales coincide con el eje global Z, por eso Wz es negativo.
     for ele in beams_x:
@@ -209,6 +220,15 @@ def draw_model():
     zs = [H, H, H, H, H]
     ax.plot(xs, ys, zs, color="tab:green", linewidth=1.5)
     ax.text(Lx / 2, Ly / 2, H + 0.15, f"Losa q = {q_losa:.1f} kN/m2", color="tab:green")
+
+    # Cargas puntuales configuradas
+    for node_tag, fx, fy, fz, mx, my, mz in point_loads:
+        x, y, z = nodes[node_tag]
+        if abs(fz) > 0:
+            dz = -0.8 if fz < 0 else 0.8
+            z0 = z - dz
+            ax.quiver(x, y, z0, 0.0, 0.0, dz, color="tab:red", arrow_length_ratio=0.25, linewidth=2)
+            ax.text(x + 0.15, y + 0.15, z0, f"Pz = {fz:.1f} kN", color="tab:red")
 
     # Ejes globales
     ax.quiver(-0.8, -0.8, 0.0, 0.7, 0.0, 0.0, color="red", arrow_length_ratio=0.2)
@@ -296,8 +316,9 @@ def draw_diagram_3d(tipo):
 def obtener_resultados_verificacion(resultado):
     ops.reactions()
 
-    carga_lineal_total = -2 * w_vigas_x * Lx - 2 * w_vigas_y * Ly
-    carga_losa_total = -q_losa * Lx * Ly
+    carga_puntual_z = sum(fz for node_tag, fx, fy, fz, mx, my, mz in point_loads)
+    carga_lineal_total = -2 * w_vigas_x * Lx - 2 * w_vigas_y * Ly + carga_puntual_z
+    carga_losa_total = -q_losa * Lx * Ly + carga_puntual_z
     reaccion_z_total = sum(ops.nodeReaction(tag, 3) for tag in [1, 2, 3, 4])
     reaccion_z_nodo_1 = ops.nodeReaction(1, 3)
     uz_nodo_5 = ops.nodeDisp(5, 3)
@@ -305,8 +326,8 @@ def obtener_resultados_verificacion(resultado):
     fuerzas_locales_e5 = ops.eleResponse(5, "localForces")
 
     # Referencias por estimacion manual/simetria del caso simetrico.
-    carga_ref = -q_losa * Lx * Ly
-    reaccion_z_ref = q_losa * Lx * Ly
+    carga_ref = -q_losa * Lx * Ly + carga_puntual_z
+    reaccion_z_ref = -carga_ref
     reaccion_base_ref = reaccion_z_ref / 4
     uz_ref = -reaccion_base_ref * H / (A_col * E)
     axial_e1_ref = reaccion_base_ref
@@ -316,6 +337,7 @@ def obtener_resultados_verificacion(resultado):
         "resultado": resultado,
         "carga_lineal_total": carga_lineal_total,
         "carga_losa_total": carga_losa_total,
+        "carga_puntual_z": carga_puntual_z,
         "carga_ref": carga_ref,
         "reaccion_z_total": reaccion_z_total,
         "reaccion_z_ref": reaccion_z_ref,
@@ -383,10 +405,22 @@ def exportar_datos_unity():
         "units": "m, kN, kN*m",
         "nodes": [],
         "elements": [],
+        "pointLoads": [],
     }
 
     for tag, (x, y, z) in nodes.items():
         datos["nodes"].append({"id": tag, "x": x, "y": y, "z": z})
+
+    for node_tag, fx, fy, fz, mx, my, mz in point_loads:
+        datos["pointLoads"].append({
+            "node": node_tag,
+            "fx": fx,
+            "fy": fy,
+            "fz": fz,
+            "mx": mx,
+            "my": my,
+            "mz": mz,
+        })
 
     for ele, (ni, nj) in sorted(elements.items()):
         fuerzas = ops.eleResponse(ele, "localForces")
@@ -441,6 +475,8 @@ def print_results(resultado):
     print(f"Vigas paralelas a X: w = {w_vigas_x:.2f} kN/m")
     print(f"Vigas paralelas a Y: w = {w_vigas_y:.2f} kN/m")
     print(f"Carga lineal total aplicada = {-2 * w_vigas_x * Lx - 2 * w_vigas_y * Ly:.3f} kN")
+    for node_tag, fx, fy, fz, mx, my, mz in point_loads:
+        print(f"Carga puntual nodo {node_tag}: Fx={fx:.3f}, Fy={fy:.3f}, Fz={fz:.3f} kN")
 
     print("\n--- Desplazamientos nodales superiores ---")
     for tag in [5, 6, 7, 8]:
@@ -470,7 +506,7 @@ def print_results(resultado):
     print(f"Suma reacciones X = {total_rx:.3f} kN")
     print(f"Suma reacciones Y = {total_ry:.3f} kN")
     print(f"Suma reacciones Z = {total_rz:.3f} kN")
-    print(f"Carga vertical total de losa = {-q_losa * Lx * Ly:.3f} kN")
+    print(f"Carga vertical total = {-q_losa * Lx * Ly + sum(fz for node_tag, fx, fy, fz, mx, my, mz in point_loads):.3f} kN")
 
     print("\n--- Fuerzas internas por elemento ---")
     print("Formato local 3D: [P_i, Vy_i, Vz_i, T_i, My_i, Mz_i, P_j, Vy_j, Vz_j, T_j, My_j, Mz_j]")
