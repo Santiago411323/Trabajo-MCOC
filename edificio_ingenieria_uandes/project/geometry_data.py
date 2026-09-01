@@ -1,4 +1,4 @@
-from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, StructuralWall, to_dict_list
+from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, Slab, StructuralWall, to_dict_list
 
 
 GEOMETRY_TOLERANCE = 0.005
@@ -52,6 +52,22 @@ LEVEL_NODE_BASE = {
 
 VERTICAL_LEVEL_SEQUENCE = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 FLOOR_BEAM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+SLAB_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+SLAB_THICKNESS = 0.15
+SLAB_REINFORCEMENT_BY_LEVEL = {
+    "CIELO_1S": ["BOTTOM_F", "CEILING"],
+    "CIELO_1": ["BOTTOM_F", "CEILING"],
+    "CIELO_2": ["BOTTOM_F", "CEILING"],
+    "CIELO_3": ["BOTTOM_F", "CEILING"],
+    "CIELO_4": ["BOTTOM_F", "CEILING"],
+}
+SLAB_LEVEL_PREFIX = {
+    "CIELO_1S": "S",
+    "CIELO_1": "1",
+    "CIELO_2": "2",
+    "CIELO_3": "3",
+    "CIELO_4": "4",
+}
 
 # Ejes de planta. Se agregan ejes auxiliares solo donde el usuario definio vigas
 # desplazadas desde ejes principales.
@@ -69,6 +85,8 @@ GRID_X_AXIS_NAMES = [
 ]
 
 GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
+SLAB_GRID_X_AXIS_NAMES = ["A_PRIME", "A", "B", "C", "C_PRIME", "D", "D_PRIME"]
+SLAB_GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
 
 # Distancias entregadas por el usuario, convertidas de cm a m.
 GRID_X_SPANS = [3.75, 3.75, 3.75, 5.00, 5.00, 5.00, 2.58, 2.42, 0.225]
@@ -80,9 +98,15 @@ grid_y = {}
 COLUMN_BX = 0.70
 COLUMN_BY = 0.70
 
-# Muro eje D con apertura.
-D_WALL_OPENING_START_FROM_COLUMN_EDGE = 5.75
+# Muro eje D' con apertura.
+D_WALL_OPENING_START_FROM_GRID_1 = 6.15
 D_WALL_OPENING_LENGTH = 2.40
+ELEVATOR_TOP_WALL_Y = 3.205
+ELEVATOR_WALL_LENGTH = 2.945
+ELEVATOR_SLAB_VOID_PANELS = {
+    ("C_PRIME", "D", "1A_PRIME", "2"),
+    ("D", "D_PRIME", "1A_PRIME", "2"),
+}
 
 # Muros de esquina interpretados desde las imagenes enviadas por el usuario.
 AP1_VERTICAL_WALL_THICKNESS = 0.60
@@ -100,7 +124,7 @@ AP3_HORIZONTAL_WALL_LENGTH = 1.85
 STRUCTURAL_POSITIONS = [
     ("P01", "B", "1"),
     ("P02", "C", "1"),
-    ("P03", "D", "1"),
+    ("P03", "D_PRIME", "1"),
     ("P04", "A", "2"),
     ("P05", "B", "2"),
     ("P06", "C", "2"),
@@ -110,8 +134,8 @@ STRUCTURAL_POSITIONS = [
 
 SUPERSTRUCTURE_BEAM_SPECS = [
     ("A_PRIME", "1", "A_PRIME", "3", 0.40, 0.80, "V40/80"),
-    ("A_PRIME", "1", "D", "1", 0.60, 0.80, "V60/80"),
-    ("A_PRIME", "3", "D", "3", 0.60, 0.80, "V60/80"),
+    ("A_PRIME", "1", "D_PRIME", "1", 0.60, 0.80, "V60/80"),
+    ("A_PRIME", "3", "D_PRIME", "3", 0.60, 0.80, "V60/80"),
     ("A", "1", "A", "3", 0.60, 0.80, "V60/80"),
     ("A_B_MID", "1", "A_B_MID", "3", 0.60, 0.80, "V60/80"),
     ("B", "1", "B", "3", 0.60, 0.80, "V60/80"),
@@ -119,7 +143,7 @@ SUPERSTRUCTURE_BEAM_SPECS = [
     ("C", "1", "C", "3", 0.60, 0.80, "V60/80"),
     ("C_CPRIME_500", "1", "C_CPRIME_500", "3", 0.60, 0.80, "V60/80"),
     ("A_PRIME", "1A_PRIME", "A_B_MID", "1A_PRIME", 0.30, 0.80, "V30/80"),
-    ("A", "2", "D", "2", 0.60, 0.80, "V60/80"),
+    ("A", "2", "D_PRIME", "2", 0.60, 0.80, "V60/80"),
     ("A_PRIME", "2A_PRIME", "A_B_MID", "2A_PRIME", 0.30, 0.80, "V30/80"),
 ]
 
@@ -175,12 +199,31 @@ def add_wall_for_each_storey(walls, wall_id, gx1, gy1, gx2, gy2, x1, y1, x2, y2,
         ))
 
 
+def create_slab(slab_number, level, gx1, gx2, gy1, gy2):
+    return Slab(
+        id=f"L{slab_number}",
+        grid_x1=gx1,
+        grid_x2=gx2,
+        grid_y1=gy1,
+        grid_y2=gy2,
+        x1=grid_x.get(gx1),
+        x2=grid_x.get(gx2),
+        y1=grid_y.get(gy1),
+        y2=grid_y.get(gy2),
+        thickness=SLAB_THICKNESS,
+        level=level,
+        z_top=levels.get(level),
+        reinforcement=SLAB_REINFORCEMENT_BY_LEVEL[level],
+    )
+
+
 def create_geometry():
     refresh_grids()
 
     nodes = []
     columns = []
     beams = []
+    slabs = []
     foundations = []
     foundation_beams = []
     walls = []
@@ -253,6 +296,16 @@ def create_geometry():
             ))
             beam_id += 1
 
+    for level in SLAB_LEVELS:
+        slab_index = 1
+        for row_index, (gy1, gy2) in enumerate(zip(SLAB_GRID_Y_AXIS_NAMES, SLAB_GRID_Y_AXIS_NAMES[1:]), start=1):
+            for col_index, (gx1, gx2) in enumerate(zip(SLAB_GRID_X_AXIS_NAMES, SLAB_GRID_X_AXIS_NAMES[1:]), start=1):
+                if (gx1, gx2, gy1, gy2) in ELEVATOR_SLAB_VOID_PANELS:
+                    continue
+                slab_number = f"{SLAB_LEVEL_PREFIX[level]}{slab_index:02d}"
+                slabs.append(create_slab(slab_number, level, gx1, gx2, gy1, gy2))
+                slab_index += 1
+
     fb_id = 1001
     for row in ["1", "2", "3"]:
         row_positions = [pos for pos in STRUCTURAL_POSITIONS if pos[2] == row]
@@ -268,21 +321,24 @@ def create_geometry():
             fb_id += 1
 
     d_x = grid_x.get("D")
+    d_prime_x = grid_x.get("D_PRIME")
     a_prime_x = grid_x.get("A_PRIME")
     c_prime_x = grid_x.get("C_PRIME")
     y_1 = grid_y.get("1")
     y_1a_prime = grid_y.get("1A_PRIME")
     y_3 = grid_y.get("3")
 
-    if None not in [d_x, y_1, y_3]:
-        opening_start_y = y_1 + COLUMN_BY / 2 + D_WALL_OPENING_START_FROM_COLUMN_EDGE
-        opening_end_y = opening_start_y + D_WALL_OPENING_LENGTH
-        add_wall_for_each_storey(walls, "W_D_1_TO_OPENING", "D", "1", "D", "OPENING_START", d_x, y_1, d_x, opening_start_y, 0.25)
-        add_wall_for_each_storey(walls, "W_D_OPENING_TO_3", "D", "OPENING_END", "D", "3", d_x, opening_end_y, d_x, y_3, 0.25)
+    if None not in [d_prime_x, c_prime_x]:
+        elevator_wall_end_y = ELEVATOR_TOP_WALL_Y + ELEVATOR_WALL_LENGTH
+        add_wall_for_each_storey(walls, "W_DPRIME_ELEVATOR_TOP_TO_CPRIME", "D_PRIME", "ELEVATOR_TOP", "C_PRIME", "ELEVATOR_TOP", d_prime_x, ELEVATOR_TOP_WALL_Y, c_prime_x, ELEVATOR_TOP_WALL_Y, 0.30)
+        add_wall_for_each_storey(walls, "W_CPRIME_ELEVATOR_SIDE", "C_PRIME", "ELEVATOR_TOP", "C_PRIME", "OPENING_START_294_5CM", c_prime_x, ELEVATOR_TOP_WALL_Y, c_prime_x, elevator_wall_end_y, 0.25)
+        add_wall_for_each_storey(walls, "W_DPRIME_ELEVATOR_SIDE", "D_PRIME", "ELEVATOR_TOP", "D_PRIME", "OPENING_START_294_5CM", d_prime_x, ELEVATOR_TOP_WALL_Y, d_prime_x, elevator_wall_end_y, 0.25)
 
-    if None not in [d_x, c_prime_x, y_1a_prime]:
-        add_wall_for_each_storey(walls, "W_D_1A_TO_CPRIME_1A", "D", "1A_PRIME", "C_PRIME", "1A_PRIME", d_x, y_1a_prime, c_prime_x, y_1a_prime, 0.30)
-        add_wall_for_each_storey(walls, "W_CPRIME_1A_TOWARD_2", "C_PRIME", "1A_PRIME", "C_PRIME", "TOWARD_2_282CM", c_prime_x, y_1a_prime, c_prime_x, y_1a_prime + 2.82, 0.25)
+    if None not in [d_prime_x, y_1, y_3]:
+        opening_start_y = y_1 + D_WALL_OPENING_START_FROM_GRID_1
+        opening_end_y = opening_start_y + D_WALL_OPENING_LENGTH
+        add_wall_for_each_storey(walls, "W_DPRIME_1_TO_ELEVATOR_TOP", "D_PRIME", "1", "D_PRIME", "ELEVATOR_TOP", d_prime_x, y_1, d_prime_x, ELEVATOR_TOP_WALL_Y, 0.25)
+        add_wall_for_each_storey(walls, "W_DPRIME_OPENING_TO_3", "D_PRIME", "OPENING_END", "D_PRIME", "3", d_prime_x, opening_end_y, d_prime_x, y_3, 0.25)
 
     if None not in [a_prime_x, y_1]:
         add_wall_for_each_storey(walls, "W_APRIME_1_VERTICAL", "A_PRIME", "A1_DOWN", "A_PRIME", "A1_UP", a_prime_x, y_1 - AP1_VERTICAL_WALL_DOWN, a_prime_x, y_1 + AP1_VERTICAL_WALL_UP, AP1_VERTICAL_WALL_THICKNESS)
@@ -300,6 +356,7 @@ def create_geometry():
             "units": {"length": "m", "force": "kN"},
             "geometry_tolerance": GEOMETRY_TOLERANCE,
             "note": "Geometry is parametric. Missing dimensions are kept as null and are not invented.",
+            "slab_note": "Slabs include planta armadura inferior (F) and planta armadura cielo from cielo 1 subterraneo to cielo piso 4.",
             "plant_levels": {
                 "FOUNDATION": "Planta de fundaciones",
                 "CIELO_1S": "Planta cielo 1 subterraneo",
@@ -314,10 +371,12 @@ def create_geometry():
         "constants": {
             "foundation_heights": FOUNDATION_HEIGHTS,
             "radier_thickness": RADIER_THICKNESS,
+            "slab_thickness": SLAB_THICKNESS,
         },
         "nodes": to_dict_list(nodes),
         "columns": to_dict_list(columns),
         "beams": to_dict_list(beams),
+        "slabs": to_dict_list(slabs),
         "walls": to_dict_list(walls),
         "foundations": to_dict_list(foundations),
         "foundation_beams": to_dict_list(foundation_beams),

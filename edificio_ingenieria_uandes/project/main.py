@@ -41,6 +41,7 @@ def print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path, un
     print(f"Nodes: {len(geometry['nodes'])}")
     print(f"Columns: {len(geometry['columns'])}")
     print(f"Beams: {len(geometry['beams'])}")
+    print(f"Slabs: {len(geometry.get('slabs', []))}")
     print(f"Walls: {len(geometry['walls'])}")
     print(f"Foundation beams: {len(geometry['foundation_beams'])}")
     print(f"Foundations: {len(geometry['foundations'])}")

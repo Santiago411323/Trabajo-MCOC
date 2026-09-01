@@ -170,6 +170,14 @@ def invalid_dimensions(geometry):
         if None not in [wall["x1"], wall["y1"], wall["x2"], wall["y2"]]:
             if hypot(wall["x2"] - wall["x1"], wall["y2"] - wall["y1"]) <= 0:
                 messages.append(f"WARNING: Wall {wall['id']} has pending length/direction")
+    for slab in geometry.get("slabs", []):
+        if slab["thickness"] is None:
+            messages.append(f"WARNING: Slab {slab['id']} has pending thickness")
+        elif slab["thickness"] <= 0:
+            messages.append(f"Slab {slab['id']} has missing/invalid thickness")
+        if None not in [slab["x1"], slab["x2"], slab["y1"], slab["y2"]]:
+            if abs(slab["x2"] - slab["x1"]) <= 0 or abs(slab["y2"] - slab["y1"]) <= 0:
+                messages.append(f"Slab {slab['id']} has invalid boundary")
     for radier in geometry["radiers"]:
         if radier["thickness"] != 0.15:
             messages.append(f"Radier {radier['id']} thickness is not 0.15 m")

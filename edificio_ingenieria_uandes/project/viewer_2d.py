@@ -9,7 +9,7 @@ def valid_xy(item):
 
 def hover_text(item, item_type):
     parts = [f"ID: {item.get('id')}", f"TYPE: {item_type}"]
-    for key in ["x", "y", "level", "width", "height", "length", "thickness", "bx", "by"]:
+    for key in ["x", "y", "level", "width", "height", "length", "thickness", "bx", "by", "reinforcement"]:
         if key in item:
             parts.append(f"{key.upper()}: {item.get(key)}")
     return "<br>".join(parts)
@@ -18,10 +18,12 @@ def hover_text(item, item_type):
 def create_viewer_2d(geometry, output_path):
     fig = go.Figure()
     trace_levels = []
+    trace_parts = []
     all_levels = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 
-    def register(levels):
+    def register(levels, part="STRUCTURE"):
         trace_levels.append(set(levels))
+        trace_parts.append(part)
 
     def level_from_z(z):
         for level_name, level_z in geometry["levels"].items():
@@ -94,6 +96,33 @@ def create_viewer_2d(geometry, output_path):
             ))
             register([element.get("level", "FOUNDATION")])
 
+    for slab in geometry.get("slabs", []):
+        if None in [slab["x1"], slab["x2"], slab["y1"], slab["y2"]]:
+            continue
+        x0, x1 = slab["x1"], slab["x2"]
+        y0, y1 = slab["y1"], slab["y2"]
+        layer_specs = [
+            ("LOSAS INFERIORES", "SLAB_BOTTOM", "rgba(0, 170, 220, 0.65)", "rgba(0, 170, 220, 0.10)"),
+            ("LOSAS SUPERIORES", "SLAB_TOP", "rgba(0, 80, 255, 0.55)", "rgba(0, 80, 255, 0.06)"),
+        ]
+        for name, part, line_color, fill_color in layer_specs:
+            if part == "SLAB_BOTTOM" and "BOTTOM_F" not in slab["reinforcement"]:
+                continue
+            if part == "SLAB_TOP" and "CEILING" not in slab["reinforcement"]:
+                continue
+            fig.add_trace(go.Scatter(
+                x=[x0, x1, x1, x0, x0],
+                y=[y0, y0, y1, y1, y0],
+                mode="lines",
+                fill="toself",
+                name=name,
+                line=dict(color=line_color, width=1),
+                fillcolor=fill_color,
+                hovertext=hover_text(slab, slab["type"]),
+                hoverinfo="text",
+            ))
+            register([slab["level"]], part)
+
     for foundation in geometry["foundations"]:
         if foundation["center_x"] is None or foundation["center_y"] is None:
             continue
@@ -152,12 +181,22 @@ def create_viewer_2d(geometry, output_path):
             args=[{"visible": [level in levels for levels in trace_levels]}],
         ))
 
+    slab_buttons = [
+        dict(label="LOSAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
+        dict(label="SIN LOSAS", method="update", args=[{"visible": [part not in ["SLAB_BOTTOM", "SLAB_TOP"] for part in trace_parts]}]),
+        dict(label="SOLO LOSAS INF", method="update", args=[{"visible": [part == "SLAB_BOTTOM" or part == "STRUCTURE" for part in trace_parts]}]),
+        dict(label="SOLO LOSAS SUP", method="update", args=[{"visible": [part == "SLAB_TOP" or part == "STRUCTURE" for part in trace_parts]}]),
+    ]
+
     fig.update_layout(
         title="UANDES structural geometry - 2D viewer",
         xaxis=dict(title="X [m]", scaleanchor="y", scaleratio=1),
         yaxis=dict(title="Y [m]"),
         legend=dict(groupclick="toggleitem"),
-        updatemenus=[dict(buttons=buttons)],
+        updatemenus=[
+            dict(buttons=buttons, x=0.0, y=1.12),
+            dict(buttons=slab_buttons, x=0.38, y=1.12),
+        ],
     )
 
     output_path = Path(output_path)

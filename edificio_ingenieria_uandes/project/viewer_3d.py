@@ -32,13 +32,13 @@ def box_mesh(center_x, center_y, width, length, z_top, height):
     return vertices, faces
 
 
-def add_box(fig, mesh_data, name, color, hovertext=""):
+def add_box(fig, mesh_data, name, color, hovertext="", opacity=0.55):
     if mesh_data is None:
         return False
     vertices, faces = mesh_data
     x, y, z = zip(*vertices)
     i, j, k = zip(*faces)
-    fig.add_trace(go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, name=name, color=color, opacity=0.55, hovertext=hovertext, hoverinfo="text"))
+    fig.add_trace(go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, name=name, color=color, opacity=opacity, hovertext=hovertext, hoverinfo="text"))
     return True
 
 
@@ -68,13 +68,31 @@ def wall_mesh(wall):
     return vertices, faces
 
 
+def slab_mesh(slab, reinforcement):
+    if None in [slab["x1"], slab["x2"], slab["y1"], slab["y2"], slab["z_top"], slab["thickness"]]:
+        return None
+    x0, x1 = sorted([slab["x1"], slab["x2"]])
+    y0, y1 = sorted([slab["y1"], slab["y2"]])
+    if reinforcement == "BOTTOM_F":
+        z0 = slab["z_top"] - slab["thickness"]
+        z1 = z0 + 0.015
+    else:
+        z1 = slab["z_top"]
+        z0 = z1 - 0.015
+    vertices = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0), (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
+    faces = [(0, 1, 2), (0, 2, 3), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
+    return vertices, faces
+
+
 def create_viewer_3d(geometry, output_path):
     fig = go.Figure()
     node_map = {node["id"]: node for node in geometry["nodes"]}
     trace_levels = []
+    trace_parts = []
 
-    def register(levels):
+    def register(levels, part="STRUCTURE"):
         trace_levels.append(set(levels))
+        trace_parts.append(part)
 
     def level_from_z(z):
         for level_name, level_z in geometry["levels"].items():
@@ -105,6 +123,14 @@ def create_viewer_3d(geometry, output_path):
         if ni and nj:
             if add_line(fig, (ni["x"], ni["y"], ni["z"]), (nj["x"], nj["y"], nj["z"]), "BEAMS", "blue", hovertext=f"ID: {beam['id']}<br>TYPE: BEAM<br>LEVEL: {beam['level']}"):
                 register([beam["level"]])
+
+    for slab in geometry.get("slabs", []):
+        if "BOTTOM_F" in slab["reinforcement"]:
+            if add_box(fig, slab_mesh(slab, "BOTTOM_F"), "LOSAS INFERIORES", "cyan", hovertext=f"ID: {slab['id']}<br>TYPE: SLAB<br>LEVEL: {slab['level']}<br>THICKNESS: {slab['thickness']} m<br>REINF: BOTTOM_F", opacity=0.32):
+                register([slab["level"]], "SLAB_BOTTOM")
+        if "CEILING" in slab["reinforcement"]:
+            if add_box(fig, slab_mesh(slab, "CEILING"), "LOSAS SUPERIORES", "deepskyblue", hovertext=f"ID: {slab['id']}<br>TYPE: SLAB<br>LEVEL: {slab['level']}<br>THICKNESS: {slab['thickness']} m<br>REINF: CEILING", opacity=0.22):
+                register([slab["level"]], "SLAB_TOP")
 
     for wall in geometry["walls"]:
         if None in [wall["x1"], wall["y1"]]:
@@ -162,10 +188,20 @@ def create_viewer_3d(geometry, output_path):
             args=[{"visible": [level in levels for levels in trace_levels]}],
         ))
 
+    slab_buttons = [
+        dict(label="LOSAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
+        dict(label="SIN LOSAS", method="update", args=[{"visible": [part not in ["SLAB_BOTTOM", "SLAB_TOP"] for part in trace_parts]}]),
+        dict(label="SOLO LOSAS INF", method="update", args=[{"visible": [part == "SLAB_BOTTOM" or part == "STRUCTURE" for part in trace_parts]}]),
+        dict(label="SOLO LOSAS SUP", method="update", args=[{"visible": [part == "SLAB_TOP" or part == "STRUCTURE" for part in trace_parts]}]),
+    ]
+
     fig.update_layout(
         title="UANDES structural geometry - 3D viewer",
         scene=dict(xaxis_title="X [m]", yaxis_title="Y [m]", zaxis_title="Z [m]", aspectmode="data"),
-        updatemenus=[dict(buttons=buttons)]
+        updatemenus=[
+            dict(buttons=buttons, x=0.0, y=1.12),
+            dict(buttons=slab_buttons, x=0.38, y=1.12),
+        ]
     )
 
     output_path = Path(output_path)

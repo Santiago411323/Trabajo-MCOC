@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from dataclasses import field
 from typing import Optional
 
 
@@ -41,6 +42,25 @@ class Beam:
     level: str
     status: str = "PENDING_DIMENSIONS"
     type: str = "BEAM"
+
+
+@dataclass
+class Slab:
+    id: str
+    grid_x1: str
+    grid_x2: str
+    grid_y1: str
+    grid_y2: str
+    x1: Optional[float]
+    x2: Optional[float]
+    y1: Optional[float]
+    y2: Optional[float]
+    thickness: Optional[float]
+    level: str
+    z_top: Optional[float]
+    reinforcement: list = field(default_factory=list)
+    status: str = "ACTIVE"
+    type: str = "SLAB"
 
 
 @dataclass
