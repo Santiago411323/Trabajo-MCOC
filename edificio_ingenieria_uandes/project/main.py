@@ -3,6 +3,7 @@ from pathlib import Path
 
 from build_opensees import build_opensees_nodes_only
 from checks import run_all_checks
+from export_unity import export_unity_structure
 from geometry_data import FOUNDATION_HEIGHTS, RADIER_THICKNESS, create_geometry
 from viewer_2d import create_viewer_2d
 from viewer_3d import create_viewer_3d
@@ -11,6 +12,7 @@ from viewer_3d import create_viewer_3d
 BASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = BASE_DIR / "outputs"
 GEOMETRY_PATH = BASE_DIR / "structural_geometry.json"
+UNITY_JSON_PATH = BASE_DIR.parents[1] / "unity_visualizador" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
 
 
 def save_geometry(geometry):
@@ -23,7 +25,7 @@ def load_geometry():
         return json.load(file)
 
 
-def print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path):
+def print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path, unity_json_path):
     print("========================================")
     print("UANDES STRUCTURAL MODEL")
     print("========================================")
@@ -61,6 +63,9 @@ def print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path):
     print()
     print("3D viewer:")
     print(viewer_3d_path)
+    print()
+    print("Unity JSON:")
+    print(unity_json_path)
     print("========================================")
 
 
@@ -76,7 +81,8 @@ def main():
 
     viewer_2d_path = create_viewer_2d(geometry, OUTPUT_DIR / "structural_2d.html")
     viewer_3d_path = create_viewer_3d(geometry, OUTPUT_DIR / "structural_3d.html")
-    print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path)
+    unity_json_path = export_unity_structure(geometry, UNITY_JSON_PATH)
+    print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path, unity_json_path)
 
 
 if __name__ == "__main__":

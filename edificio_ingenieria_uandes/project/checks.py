@@ -59,7 +59,15 @@ def disconnected_nodes(geometry):
         for element in geometry[collection_name]:
             connected.add(element["node_i"])
             connected.add(element["node_j"])
-    return [f"Disconnected node {node['id']}" for node in geometry["nodes"] if node["id"] not in connected]
+    messages = []
+    for node in geometry["nodes"]:
+        if node["id"] in connected:
+            continue
+        if None in [node["x"], node["y"], node["z"]]:
+            messages.append(f"WARNING: prepared node {node['id']} is disconnected because coordinates are pending")
+        else:
+            messages.append(f"Disconnected node {node['id']}")
+    return messages
 
 
 def missing_node_references(geometry):
@@ -75,13 +83,12 @@ def missing_node_references(geometry):
 
 def beam_without_support(geometry):
     messages = []
-    nodes = node_lookup(geometry)
     column_top_nodes = {column["node_j"] for column in geometry["columns"]}
     for beam in geometry["beams"]:
         if beam["node_i"] not in column_top_nodes:
-            messages.append(f"Beam {beam['id']} node_i has no vertical supporting column: {beam['node_i']}")
+            messages.append(f"WARNING: Beam {beam['id']} node_i has no vertical supporting column: {beam['node_i']}")
         if beam["node_j"] not in column_top_nodes:
-            messages.append(f"Beam {beam['id']} node_j has no vertical supporting column: {beam['node_j']}")
+            messages.append(f"WARNING: Beam {beam['id']} node_j has no vertical supporting column: {beam['node_j']}")
     return messages
 
 
@@ -162,7 +169,7 @@ def invalid_dimensions(geometry):
             messages.append(f"Wall {wall['id']} has missing/invalid thickness")
         if None not in [wall["x1"], wall["y1"], wall["x2"], wall["y2"]]:
             if hypot(wall["x2"] - wall["x1"], wall["y2"] - wall["y1"]) <= 0:
-                messages.append(f"Wall {wall['id']} has invalid length")
+                messages.append(f"WARNING: Wall {wall['id']} has pending length/direction")
     for radier in geometry["radiers"]:
         if radier["thickness"] != 0.15:
             messages.append(f"Radier {radier['id']} thickness is not 0.15 m")

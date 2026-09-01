@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteAlways]
 public class StructureViewer : MonoBehaviour
 {
     [Header("Datos exportados desde OpenSeesPy")]
@@ -19,24 +20,64 @@ public class StructureViewer : MonoBehaviour
     private readonly Dictionary<int, Vector3> nodes = new Dictionary<int, Vector3>();
     private readonly List<ElementSelectable> selectables = new List<ElementSelectable>();
     private DiagramController diagramController;
+    private bool structureCreated;
 
     private void Start()
     {
+        CreateStructure();
+    }
+
+    private void OnEnable()
+    {
+        CreateStructure();
+    }
+
+    private void CreateStructure()
+    {
         CreateDefaultMaterials();
 
-        if (structureJson == null)
+        if (structureCreated)
         {
-            Debug.LogError("Asigna estructura_3d_unity.json en el campo Structure Json.");
             return;
         }
 
+        if (structureJson == null)
+        {
+            structureJson = Resources.Load<TextAsset>("estructura_edificio_ingenieria_unity");
+            if (structureJson == null)
+            {
+                Debug.LogError("Asigna estructura_edificio_ingenieria_unity.json en el campo Structure Json o copialo a Assets/Resources.");
+                return;
+            }
+        }
+
         StructureData data = JsonUtility.FromJson<StructureData>(structureJson.text);
+        ClearStructureChildren();
+        nodes.Clear();
+        selectables.Clear();
         CreateNodes(data);
         CreateElements(data);
         CreateSupports(data);
         CreatePointLoads(data);
         CreateGlobalAxes();
         CreateDiagramController();
+        structureCreated = true;
+    }
+
+    private void ClearStructureChildren()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = transform.GetChild(i).gameObject;
+            if (Application.isPlaying)
+            {
+                Destroy(child);
+            }
+            else
+            {
+                DestroyImmediate(child);
+            }
+        }
     }
 
     private void CreateNodes(StructureData data)

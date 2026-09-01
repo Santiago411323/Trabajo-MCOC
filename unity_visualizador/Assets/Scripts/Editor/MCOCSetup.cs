@@ -1,18 +1,45 @@
+using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public static class MCOCSetup
 {
+    [InitializeOnLoadMethod]
+    public static void CrearVisualizadorSiFalta()
+    {
+        EditorApplication.delayCall += () =>
+        {
+            if (GameObject.Find("StructureViewer") != null)
+            {
+                return;
+            }
+            CrearVisualizador(false);
+        };
+    }
+
     [MenuItem("MCOC/Crear Visualizador")]
     public static void CrearVisualizador()
     {
-        TextAsset json = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/estructura_3d_unity.json");
+        CrearVisualizador(true);
+    }
+
+    public static void CrearVisualizador(bool showDialog)
+    {
+        TextAsset json = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/estructura_edificio_ingenieria_unity.json");
         if (json == null)
         {
-            EditorUtility.DisplayDialog(
-                "Falta JSON",
-                "No se encontro Assets/estructura_3d_unity.json. Copia ese archivo dentro de Assets y vuelve a intentar.",
-                "OK");
+            json = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/estructura_3d_unity.json");
+        }
+        if (json == null)
+        {
+            if (showDialog && !Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog(
+                    "Falta JSON",
+                    "No se encontro el JSON en Assets/Resources.",
+                    "OK");
+            }
             return;
         }
 
@@ -48,7 +75,21 @@ public static class MCOCSetup
             camera.gameObject.AddComponent<OrbitCamera>();
         }
 
+        if (Object.FindObjectOfType<Light>() == null)
+        {
+            GameObject lightObject = new GameObject("Directional Light");
+            Light light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 1.2f;
+            lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        }
+
         Selection.activeGameObject = viewerObject;
-        EditorUtility.DisplayDialog("Listo", "Visualizador creado. Ahora presiona Play.", "OK");
+        Directory.CreateDirectory("Assets/Scenes");
+        EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), "Assets/Scenes/StructureViewerScene.unity");
+        if (showDialog && !Application.isBatchMode)
+        {
+            EditorUtility.DisplayDialog("Listo", "Visualizador creado. Ahora presiona Play.", "OK");
+        }
     }
 }
