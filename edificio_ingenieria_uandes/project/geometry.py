@@ -1,0 +1,100 @@
+from dataclasses import asdict, dataclass
+from typing import Optional
+
+
+@dataclass
+class Node:
+    id: int
+    grid_x: str
+    grid_y: str
+    level: str
+    x: Optional[float]
+    y: Optional[float]
+    z: Optional[float]
+    type: str = "NODE"
+
+
+@dataclass
+class Column:
+    id: str
+    grid_x: str
+    grid_y: str
+    x_center: Optional[float]
+    y_center: Optional[float]
+    bx: Optional[float]
+    by: Optional[float]
+    z_bottom: Optional[float]
+    z_top: Optional[float]
+    node_i: int
+    node_j: int
+    status: str = "PENDING_DIMENSIONS"
+    type: str = "COLUMN"
+
+
+@dataclass
+class Beam:
+    id: str
+    node_i: int
+    node_j: int
+    width: Optional[float]
+    height: Optional[float]
+    level: str
+    status: str = "PENDING_DIMENSIONS"
+    type: str = "BEAM"
+
+
+@dataclass
+class StructuralWall:
+    id: str
+    grid_x1: str
+    grid_y1: str
+    grid_x2: str
+    grid_y2: str
+    x1: Optional[float]
+    y1: Optional[float]
+    x2: Optional[float]
+    y2: Optional[float]
+    thickness: Optional[float]
+    z_bottom: Optional[float]
+    z_top: Optional[float]
+    status: str = "PENDING_DIMENSIONS"
+    type: str = "STRUCTURAL_WALL"
+
+
+@dataclass
+class Foundation:
+    id: str
+    type: str
+    center_x: Optional[float]
+    center_y: Optional[float]
+    width: Optional[float]
+    length: Optional[float]
+    thickness: Optional[float]
+    level: str
+    supporting_element: str
+    status: str = "PENDING_DIMENSIONS"
+
+
+@dataclass
+class FoundationBeam:
+    id: str
+    node_i: int
+    node_j: int
+    width: Optional[float]
+    height: Optional[float]
+    z: Optional[float]
+    status: str = "PENDING_DIMENSIONS"
+    type: str = "FOUNDATION_BEAM"
+
+
+@dataclass
+class Radier:
+    id: str
+    boundary: list
+    z_top: Optional[float]
+    thickness: float = 0.15
+    type: str = "RADIER"
+
+
+def to_dict_list(items):
+    return [asdict(item) for item in items]
