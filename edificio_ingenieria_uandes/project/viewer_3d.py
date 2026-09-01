@@ -110,6 +110,46 @@ def slab_mesh(slab, reinforcement):
     return vertices, faces
 
 
+def radier_mesh(radier):
+    boundary = radier.get("boundary", [])
+    if len(boundary) < 3 or radier.get("z_top") is None:
+        return None
+    z1 = radier["z_top"]
+    z0 = z1 - radier.get("thickness", 0.15)
+    vertices = [(point[0], point[1], z) for z in [z0, z1] for point in boundary]
+    count = len(boundary)
+    faces = []
+    for index in range(1, count - 1):
+        faces.extend([(0, index, index + 1), (count, count + index + 1, count + index)])
+    for index in range(count):
+        next_index = (index + 1) % count
+        faces.extend([(index, next_index, count + next_index), (index, count + next_index, count + index)])
+    return vertices, faces
+
+
+def stair_segment_mesh(segment, width, thickness):
+    if None in [segment["x1"], segment["y1"], segment["z1"], segment["x2"], segment["y2"], segment["z2"], width, thickness]:
+        return None
+    dx = segment["x2"] - segment["x1"]
+    dy = segment["y2"] - segment["y1"]
+    length = hypot(dx, dy)
+    if length <= 0:
+        return None
+    nx, ny = -dy / length * width / 2, dx / length * width / 2
+    vertices = [
+        (segment["x1"] + nx, segment["y1"] + ny, segment["z1"]),
+        (segment["x1"] - nx, segment["y1"] - ny, segment["z1"]),
+        (segment["x2"] - nx, segment["y2"] - ny, segment["z2"]),
+        (segment["x2"] + nx, segment["y2"] + ny, segment["z2"]),
+        (segment["x1"] + nx, segment["y1"] + ny, segment["z1"] - thickness),
+        (segment["x1"] - nx, segment["y1"] - ny, segment["z1"] - thickness),
+        (segment["x2"] - nx, segment["y2"] - ny, segment["z2"] - thickness),
+        (segment["x2"] + nx, segment["y2"] + ny, segment["z2"] - thickness),
+    ]
+    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1), (1, 5, 6), (1, 6, 2), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
+    return vertices, faces
+
+
 def create_viewer_3d(geometry, output_path):
     fig = go.Figure()
     node_map = {node["id"]: node for node in geometry["nodes"]}
@@ -182,14 +222,22 @@ def create_viewer_3d(geometry, output_path):
             ))
             register([level_from_z(z_top) or "FOUNDATION"])
         else:
-            if add_box(fig, wall_mesh(wall), "WALLS", "red", hovertext=f"ID: {wall['id']}<br>TYPE: STRUCTURAL_WALL<br>THICKNESS: {wall['thickness']} m"):
+            wall_hovertext = f"ID: {wall['id']}<br>TYPE: STRUCTURAL_WALL<br>THICKNESS: {wall['thickness']} m"
+            if add_box(fig, wall_mesh(wall), "WALLS", "red", hovertext=wall_hovertext):
                 register([level_from_z(wall["z_top"]) or "FOUNDATION"])
+            elif add_line(fig, (wall["x1"], wall["y1"], z_bottom), (wall["x2"], wall["y2"], z_bottom), "WALLS", "red", hovertext=wall_hovertext):
+                register(["FOUNDATION"])
 
     for fb in geometry["foundation_beams"]:
         ni = node_map.get(fb["node_i"])
         nj = node_map.get(fb["node_j"])
         if ni and nj:
-            if add_line(fig, (ni["x"], ni["y"], ni["z"]), (nj["x"], nj["y"], nj["z"]), "FOUNDATION BEAMS", "orange", hovertext=f"ID: {fb['id']}<br>TYPE: FOUNDATION_BEAM"):
+            start = (ni["x"], ni["y"], fb["z"] if fb["z"] is not None else ni["z"])
+            end = (nj["x"], nj["y"], fb["z"] if fb["z"] is not None else nj["z"])
+            hovertext = f"ID: {fb['id']}<br>TYPE: FOUNDATION_BEAM<br>SECTION: {fb['width']} x {fb['height']} m"
+            if add_box(fig, beam_mesh(fb, start, end), "FOUNDATION BEAMS", "orange", hovertext=hovertext, opacity=0.75):
+                register(["FOUNDATION"])
+            elif add_line(fig, start, end, "FOUNDATION BEAMS", "orange", hovertext=hovertext):
                 register(["FOUNDATION"])
 
     for foundation in geometry["foundations"]:
@@ -197,10 +245,17 @@ def create_viewer_3d(geometry, output_path):
             register(["FOUNDATION"])
 
     for radier in geometry["radiers"]:
-        boundary = radier["boundary"]
-        if len(boundary) >= 3 and radier["z_top"] is not None:
-            # Radier polygon meshing is intentionally deferred until real boundary points are supplied.
-            pass
+        if add_box(fig, radier_mesh(radier), "RADIERS", "purple", hovertext=f"ID: {radier['id']}<br>TYPE: RADIER<br>THICKNESS: {radier['thickness']} m<br>Z TOP: {radier['z_top']} m", opacity=0.35):
+            register(["FOUNDATION"])
+
+    for stair in geometry.get("stairs", []):
+        for segment in stair["segments"]:
+            if add_box(fig, stair_segment_mesh(segment, stair["width"], stair["thickness"]), "STAIR", "gold", hovertext=f"ID: {stair['id']}<br>SEGMENT: {segment['id']}<br>WIDTH: {stair['width']} m<br>THICKNESS: {stair['thickness']} m<br>SLOPE: {segment['slope']}", opacity=0.75):
+                register(["FOUNDATION"], "STRUCTURE")
+
+    for stair_wall in geometry.get("stair_walls", []):
+        if add_line(fig, (stair_wall["x1"], stair_wall["y1"], stair_wall["z1"]), (stair_wall["x2"], stair_wall["y2"], stair_wall["z2"]), "STAIR WALLS", "darkred", width=8, hovertext=f"ID: {stair_wall['id']}<br>THICKNESS: {stair_wall['thickness']} m<br>TOP LEVEL: {stair_wall['top_level']}"):
+            register(["FOUNDATION"], "STRUCTURE")
 
     level_buttons = [
         ("FOUNDATIONS ONLY", "FOUNDATION"),

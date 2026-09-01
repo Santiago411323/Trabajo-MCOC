@@ -64,6 +64,36 @@ class Slab:
 
 
 @dataclass
+class Stair:
+    id: str
+    x1: Optional[float]
+    y1: Optional[float]
+    x2: Optional[float]
+    y2: Optional[float]
+    width: Optional[float]
+    thickness: Optional[float]
+    segments: list
+    status: str = "ACTIVE"
+    type: str = "STAIR"
+
+
+@dataclass
+class StairWall:
+    id: str
+    side: str
+    x1: Optional[float]
+    y1: Optional[float]
+    z1: Optional[float]
+    x2: Optional[float]
+    y2: Optional[float]
+    z2: Optional[float]
+    thickness: Optional[float]
+    top_level: str
+    status: str = "ACTIVE"
+    type: str = "STAIR_SIDE_WALL"
+
+
+@dataclass
 class StructuralWall:
     id: str
     grid_x1: str

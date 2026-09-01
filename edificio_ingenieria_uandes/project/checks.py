@@ -63,6 +63,9 @@ def disconnected_nodes(geometry):
     for node in geometry["nodes"]:
         if node["id"] in connected:
             continue
+        if node.get("grid_x") in ["B_PRIME", "E1"] or node.get("grid_y") in ["8B", "8A"]:
+            messages.append(f"WARNING: exterior node {node['id']} is prepared for pending radier/staircase connectivity")
+            continue
         if None in [node["x"], node["y"], node["z"]]:
             messages.append(f"WARNING: prepared node {node['id']} is disconnected because coordinates are pending")
         else:

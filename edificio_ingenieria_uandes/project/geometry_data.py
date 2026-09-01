@@ -1,4 +1,5 @@
-from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, Slab, StructuralWall, to_dict_list
+from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, Slab, Stair, StairWall, StructuralWall, to_dict_list
+from math import hypot
 
 
 GEOMETRY_TOLERANCE = 0.005
@@ -16,6 +17,19 @@ FOUNDATION_HEIGHTS = {
 }
 
 RADIER_THICKNESS = 0.15
+EXTERIOR_RADIER_TOP_Z = -7.97
+EXTERIOR_FOUNDATION_WALL_THICKNESS = 0.20
+EXTERIOR_FOUNDATION_BEAM_WIDTH = 0.20
+EXTERIOR_FOUNDATION_BEAM_HEIGHT = 1.505
+STAIR_WIDTH = 4.30
+STAIR_THICKNESS = 0.15
+STAIR_FIRST_RUN = 4.17
+STAIR_LANDING_RUN = 2.63
+STAIR_FIRST_SLOPE = 0.5246
+STAIR_SECOND_SLOPE = 0.5262
+STAIR_ENTRY_EXTENSION = 1.22
+STAIR_LANDING_Z = -5.945
+STAIR_LANDING_WALL_TOP_Z = -5.15
 
 ISOLATED_FOOTING = "ISOLATED_FOOTING"
 STRIP_FOOTING = "STRIP_FOOTING"
@@ -82,15 +96,17 @@ GRID_X_AXIS_NAMES = [
     "C_PRIME",
     "D",
     "D_PRIME",
+    "B_PRIME",
+    "E1",
 ]
 
-GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
+GRID_Y_AXIS_NAMES = ["8B", "8A", "1", "1A_PRIME", "2", "2A_PRIME", "3"]
 SLAB_GRID_X_AXIS_NAMES = ["A_PRIME", "A", "B", "C", "C_PRIME", "D", "D_PRIME"]
 SLAB_GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
 
 # Distancias entregadas por el usuario, convertidas de cm a m.
 GRID_X_SPANS = [3.75, 3.75, 3.75, 5.00, 5.00, 5.00, 2.58, 2.42, 0.225]
-GRID_Y_SPANS = [4.265, 4.635, 2.985, 4.265]
+GRID_Y_SPANS = [4.30, 6.42, 4.265, 4.635, 2.985, 4.265]
 
 grid_x = {}
 grid_y = {}
@@ -132,6 +148,9 @@ STRUCTURAL_POSITIONS = [
     ("P08", "C", "3"),
 ]
 
+EXTERIOR_NODE_X_AXES = ["B_PRIME", "E1"]
+EXTERIOR_NODE_Y_AXES = ["8B", "8A"]
+
 SUPERSTRUCTURE_BEAM_SPECS = [
     ("A_PRIME", "1", "A_PRIME", "3", 0.40, 0.80, "V40/80"),
     ("A_PRIME", "1", "D_PRIME", "1", 0.60, 0.80, "V60/80"),
@@ -171,6 +190,22 @@ def refresh_grids():
     global grid_x, grid_y
     grid_x = generate_grid_coordinates(GRID_X_AXIS_NAMES, GRID_X_SPANS)
     grid_y = generate_grid_coordinates(GRID_Y_AXIS_NAMES, GRID_Y_SPANS)
+
+    # The exterior axes are an offset extension and must not move the original
+    # building grid, whose axis 1 remains the origin.
+    grid_x.update({
+        "B_PRIME": grid_x["C"] + 3.224,
+        "E1": grid_x["C"] + 3.224 + 7.05,
+    })
+    grid_y.update({
+        "1": 0.0,
+        "1A_PRIME": 4.265,
+        "2": 8.90,
+        "2A_PRIME": 11.885,
+        "3": 16.15,
+    })
+    grid_y["8A"] = grid_y["1"] - 6.42
+    grid_y["8B"] = grid_y["8A"] - 4.30
 
 
 def structural_node(node_id, grid_x_name, grid_y_name, level):
@@ -228,6 +263,8 @@ def create_geometry():
     foundation_beams = []
     walls = []
     radiers = []
+    stairs = []
+    stair_walls = []
 
     node_registry = {}
     next_node_index_by_level = {level: 1 for level in levels}
@@ -281,6 +318,13 @@ def create_geometry():
                 node_j=position_to_nodes[position_id][top_level],
                 status="ACTIVE",
             ))
+
+    # Nodes for the exterior extension. Their future stair/radier elements are
+    # intentionally not invented until dimensions and connectivity are supplied.
+    for gx in EXTERIOR_NODE_X_AXES:
+        for gy in EXTERIOR_NODE_Y_AXES:
+            for level in VERTICAL_LEVEL_SEQUENCE:
+                get_or_create_node(gx, gy, level)
 
     beam_id = 3001
     for level in FLOOR_BEAM_LEVELS:
@@ -340,6 +384,120 @@ def create_geometry():
         add_wall_for_each_storey(walls, "W_DPRIME_1_TO_ELEVATOR_TOP", "D_PRIME", "1", "D_PRIME", "ELEVATOR_TOP", d_prime_x, y_1, d_prime_x, ELEVATOR_TOP_WALL_Y, 0.25)
         add_wall_for_each_storey(walls, "W_DPRIME_OPENING_TO_3", "D_PRIME", "OPENING_END", "D_PRIME", "3", d_prime_x, opening_end_y, d_prime_x, y_3, 0.25)
 
+    exterior_c_x = grid_x.get("C")
+    exterior_bp_x = grid_x.get("B_PRIME")
+    exterior_e1_x = grid_x.get("E1")
+    exterior_8b_y = grid_y.get("8B")
+    exterior_8a_y = grid_y.get("8A")
+    if None not in [exterior_c_x, exterior_bp_x, exterior_e1_x, exterior_8b_y, exterior_8a_y]:
+        exterior_wall_end_x = exterior_c_x - 1.22
+        foundation_wall_specs = [
+            ("FW_E1_8B_TO_C_PLUS_122", exterior_e1_x, exterior_8b_y, exterior_wall_end_x, exterior_8b_y),
+            ("FW_E1_8B_TO_8A", exterior_e1_x, exterior_8b_y, exterior_e1_x, exterior_8a_y),
+            ("FW_E1_8A_TO_C_PLUS_122", exterior_e1_x, exterior_8a_y, exterior_wall_end_x, exterior_8a_y),
+            ("FW_BPRIME_8B_TO_8A", exterior_bp_x, exterior_8b_y, exterior_bp_x, exterior_8a_y),
+        ]
+        for wall_id, x1, y1, x2, y2 in foundation_wall_specs:
+            walls.append(StructuralWall(
+                id=wall_id,
+                grid_x1="EXTERIOR",
+                grid_y1="EXTERIOR",
+                grid_x2="EXTERIOR",
+                grid_y2="EXTERIOR",
+                x1=x1,
+                y1=y1,
+                x2=x2,
+                y2=y2,
+                thickness=EXTERIOR_FOUNDATION_WALL_THICKNESS,
+                z_bottom=EXTERIOR_RADIER_TOP_Z,
+                z_top=None,
+                status="ACTIVE_PENDING_WALL_HEIGHT",
+            ))
+
+        foundation_beams.append(FoundationBeam(
+            id="FB_EXT_C_8B_TO_8A",
+            node_i=get_or_create_node("C", "8B", "FOUNDATION"),
+            node_j=get_or_create_node("C", "8A", "FOUNDATION"),
+            width=EXTERIOR_FOUNDATION_BEAM_WIDTH,
+            height=EXTERIOR_FOUNDATION_BEAM_HEIGHT,
+            z=EXTERIOR_RADIER_TOP_Z,
+        ))
+
+        radiers.append(Radier(
+            id="R_EXT_001",
+            boundary=[
+                [exterior_wall_end_x, exterior_8b_y],
+                [exterior_e1_x, exterior_8b_y],
+                [exterior_e1_x, exterior_8a_y],
+                [exterior_wall_end_x, exterior_8a_y],
+            ],
+            z_top=EXTERIOR_RADIER_TOP_Z,
+        ))
+
+        stair_x1, stair_x2 = exterior_c_x, exterior_e1_x
+        stair_y1 = (exterior_8a_y + exterior_8b_y) / 2
+        stair_y2 = stair_y1
+        total_plan_run = stair_x2 - stair_x1
+        final_run = total_plan_run - STAIR_FIRST_RUN - STAIR_LANDING_RUN
+        first_stair_base_z = EXTERIOR_RADIER_TOP_Z
+
+        def point_at(distance):
+            ratio = distance / total_plan_run
+            return stair_x1 + (stair_x2 - stair_x1) * ratio, stair_y1 + (stair_y2 - stair_y1) * ratio
+
+        p0 = point_at(0.0)
+        p1 = point_at(STAIR_FIRST_RUN)
+        p2 = point_at(STAIR_FIRST_RUN + STAIR_LANDING_RUN)
+        p3 = point_at(total_plan_run)
+        base_segments = [
+            ("EXTENSION", stair_x1 - STAIR_ENTRY_EXTENSION, stair_x1, 0.0, 0.0, 0.0),
+            ("TRAMO_1", p0[0], p1[0], 0.0, STAIR_FIRST_RUN * STAIR_FIRST_SLOPE, STAIR_FIRST_SLOPE),
+            ("DESCANSO", p1[0], p2[0], STAIR_FIRST_RUN * STAIR_FIRST_SLOPE, STAIR_FIRST_RUN * STAIR_FIRST_SLOPE, 0.0),
+            ("TRAMO_2", p2[0], p3[0], STAIR_FIRST_RUN * STAIR_FIRST_SLOPE, STAIR_FIRST_RUN * STAIR_FIRST_SLOPE + final_run * STAIR_SECOND_SLOPE, STAIR_SECOND_SLOPE),
+        ]
+        for storey_index, storey_base_z in enumerate([first_stair_base_z + index * FLOOR_HEIGHT for index in range(4)], start=1):
+            storey_segments = []
+            for segment_id, x_start, x_end, rise_start, rise_end, slope in base_segments:
+                segment = {
+                    "id": f"L{storey_index}_{segment_id}",
+                    "x1": x_start,
+                    "y1": stair_y1,
+                    "x2": x_end,
+                    "y2": stair_y1,
+                    "z1": storey_base_z + rise_start,
+                    "z2": storey_base_z + rise_end,
+                    "slope": slope,
+                }
+                if segment_id == "DESCANSO":
+                    segment["obra_gruesa"] = storey_base_z + rise_start
+                storey_segments.append(segment)
+            stairs.append(Stair(
+                id=f"ESC_EXT_{storey_index:03d}",
+                x1=stair_x1,
+                y1=stair_y1,
+                x2=stair_x2,
+                y2=stair_y2,
+                width=STAIR_WIDTH,
+                thickness=STAIR_THICKNESS,
+                segments=storey_segments,
+            ))
+            for side, y_side in [("8B", exterior_8b_y), ("8A", exterior_8a_y)]:
+                for segment in storey_segments:
+                    wall_z1 = storey_base_z + (STAIR_LANDING_WALL_TOP_Z - EXTERIOR_RADIER_TOP_Z) if segment["id"].endswith("DESCANSO") else segment["z1"]
+                    wall_z2 = wall_z1 if segment["id"].endswith("DESCANSO") else segment["z2"]
+                    stair_walls.append(StairWall(
+                        id=f"MW_{storey_index}_{side}_{segment['id']}",
+                        side=side,
+                        x1=segment["x1"],
+                        y1=y_side,
+                        z1=wall_z1,
+                        x2=segment["x2"],
+                        y2=y_side,
+                        z2=wall_z2,
+                        thickness=EXTERIOR_FOUNDATION_WALL_THICKNESS,
+                        top_level="-5.15 m" if segment["id"].endswith("DESCANSO") else "VAR",
+                    ))
+
     if None not in [a_prime_x, y_1]:
         add_wall_for_each_storey(walls, "W_APRIME_1_VERTICAL", "A_PRIME", "A1_DOWN", "A_PRIME", "A1_UP", a_prime_x, y_1 - AP1_VERTICAL_WALL_DOWN, a_prime_x, y_1 + AP1_VERTICAL_WALL_UP, AP1_VERTICAL_WALL_THICKNESS)
         add_wall_for_each_storey(walls, "W_APRIME_1_HORIZONTAL", "A_PRIME", "1", "A1_ARM", "1", a_prime_x, y_1, a_prime_x + AP1_HORIZONTAL_WALL_LENGTH, y_1, AP1_HORIZONTAL_WALL_THICKNESS)
@@ -357,6 +515,7 @@ def create_geometry():
             "geometry_tolerance": GEOMETRY_TOLERANCE,
             "note": "Geometry is parametric. Missing dimensions are kept as null and are not invented.",
             "slab_note": "Slabs include planta armadura inferior (F) and planta armadura cielo from cielo 1 subterraneo to cielo piso 4.",
+            "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
             "plant_levels": {
                 "FOUNDATION": "Planta de fundaciones",
                 "CIELO_1S": "Planta cielo 1 subterraneo",
@@ -372,6 +531,8 @@ def create_geometry():
             "foundation_heights": FOUNDATION_HEIGHTS,
             "radier_thickness": RADIER_THICKNESS,
             "slab_thickness": SLAB_THICKNESS,
+            "stair_width": STAIR_WIDTH,
+            "stair_thickness": STAIR_THICKNESS,
         },
         "nodes": to_dict_list(nodes),
         "columns": to_dict_list(columns),
@@ -381,4 +542,6 @@ def create_geometry():
         "foundations": to_dict_list(foundations),
         "foundation_beams": to_dict_list(foundation_beams),
         "radiers": to_dict_list(radiers),
+        "stairs": to_dict_list(stairs),
+        "stair_walls": to_dict_list(stair_walls),
     }
