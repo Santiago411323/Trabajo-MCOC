@@ -68,6 +68,32 @@ def wall_mesh(wall):
     return vertices, faces
 
 
+def beam_mesh(beam, start, end):
+    if None in [beam["width"], beam["height"], *start, *end]:
+        return None
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length = hypot(dx, dy)
+    if length <= 0:
+        return None
+    nx = -dy / length * beam["width"] / 2
+    ny = dx / length * beam["width"] / 2
+    z0 = start[2] - beam["height"] / 2
+    z1 = start[2] + beam["height"] / 2
+    vertices = [
+        (start[0] + nx, start[1] + ny, z0),
+        (start[0] - nx, start[1] - ny, z0),
+        (end[0] - nx, end[1] - ny, z0),
+        (end[0] + nx, end[1] + ny, z0),
+        (start[0] + nx, start[1] + ny, z1),
+        (start[0] - nx, start[1] - ny, z1),
+        (end[0] - nx, end[1] - ny, z1),
+        (end[0] + nx, end[1] + ny, z1),
+    ]
+    faces = [(0, 1, 2), (0, 2, 3), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
+    return vertices, faces
+
+
 def slab_mesh(slab, reinforcement):
     if None in [slab["x1"], slab["x2"], slab["y1"], slab["y2"], slab["z_top"], slab["thickness"]]:
         return None
@@ -121,7 +147,12 @@ def create_viewer_3d(geometry, output_path):
         ni = node_map.get(beam["node_i"])
         nj = node_map.get(beam["node_j"])
         if ni and nj:
-            if add_line(fig, (ni["x"], ni["y"], ni["z"]), (nj["x"], nj["y"], nj["z"]), "BEAMS", "blue", hovertext=f"ID: {beam['id']}<br>TYPE: BEAM<br>LEVEL: {beam['level']}"):
+            start = (ni["x"], ni["y"], ni["z"])
+            end = (nj["x"], nj["y"], nj["z"])
+            hovertext = f"ID: {beam['id']}<br>TYPE: BEAM<br>LEVEL: {beam['level']}<br>SECTION: {beam['width']} x {beam['height']} m"
+            if add_box(fig, beam_mesh(beam, start, end), "BEAMS", "blue", hovertext=hovertext, opacity=0.75):
+                register([beam["level"]])
+            elif add_line(fig, start, end, "BEAMS", "blue", hovertext=hovertext):
                 register([beam["level"]])
 
     for slab in geometry.get("slabs", []):
