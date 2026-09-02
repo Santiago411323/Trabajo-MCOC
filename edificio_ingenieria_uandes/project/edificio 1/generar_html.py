@@ -47,7 +47,7 @@ def build_js(coords, elems, muros, losas):
     losas_j = []
     for l in losas:
         pts = [coords[n] for n in l["nodos"]]
-        losas_j.append({"nivel": l["nivel"], "t": l.get("t", 0.12),
+        losas_j.append({"nivel": l["nivel"], "t": l.get("t", 0.15),
                         "detalle": l.get("detalle", "losas"), "p": pts})
     data = json.dumps(segs)
     data_m = json.dumps(paneles)
@@ -316,7 +316,7 @@ LOSAS.forEach((l, lidx)=>{
   const cx=(p0[0]+p1[0]+p2[0]+p3[0])/4;
   const cy=(p0[1]+p1[1]+p2[1]+p3[1])/4;
   const cz=(p0[2]+p1[2]+p2[2]+p3[2])/4;
-  const espesor = l.t || 0.12;
+  const espesor = l.t || 0.15;
   // Box geometry: (X, Y, Z). El espesor debe quedar a lo largo de Z (vertical),
   // por lo que va como 3er argumento: la losa es horizontal en el plano X-Y.
   const geom = new THREE.BoxGeometry(largoX, largoY, espesor);

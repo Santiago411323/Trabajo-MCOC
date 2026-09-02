@@ -44,7 +44,7 @@
 | `SUBTERRANEO` | True | Sótano de Z=−4 a Z=0 |
 | `MUROS_ESTRUCTURALES` | True | Muros de cortante verticales |
 | `MURO_YPOS` | "AMBOS" | Genera muro negativo + positivo |
-| `LOSA_ESPESOR_M` | 0.12 | Espesor de losa (referencia) |
+| `LOSA_ESPESOR_M` | 0.15 | Espesor de losa (referencia) |
 | E | 23500 MPa | Módulo elástico hormigón |
 | ν | 0.2 | Coeficiente de Poisson |
 
@@ -195,7 +195,7 @@ Muros de cortante **verticales de altura completa (Z=−4 a Z=16)** que conectan
 - Se generan losas (diafragmas) en **cada nivel de viga (Z=0, 4, 8, 12, 16)** (Z=0 = techo del sótano).
 - Rellenan cada **bahía de la cuadrícula de vigas** entre los **3 ejes Y** (P1, COMP, P2) y los vanos transversales.
 - La cuadrícula se **subdivide en todas las líneas de viga** (aunque no haya columna: X=5,15,25, y la extra X=7.51 donde exista).
-- Cada bahía = 4 nodos esquina + nivel + espesor (0.12 m).
+- Cada bahía = 4 nodos esquina + nivel + espesor (0.15 m).
 - **Voladizos**: también reciben losa las superficies de los voladizos (X+, Y− original, marco Y− X=10→20, voladizo Y− pasillo 2, y el tramo Y=−9.71).
 
 ### 9.2 Huecos en la zona X negativa (huella de los muros)

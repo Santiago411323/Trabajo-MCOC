@@ -167,7 +167,7 @@ else:                                     # "AMBOS" (y cualquier otro valor)
 #   excluyen del plano de losa comun (quedan como 'zona_muro', con una
 #   losa distinta pendiente de definir).
 LOSAS = True
-LOSA_ESPESOR_M = 0.12        # espesor de losa (m) - referencia
+LOSA_ESPESOR_M = 0.15        # espesor de losa (m) - referencia
 # Losas en los niveles de vigas (Z=H,2H,...) y en el techo del sotano (Z=0)
 
 # Eliminacion en el 3er piso (Z=12), pasillo 2 (Y=P2): se retiran la 3ra columna
