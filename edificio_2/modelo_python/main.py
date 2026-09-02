@@ -10,11 +10,13 @@ from viewer_3d import create_viewer_3d
 
 
 BASE_DIR = Path(__file__).resolve().parent
+EDIFICIO_2_DIR = BASE_DIR.parent
+ROOT_DIR = BASE_DIR.parents[1]
 OUTPUT_DIR = BASE_DIR / "outputs"
 GEOMETRY_PATH = BASE_DIR / "structural_geometry.json"
-UNITY_JSON_PATH = BASE_DIR.parents[1] / "unity_visualizador" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
-UNITY_OPEN_PROJECT_JSON_PATH = BASE_DIR.parents[1] / "Visualizador_MCOC" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
-UNITY_OPEN_PROJECT_LEGACY_JSON_PATH = BASE_DIR.parents[1] / "Visualizador_MCOC" / "Assets" / "estructura_3d_unity.json"
+UNITY_JSON_PATH = EDIFICIO_2_DIR / "unity_visualizador" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
+UNITY_OPEN_PROJECT_JSON_PATH = ROOT_DIR / "Visualizador_MCOC" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
+UNITY_OPEN_PROJECT_LEGACY_JSON_PATH = ROOT_DIR / "Visualizador_MCOC" / "Assets" / "estructura_3d_unity.json"
 
 
 def save_geometry(geometry):
