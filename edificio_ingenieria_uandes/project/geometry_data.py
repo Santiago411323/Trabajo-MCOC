@@ -1,4 +1,4 @@
-from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, Slab, Stair, StairWall, StructuralWall, to_dict_list
+from geometry import Beam, Column, Foundation, FoundationBeam, Node, Radier, RigidDiaphragm, Stair, StairWall, StructuralWall, to_dict_list
 from math import hypot
 
 
@@ -66,16 +66,70 @@ LEVEL_NODE_BASE = {
 
 VERTICAL_LEVEL_SEQUENCE = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 FLOOR_BEAM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
-SLAB_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
-SLAB_THICKNESS = 0.15
-SLAB_REINFORCEMENT_BY_LEVEL = {
-    "CIELO_1S": ["BOTTOM_F", "CEILING"],
-    "CIELO_1": ["BOTTOM_F", "CEILING"],
-    "CIELO_2": ["BOTTOM_F", "CEILING"],
-    "CIELO_3": ["BOTTOM_F", "CEILING"],
-    "CIELO_4": ["BOTTOM_F", "CEILING"],
+DIAPHRAGM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+DIAPHRAGM_DISPLAY_THICKNESS = 0.03
+DIAPHRAGM_12_VOID_WIDTH = 1.50
+DIAPHRAGM_12_VOID_PANELS = {
+    ("A_PRIME", "A", "1A_PRIME", "2"),
+    ("A_PRIME", "A", "2", "2A_PRIME"),
 }
-SLAB_LEVEL_PREFIX = {
+CIELO_4_DIAPHRAGM_VOIDS = [
+    {
+        "id": "VOID_L403_01",
+        "origin_grid_x": "B",
+        "origin_grid_y": "1",
+        "offset_x": 0.0,
+        "offset_y": 5.04,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+    {
+        "id": "VOID_L403_02",
+        "origin_grid_x": "B",
+        "origin_grid_y": "1",
+        "offset_x": -2.06,
+        "offset_y": 5.04,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+    {
+        "id": "VOID_L403_03",
+        "origin_grid_x": "B",
+        "origin_grid_y": "1",
+        "offset_x": 0.0,
+        "offset_y": 5.04 + 1.777 + 2.10,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+    {
+        "id": "VOID_L403_04",
+        "origin_grid_x": "B",
+        "origin_grid_y": "1",
+        "offset_x": -2.06,
+        "offset_y": 5.04 + 1.777 + 2.10,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+    {
+        "id": "VOID_CPRIME_2_TOWARD_C_01",
+        "origin_grid_x": "C_PRIME",
+        "origin_grid_y": "2",
+        "offset_x": -0.353 - 2.06,
+        "offset_y": 0.0,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+    {
+        "id": "VOID_CPRIME_2_TOWARD_C_02",
+        "origin_grid_x": "C_PRIME",
+        "origin_grid_y": "2",
+        "offset_x": -0.353 - 2.06,
+        "offset_y": -2.06 - 1.777,
+        "width_x": 2.06,
+        "length_y": 1.777,
+    },
+]
+DIAPHRAGM_LEVEL_PREFIX = {
     "CIELO_1S": "S",
     "CIELO_1": "1",
     "CIELO_2": "2",
@@ -101,8 +155,8 @@ GRID_X_AXIS_NAMES = [
 ]
 
 GRID_Y_AXIS_NAMES = ["8B", "8A", "1", "1A_PRIME", "2", "2A_PRIME", "3"]
-SLAB_GRID_X_AXIS_NAMES = ["A_PRIME", "A", "B", "C", "C_PRIME", "D", "D_PRIME"]
-SLAB_GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
+DIAPHRAGM_GRID_X_AXIS_NAMES = ["A_PRIME", "A", "B", "C", "C_PRIME", "D", "D_PRIME"]
+DIAPHRAGM_GRID_Y_AXIS_NAMES = ["1", "1A_PRIME", "2", "2A_PRIME", "3"]
 
 # Distancias entregadas por el usuario, convertidas de cm a m.
 GRID_X_SPANS = [3.75, 3.75, 3.75, 5.00, 5.00, 5.00, 2.58, 2.42, 0.225]
@@ -119,7 +173,7 @@ D_WALL_OPENING_START_FROM_GRID_1 = 6.15
 D_WALL_OPENING_LENGTH = 2.40
 ELEVATOR_TOP_WALL_Y = 3.205
 ELEVATOR_WALL_LENGTH = 2.945
-ELEVATOR_SLAB_VOID_PANELS = {
+ELEVATOR_DIAPHRAGM_VOID_PANELS = {
     ("C_PRIME", "D", "1A_PRIME", "2"),
     ("D", "D_PRIME", "1A_PRIME", "2"),
 }
@@ -147,6 +201,9 @@ STRUCTURAL_POSITIONS = [
     ("P07", "B", "3"),
     ("P08", "C", "3"),
 ]
+
+ISOLATED_FOOTING_SPECS = {}
+FOUNDATION_BEAM_SPECS = []
 
 EXTERIOR_NODE_X_AXES = ["B_PRIME", "E1"]
 EXTERIOR_NODE_Y_AXES = ["8B", "8A"]
@@ -203,6 +260,10 @@ def refresh_grids():
         "2": 8.90,
         "2A_PRIME": 11.885,
         "3": 16.15,
+        "ELEVATOR_Y_LOW": ELEVATOR_TOP_WALL_Y,
+        "ELEVATOR_Y_HIGH": ELEVATOR_TOP_WALL_Y + ELEVATOR_WALL_LENGTH,
+        "DPRIME_3_STRIP_TOP": 16.15 + 1.20,
+        "DPRIME_3_STRIP_BOTTOM": 16.15 - 9.20,
     })
     grid_y["8A"] = grid_y["1"] - 6.42
     grid_y["8B"] = grid_y["8A"] - 4.30
@@ -234,22 +295,78 @@ def add_wall_for_each_storey(walls, wall_id, gx1, gy1, gx2, gy2, x1, y1, x2, y2,
         ))
 
 
-def create_slab(slab_number, level, gx1, gx2, gy1, gy2):
-    return Slab(
-        id=f"L{slab_number}",
+def create_diaphragm(diaphragm_number, level, gx1, gx2, gy1, gy2):
+    x1 = grid_x.get(gx1)
+    x2 = grid_x.get(gx2)
+    if (gx1, gx2, gy1, gy2) in DIAPHRAGM_12_VOID_PANELS:
+        x1 += DIAPHRAGM_12_VOID_WIDTH
+    return RigidDiaphragm(
+        id=f"D{diaphragm_number}",
         grid_x1=gx1,
         grid_x2=gx2,
         grid_y1=gy1,
         grid_y2=gy2,
-        x1=grid_x.get(gx1),
-        x2=grid_x.get(gx2),
+        x1=x1,
+        x2=x2,
         y1=grid_y.get(gy1),
         y2=grid_y.get(gy2),
-        thickness=SLAB_THICKNESS,
         level=level,
-        z_top=levels.get(level),
-        reinforcement=SLAB_REINFORCEMENT_BY_LEVEL[level],
+        z=levels.get(level),
     )
+
+
+def subtract_rectangular_void(rectangle, void):
+    x1, x2, y1, y2 = rectangle
+    vx1, vx2, vy1, vy2 = void
+    ix1 = max(x1, vx1)
+    ix2 = min(x2, vx2)
+    iy1 = max(y1, vy1)
+    iy2 = min(y2, vy2)
+
+    if ix1 >= ix2 or iy1 >= iy2:
+        return [rectangle]
+
+    pieces = []
+    if x1 < ix1:
+        pieces.append((x1, ix1, y1, y2))
+    if ix2 < x2:
+        pieces.append((ix2, x2, y1, y2))
+    if y1 < iy1:
+        pieces.append((ix1, ix2, y1, iy1))
+    if iy2 < y2:
+        pieces.append((ix1, ix2, iy2, y2))
+
+    return [piece for piece in pieces if piece[0] < piece[1] and piece[2] < piece[3]]
+
+
+def split_diaphragm_by_voids(diaphragm, voids):
+    pieces = [(diaphragm.x1, diaphragm.x2, diaphragm.y1, diaphragm.y2)]
+    for void in voids:
+        next_pieces = []
+        for piece in pieces:
+            next_pieces.extend(subtract_rectangular_void(piece, void))
+        pieces = next_pieces
+
+    if len(pieces) == 1 and pieces[0] == (diaphragm.x1, diaphragm.x2, diaphragm.y1, diaphragm.y2):
+        return [diaphragm]
+
+    split_diaphragms = []
+    for index, (x1, x2, y1, y2) in enumerate(pieces, start=1):
+        split_diaphragms.append(RigidDiaphragm(
+            id=f"{diaphragm.id}_{index}",
+            grid_x1=diaphragm.grid_x1,
+            grid_x2=diaphragm.grid_x2,
+            grid_y1=diaphragm.grid_y1,
+            grid_y2=diaphragm.grid_y2,
+            x1=x1,
+            x2=x2,
+            y1=y1,
+            y2=y2,
+            level=diaphragm.level,
+            z=diaphragm.z,
+            status=diaphragm.status,
+        ))
+    return split_diaphragms
 
 
 def create_geometry():
@@ -259,6 +376,7 @@ def create_geometry():
     columns = []
     beams = []
     slabs = []
+    rigid_diaphragms = []
     foundations = []
     foundation_beams = []
     walls = []
@@ -290,19 +408,6 @@ def create_geometry():
             position_to_nodes[position_id][level] = get_or_create_node(gx, gy, level)
 
         n_foundation = structural_node(position_to_nodes[position_id]["FOUNDATION"], gx, gy, "FOUNDATION")
-
-        foundations.append(Foundation(
-            id=f"F{idx:03d}",
-            type=ISOLATED_FOOTING,
-            center_x=n_foundation.x,
-            center_y=n_foundation.y,
-            width=None,
-            length=None,
-            thickness=None,
-            level="FOUNDATION",
-            supporting_element=position_id,
-        ))
-
         for level_index, (bottom_level, top_level) in enumerate(zip(VERTICAL_LEVEL_SEQUENCE, VERTICAL_LEVEL_SEQUENCE[1:]), start=1):
             columns.append(Column(
                 id=f"C{level_index}{idx:03d}",
@@ -340,29 +445,33 @@ def create_geometry():
             ))
             beam_id += 1
 
-    for level in SLAB_LEVELS:
-        slab_index = 1
-        for row_index, (gy1, gy2) in enumerate(zip(SLAB_GRID_Y_AXIS_NAMES, SLAB_GRID_Y_AXIS_NAMES[1:]), start=1):
-            for col_index, (gx1, gx2) in enumerate(zip(SLAB_GRID_X_AXIS_NAMES, SLAB_GRID_X_AXIS_NAMES[1:]), start=1):
-                if (gx1, gx2, gy1, gy2) in ELEVATOR_SLAB_VOID_PANELS:
+    for level in DIAPHRAGM_LEVELS:
+        diaphragm_index = 1
+        level_voids = []
+        if level == "CIELO_4":
+            for void in CIELO_4_DIAPHRAGM_VOIDS:
+                vx1 = grid_x[void["origin_grid_x"]] + void["offset_x"]
+                vy1 = grid_y[void["origin_grid_y"]] + void["offset_y"]
+                level_voids.append((vx1, vx1 + void["width_x"], vy1, vy1 + void["length_y"]))
+        for row_index, (gy1, gy2) in enumerate(zip(DIAPHRAGM_GRID_Y_AXIS_NAMES, DIAPHRAGM_GRID_Y_AXIS_NAMES[1:]), start=1):
+            for col_index, (gx1, gx2) in enumerate(zip(DIAPHRAGM_GRID_X_AXIS_NAMES, DIAPHRAGM_GRID_X_AXIS_NAMES[1:]), start=1):
+                if (gx1, gx2, gy1, gy2) in ELEVATOR_DIAPHRAGM_VOID_PANELS:
                     continue
-                slab_number = f"{SLAB_LEVEL_PREFIX[level]}{slab_index:02d}"
-                slabs.append(create_slab(slab_number, level, gx1, gx2, gy1, gy2))
-                slab_index += 1
+                diaphragm_number = f"{DIAPHRAGM_LEVEL_PREFIX[level]}{diaphragm_index:02d}"
+                diaphragm = create_diaphragm(diaphragm_number, level, gx1, gx2, gy1, gy2)
+                rigid_diaphragms.extend(split_diaphragm_by_voids(diaphragm, level_voids))
+                diaphragm_index += 1
 
-    fb_id = 1001
-    for row in ["1", "2", "3"]:
-        row_positions = [pos for pos in STRUCTURAL_POSITIONS if pos[2] == row]
-        for left, right in zip(row_positions, row_positions[1:]):
-            foundation_beams.append(FoundationBeam(
-                id=f"FB{fb_id}",
-                node_i=position_to_nodes[left[0]]["FOUNDATION"],
-                node_j=position_to_nodes[right[0]]["FOUNDATION"],
-                width=None,
-                height=None,
-                z=levels["FOUNDATION"],
-            ))
-            fb_id += 1
+    for beam_id, gx1, gy1, gx2, gy2, width, height in FOUNDATION_BEAM_SPECS:
+        foundation_beams.append(FoundationBeam(
+            id=beam_id,
+            node_i=get_or_create_node(gx1, gy1, "FOUNDATION"),
+            node_j=get_or_create_node(gx2, gy2, "FOUNDATION"),
+            width=width,
+            height=height,
+            z=levels["FOUNDATION"],
+            status="ACTIVE",
+        ))
 
     d_x = grid_x.get("D")
     d_prime_x = grid_x.get("D_PRIME")
@@ -413,15 +522,6 @@ def create_geometry():
                 z_top=None,
                 status="ACTIVE_PENDING_WALL_HEIGHT",
             ))
-
-        foundation_beams.append(FoundationBeam(
-            id="FB_EXT_C_8B_TO_8A",
-            node_i=get_or_create_node("C", "8B", "FOUNDATION"),
-            node_j=get_or_create_node("C", "8A", "FOUNDATION"),
-            width=EXTERIOR_FOUNDATION_BEAM_WIDTH,
-            height=EXTERIOR_FOUNDATION_BEAM_HEIGHT,
-            z=EXTERIOR_RADIER_TOP_Z,
-        ))
 
         radiers.append(Radier(
             id="R_EXT_001",
@@ -508,13 +608,29 @@ def create_geometry():
 
     radiers.append(Radier(id="R001", boundary=[], z_top=levels["FOUNDATION"]))
 
+    supports = []
+    for node in nodes:
+        if node.level != "FOUNDATION" or None in [node.x, node.y, node.z]:
+            continue
+        supports.append({
+            "node": node.id,
+            "type": "fixed",
+            "ux": 1,
+            "uy": 1,
+            "uz": 1,
+            "rx": 1,
+            "ry": 1,
+            "rz": 1,
+        })
+
     return {
         "metadata": {
             "name": "UANDES Structural Model",
             "units": {"length": "m", "force": "kN"},
             "geometry_tolerance": GEOMETRY_TOLERANCE,
             "note": "Geometry is parametric. Missing dimensions are kept as null and are not invented.",
-            "slab_note": "Slabs include planta armadura inferior (F) and planta armadura cielo from cielo 1 subterraneo to cielo piso 4.",
+            "diaphragm_note": "Rigid diaphragms replace slab panels. No finite-element slabs are generated.",
+            "diaphragm_12_void_note": "The panel between A'-A and 1A'-2A' is shortened by 1.50 m from axis A' on every diaphragm level.",
             "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
             "plant_levels": {
                 "FOUNDATION": "Planta de fundaciones",
@@ -530,7 +646,7 @@ def create_geometry():
         "constants": {
             "foundation_heights": FOUNDATION_HEIGHTS,
             "radier_thickness": RADIER_THICKNESS,
-            "slab_thickness": SLAB_THICKNESS,
+            "diaphragm_display_thickness": DIAPHRAGM_DISPLAY_THICKNESS,
             "stair_width": STAIR_WIDTH,
             "stair_thickness": STAIR_THICKNESS,
         },
@@ -538,10 +654,12 @@ def create_geometry():
         "columns": to_dict_list(columns),
         "beams": to_dict_list(beams),
         "slabs": to_dict_list(slabs),
+        "rigid_diaphragms": to_dict_list(rigid_diaphragms),
         "walls": to_dict_list(walls),
         "foundations": to_dict_list(foundations),
         "foundation_beams": to_dict_list(foundation_beams),
         "radiers": to_dict_list(radiers),
         "stairs": to_dict_list(stairs),
         "stair_walls": to_dict_list(stair_walls),
+        "supports": supports,
     }

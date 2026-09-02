@@ -8,6 +8,8 @@ def export_unity_structure(geometry, output_path):
         for element in geometry[collection_name]:
             node_ids.add(element["node_i"])
             node_ids.add(element["node_j"])
+    for support in geometry.get("supports", []):
+        node_ids.add(support["node"])
 
     nodes = []
     for node in geometry["nodes"]:
@@ -59,18 +61,31 @@ def export_unity_structure(geometry, output_path):
             element_id += 1
 
     supports = []
-    for node in nodes:
-        if node["z"] != geometry["levels"]["FOUNDATION"]:
+    for support in geometry.get("supports", []):
+        if support["node"] not in valid_node_ids:
             continue
         supports.append({
-            "node": node["id"],
-            "type": "fixed",
-            "ux": 1,
-            "uy": 1,
-            "uz": 1,
-            "rx": 1,
-            "ry": 1,
-            "rz": 1,
+            "node": support["node"],
+            "type": support["type"],
+            "ux": support["ux"],
+            "uy": support["uy"],
+            "uz": support["uz"],
+            "rx": support["rx"],
+            "ry": support["ry"],
+            "rz": support["rz"],
+        })
+
+    diaphragms = []
+    for diaphragm in geometry.get("rigid_diaphragms", []):
+        diaphragms.append({
+            "id": diaphragm["id"],
+            "level": diaphragm["level"],
+            "z": diaphragm["z"],
+            "x1": diaphragm["x1"],
+            "x2": diaphragm["x2"],
+            "y1": diaphragm["y1"],
+            "y2": diaphragm["y2"],
+            "type": diaphragm["type"],
         })
 
     data = {
@@ -79,6 +94,7 @@ def export_unity_structure(geometry, output_path):
         "elements": elements,
         "pointLoads": [],
         "supports": supports,
+        "rigidDiaphragms": diaphragms,
     }
 
     output_path = Path(output_path)

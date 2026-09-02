@@ -94,17 +94,13 @@ def beam_mesh(beam, start, end):
     return vertices, faces
 
 
-def slab_mesh(slab, reinforcement):
-    if None in [slab["x1"], slab["x2"], slab["y1"], slab["y2"], slab["z_top"], slab["thickness"]]:
+def diaphragm_mesh(diaphragm, display_thickness):
+    if None in [diaphragm["x1"], diaphragm["x2"], diaphragm["y1"], diaphragm["y2"], diaphragm["z"]]:
         return None
-    x0, x1 = sorted([slab["x1"], slab["x2"]])
-    y0, y1 = sorted([slab["y1"], slab["y2"]])
-    if reinforcement == "BOTTOM_F":
-        z0 = slab["z_top"] - slab["thickness"]
-        z1 = z0 + 0.015
-    else:
-        z1 = slab["z_top"]
-        z0 = z1 - 0.015
+    x0, x1 = sorted([diaphragm["x1"], diaphragm["x2"]])
+    y0, y1 = sorted([diaphragm["y1"], diaphragm["y2"]])
+    z1 = diaphragm["z"]
+    z0 = z1 - display_thickness
     vertices = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0), (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
     faces = [(0, 1, 2), (0, 2, 3), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
     return vertices, faces
@@ -116,6 +112,22 @@ def radier_mesh(radier):
         return None
     z1 = radier["z_top"]
     z0 = z1 - radier.get("thickness", 0.15)
+    vertices = [(point[0], point[1], z) for z in [z0, z1] for point in boundary]
+    count = len(boundary)
+    faces = []
+    for index in range(1, count - 1):
+        faces.extend([(0, index, index + 1), (count, count + index + 1, count + index)])
+    for index in range(count):
+        next_index = (index + 1) % count
+        faces.extend([(index, next_index, count + next_index), (index, count + next_index, count + index)])
+    return vertices, faces
+
+
+def polygon_prism_mesh(boundary, z_top, thickness):
+    if len(boundary) < 3 or z_top is None or thickness is None:
+        return None
+    z1 = z_top
+    z0 = z1 - thickness
     vertices = [(point[0], point[1], z) for z in [z0, z1] for point in boundary]
     count = len(boundary)
     faces = []
@@ -172,6 +184,20 @@ def create_viewer_3d(geometry, output_path):
         fig.add_trace(go.Scatter3d(x=[node["x"]], y=[node["y"]], z=[node["z"]], mode="markers+text", name="NODES", text=[str(node["id"])], marker=dict(size=4), hovertext=f"ID: {node['id']}<br>TYPE: NODE<br>LEVEL: {node['level']}", hoverinfo="text"))
         register([node["level"]])
 
+    support_nodes = [node_map[support["node"]] for support in geometry.get("supports", []) if support["node"] in node_map]
+    if support_nodes:
+        fig.add_trace(go.Scatter3d(
+            x=[node["x"] for node in support_nodes],
+            y=[node["y"] for node in support_nodes],
+            z=[node["z"] for node in support_nodes],
+            mode="markers",
+            name="SUPPORTS FIXED",
+            marker=dict(size=6, symbol="diamond", color="black"),
+            hovertext=[f"NODE: {node['id']}<br>TYPE: FIXED SUPPORT<br>ux uy uz rx ry rz fixed" for node in support_nodes],
+            hoverinfo="text",
+        ))
+        register(["FOUNDATION"])
+
     for column in geometry["columns"]:
         ni = node_map.get(column["node_i"])
         nj = node_map.get(column["node_j"])
@@ -195,13 +221,11 @@ def create_viewer_3d(geometry, output_path):
             elif add_line(fig, start, end, "BEAMS", "blue", hovertext=hovertext):
                 register([beam["level"]])
 
-    for slab in geometry.get("slabs", []):
-        if "BOTTOM_F" in slab["reinforcement"]:
-            if add_box(fig, slab_mesh(slab, "BOTTOM_F"), "LOSAS INFERIORES", "cyan", hovertext=f"ID: {slab['id']}<br>TYPE: SLAB<br>LEVEL: {slab['level']}<br>THICKNESS: {slab['thickness']} m<br>REINF: BOTTOM_F", opacity=0.32):
-                register([slab["level"]], "SLAB_BOTTOM")
-        if "CEILING" in slab["reinforcement"]:
-            if add_box(fig, slab_mesh(slab, "CEILING"), "LOSAS SUPERIORES", "deepskyblue", hovertext=f"ID: {slab['id']}<br>TYPE: SLAB<br>LEVEL: {slab['level']}<br>THICKNESS: {slab['thickness']} m<br>REINF: CEILING", opacity=0.22):
-                register([slab["level"]], "SLAB_TOP")
+    diaphragm_thickness = geometry.get("constants", {}).get("diaphragm_display_thickness", 0.03)
+    for diaphragm in geometry.get("rigid_diaphragms", []):
+        hovertext = f"ID: {diaphragm['id']}<br>TYPE: RIGID_DIAPHRAGM<br>LEVEL: {diaphragm['level']}<br>Z: {diaphragm['z']} m"
+        if add_box(fig, diaphragm_mesh(diaphragm, diaphragm_thickness), "RIGID DIAPHRAGMS", "cyan", hovertext=hovertext, opacity=0.25):
+            register([diaphragm["level"]], "DIAPHRAGM")
 
     for wall in geometry["walls"]:
         if None in [wall["x1"], wall["y1"]]:
@@ -228,6 +252,15 @@ def create_viewer_3d(geometry, output_path):
             elif add_line(fig, (wall["x1"], wall["y1"], z_bottom), (wall["x2"], wall["y2"], z_bottom), "WALLS", "red", hovertext=wall_hovertext):
                 register(["FOUNDATION"])
 
+    for foundation in geometry["foundations"]:
+        mesh = None
+        if foundation.get("boundary"):
+            mesh = polygon_prism_mesh(foundation["boundary"], geometry["levels"]["FOUNDATION"], foundation["thickness"])
+        else:
+            mesh = box_mesh(foundation["center_x"], foundation["center_y"], foundation["width"], foundation["length"], geometry["levels"]["FOUNDATION"], foundation["thickness"])
+        if add_box(fig, mesh, "FOUNDATIONS", "brown", hovertext=f"ID: {foundation['id']}<br>TYPE: {foundation['type']}<br>THICKNESS: {foundation['thickness']} m"):
+            register(["FOUNDATION"])
+
     for fb in geometry["foundation_beams"]:
         ni = node_map.get(fb["node_i"])
         nj = node_map.get(fb["node_j"])
@@ -235,14 +268,10 @@ def create_viewer_3d(geometry, output_path):
             start = (ni["x"], ni["y"], fb["z"] if fb["z"] is not None else ni["z"])
             end = (nj["x"], nj["y"], fb["z"] if fb["z"] is not None else nj["z"])
             hovertext = f"ID: {fb['id']}<br>TYPE: FOUNDATION_BEAM<br>SECTION: {fb['width']} x {fb['height']} m"
-            if add_box(fig, beam_mesh(fb, start, end), "FOUNDATION BEAMS", "orange", hovertext=hovertext, opacity=0.75):
+            if add_box(fig, beam_mesh(fb, start, end), "FOUNDATION BEAMS", "orange", hovertext=hovertext, opacity=0.9):
                 register(["FOUNDATION"])
             elif add_line(fig, start, end, "FOUNDATION BEAMS", "orange", hovertext=hovertext):
                 register(["FOUNDATION"])
-
-    for foundation in geometry["foundations"]:
-        if add_box(fig, box_mesh(foundation["center_x"], foundation["center_y"], foundation["width"], foundation["length"], geometry["levels"]["FOUNDATION"], foundation["thickness"]), "FOUNDATIONS", "brown", hovertext=f"ID: {foundation['id']}<br>TYPE: {foundation['type']}"):
-            register(["FOUNDATION"])
 
     for radier in geometry["radiers"]:
         if add_box(fig, radier_mesh(radier), "RADIERS", "purple", hovertext=f"ID: {radier['id']}<br>TYPE: RADIER<br>THICKNESS: {radier['thickness']} m<br>Z TOP: {radier['z_top']} m", opacity=0.35):
@@ -274,11 +303,10 @@ def create_viewer_3d(geometry, output_path):
             args=[{"visible": [level in levels for levels in trace_levels]}],
         ))
 
-    slab_buttons = [
-        dict(label="LOSAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
-        dict(label="SIN LOSAS", method="update", args=[{"visible": [part not in ["SLAB_BOTTOM", "SLAB_TOP"] for part in trace_parts]}]),
-        dict(label="SOLO LOSAS INF", method="update", args=[{"visible": [part == "SLAB_BOTTOM" or part == "STRUCTURE" for part in trace_parts]}]),
-        dict(label="SOLO LOSAS SUP", method="update", args=[{"visible": [part == "SLAB_TOP" or part == "STRUCTURE" for part in trace_parts]}]),
+    diaphragm_buttons = [
+        dict(label="DIAFRAGMAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
+        dict(label="SIN DIAFRAGMAS", method="update", args=[{"visible": [part != "DIAPHRAGM" for part in trace_parts]}]),
+        dict(label="SOLO DIAFRAGMAS", method="update", args=[{"visible": [part == "DIAPHRAGM" or part == "STRUCTURE" for part in trace_parts]}]),
     ]
 
     fig.update_layout(
@@ -286,7 +314,7 @@ def create_viewer_3d(geometry, output_path):
         scene=dict(xaxis_title="X [m]", yaxis_title="Y [m]", zaxis_title="Z [m]", aspectmode="data"),
         updatemenus=[
             dict(buttons=buttons, x=0.0, y=1.12),
-            dict(buttons=slab_buttons, x=0.38, y=1.12),
+            dict(buttons=diaphragm_buttons, x=0.38, y=1.12),
         ]
     )
 

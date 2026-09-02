@@ -79,7 +79,20 @@ def create_viewer_2d(geometry, output_path):
         register([level])
 
     node_map = {node["id"]: node for node in geometry["nodes"]}
-    for collection_name, color in [("beams", "blue"), ("foundation_beams", "orange")]:
+    support_nodes = [node_map[support["node"]] for support in geometry.get("supports", []) if support["node"] in node_map and valid_xy(node_map[support["node"]])]
+    if support_nodes:
+        fig.add_trace(go.Scatter(
+            x=[node["x"] for node in support_nodes],
+            y=[node["y"] for node in support_nodes],
+            mode="markers",
+            name="SUPPORTS FIXED",
+            marker=dict(symbol="triangle-up", size=13, color="black"),
+            hovertext=[f"NODE: {node['id']}<br>TYPE: FIXED SUPPORT<br>ux uy uz rx ry rz fixed" for node in support_nodes],
+            hoverinfo="text",
+        ))
+        register(["FOUNDATION"])
+
+    for collection_name, color in [("beams", "blue")]:
         for element in geometry[collection_name]:
             ni = node_map.get(element["node_i"])
             nj = node_map.get(element["node_j"])
@@ -96,34 +109,41 @@ def create_viewer_2d(geometry, output_path):
             ))
             register([element.get("level", "FOUNDATION")])
 
-    for slab in geometry.get("slabs", []):
-        if None in [slab["x1"], slab["x2"], slab["y1"], slab["y2"]]:
+    for diaphragm in geometry.get("rigid_diaphragms", []):
+        if None in [diaphragm["x1"], diaphragm["x2"], diaphragm["y1"], diaphragm["y2"]]:
             continue
-        x0, x1 = slab["x1"], slab["x2"]
-        y0, y1 = slab["y1"], slab["y2"]
-        layer_specs = [
-            ("LOSAS INFERIORES", "SLAB_BOTTOM", "rgba(0, 170, 220, 0.65)", "rgba(0, 170, 220, 0.10)"),
-            ("LOSAS SUPERIORES", "SLAB_TOP", "rgba(0, 80, 255, 0.55)", "rgba(0, 80, 255, 0.06)"),
-        ]
-        for name, part, line_color, fill_color in layer_specs:
-            if part == "SLAB_BOTTOM" and "BOTTOM_F" not in slab["reinforcement"]:
-                continue
-            if part == "SLAB_TOP" and "CEILING" not in slab["reinforcement"]:
-                continue
-            fig.add_trace(go.Scatter(
-                x=[x0, x1, x1, x0, x0],
-                y=[y0, y0, y1, y1, y0],
-                mode="lines",
-                fill="toself",
-                name=name,
-                line=dict(color=line_color, width=1),
-                fillcolor=fill_color,
-                hovertext=hover_text(slab, slab["type"]),
-                hoverinfo="text",
-            ))
-            register([slab["level"]], part)
+        x0, x1 = diaphragm["x1"], diaphragm["x2"]
+        y0, y1 = diaphragm["y1"], diaphragm["y2"]
+        fig.add_trace(go.Scatter(
+            x=[x0, x1, x1, x0, x0],
+            y=[y0, y0, y1, y1, y0],
+            mode="lines",
+            fill="toself",
+            name="RIGID DIAPHRAGMS",
+            line=dict(color="rgba(0, 170, 220, 0.70)", width=1),
+            fillcolor="rgba(0, 170, 220, 0.12)",
+            hovertext=hover_text(diaphragm, diaphragm["type"]),
+            hoverinfo="text",
+        ))
+        register([diaphragm["level"]], "DIAPHRAGM")
 
     for foundation in geometry["foundations"]:
+        if foundation.get("boundary"):
+            x = [point[0] for point in foundation["boundary"]] + [foundation["boundary"][0][0]]
+            y = [point[1] for point in foundation["boundary"]] + [foundation["boundary"][0][1]]
+            fig.add_trace(go.Scatter(
+                x=x,
+                y=y,
+                mode="lines",
+                fill="toself",
+                name="FOUNDATIONS",
+                line=dict(color="brown", width=2),
+                fillcolor="rgba(120, 70, 20, 0.20)",
+                hovertext=hover_text(foundation, foundation["type"]),
+                hoverinfo="text",
+            ))
+            register(["FOUNDATION"])
+            continue
         if foundation["center_x"] is None or foundation["center_y"] is None:
             continue
         fig.add_trace(go.Scatter(
@@ -133,6 +153,22 @@ def create_viewer_2d(geometry, output_path):
             name="FOUNDATIONS",
             marker=dict(symbol="square", size=14, color="brown"),
             hovertext=hover_text(foundation, foundation["type"]),
+            hoverinfo="text",
+        ))
+        register(["FOUNDATION"])
+
+    for element in geometry["foundation_beams"]:
+        ni = node_map.get(element["node_i"])
+        nj = node_map.get(element["node_j"])
+        if not ni or not nj or not valid_xy(ni) or not valid_xy(nj):
+            continue
+        fig.add_trace(go.Scatter(
+            x=[ni["x"], nj["x"]],
+            y=[ni["y"], nj["y"]],
+            mode="lines",
+            name="FOUNDATION_BEAMS",
+            line=dict(color="orange", width=7),
+            hovertext=hover_text(element, element["type"]),
             hoverinfo="text",
         ))
         register(["FOUNDATION"])
@@ -181,11 +217,10 @@ def create_viewer_2d(geometry, output_path):
             args=[{"visible": [level in levels for levels in trace_levels]}],
         ))
 
-    slab_buttons = [
-        dict(label="LOSAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
-        dict(label="SIN LOSAS", method="update", args=[{"visible": [part not in ["SLAB_BOTTOM", "SLAB_TOP"] for part in trace_parts]}]),
-        dict(label="SOLO LOSAS INF", method="update", args=[{"visible": [part == "SLAB_BOTTOM" or part == "STRUCTURE" for part in trace_parts]}]),
-        dict(label="SOLO LOSAS SUP", method="update", args=[{"visible": [part == "SLAB_TOP" or part == "STRUCTURE" for part in trace_parts]}]),
+    diaphragm_buttons = [
+        dict(label="DIAFRAGMAS ON", method="update", args=[{"visible": [True] * len(fig.data)}]),
+        dict(label="SIN DIAFRAGMAS", method="update", args=[{"visible": [part != "DIAPHRAGM" for part in trace_parts]}]),
+        dict(label="SOLO DIAFRAGMAS", method="update", args=[{"visible": [part == "DIAPHRAGM" or part == "STRUCTURE" for part in trace_parts]}]),
     ]
 
     fig.update_layout(
@@ -195,7 +230,7 @@ def create_viewer_2d(geometry, output_path):
         legend=dict(groupclick="toggleitem"),
         updatemenus=[
             dict(buttons=buttons, x=0.0, y=1.12),
-            dict(buttons=slab_buttons, x=0.38, y=1.12),
+            dict(buttons=diaphragm_buttons, x=0.38, y=1.12),
         ],
     )
 

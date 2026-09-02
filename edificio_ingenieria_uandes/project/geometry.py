@@ -64,6 +64,23 @@ class Slab:
 
 
 @dataclass
+class RigidDiaphragm:
+    id: str
+    grid_x1: str
+    grid_x2: str
+    grid_y1: str
+    grid_y2: str
+    x1: Optional[float]
+    x2: Optional[float]
+    y1: Optional[float]
+    y2: Optional[float]
+    level: str
+    z: Optional[float]
+    status: str = "ACTIVE"
+    type: str = "RIGID_DIAPHRAGM"
+
+
+@dataclass
 class Stair:
     id: str
     x1: Optional[float]
@@ -123,6 +140,7 @@ class Foundation:
     level: str
     supporting_element: str
     status: str = "PENDING_DIMENSIONS"
+    boundary: list = field(default_factory=list)
 
 
 @dataclass

@@ -145,7 +145,8 @@ def structural_islands(geometry):
 def invalid_dimensions(geometry):
     messages = []
     for foundation in geometry["foundations"]:
-        for field in ["width", "length", "thickness"]:
+        fields = ["thickness"] if foundation.get("boundary") else ["width", "length", "thickness"]
+        for field in fields:
             value = foundation[field]
             if value is None:
                 messages.append(f"WARNING: Foundation {foundation['id']} has pending {field}")
@@ -173,14 +174,12 @@ def invalid_dimensions(geometry):
         if None not in [wall["x1"], wall["y1"], wall["x2"], wall["y2"]]:
             if hypot(wall["x2"] - wall["x1"], wall["y2"] - wall["y1"]) <= 0:
                 messages.append(f"WARNING: Wall {wall['id']} has pending length/direction")
-    for slab in geometry.get("slabs", []):
-        if slab["thickness"] is None:
-            messages.append(f"WARNING: Slab {slab['id']} has pending thickness")
-        elif slab["thickness"] <= 0:
-            messages.append(f"Slab {slab['id']} has missing/invalid thickness")
-        if None not in [slab["x1"], slab["x2"], slab["y1"], slab["y2"]]:
-            if abs(slab["x2"] - slab["x1"]) <= 0 or abs(slab["y2"] - slab["y1"]) <= 0:
-                messages.append(f"Slab {slab['id']} has invalid boundary")
+    for diaphragm in geometry.get("rigid_diaphragms", []):
+        if diaphragm.get("z") is None:
+            messages.append(f"Rigid diaphragm {diaphragm['id']} has missing z")
+        if None not in [diaphragm["x1"], diaphragm["x2"], diaphragm["y1"], diaphragm["y2"]]:
+            if abs(diaphragm["x2"] - diaphragm["x1"]) <= 0 or abs(diaphragm["y2"] - diaphragm["y1"]) <= 0:
+                messages.append(f"Rigid diaphragm {diaphragm['id']} has invalid boundary")
     for radier in geometry["radiers"]:
         if radier["thickness"] != 0.15:
             messages.append(f"Radier {radier['id']} thickness is not 0.15 m")

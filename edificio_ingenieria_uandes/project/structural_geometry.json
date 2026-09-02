@@ -7,7 +7,8 @@
     },
     "geometry_tolerance": 0.005,
     "note": "Geometry is parametric. Missing dimensions are kept as null and are not invented.",
-    "slab_note": "Slabs include planta armadura inferior (F) and planta armadura cielo from cielo 1 subterraneo to cielo piso 4.",
+    "diaphragm_note": "Rigid diaphragms replace slab panels. No finite-element slabs are generated.",
+    "diaphragm_12_void_note": "The panel between A'-A and 1A'-2A' is shortened by 1.50 m from axis A' on every diaphragm level.",
     "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
     "plant_levels": {
       "FOUNDATION": "Planta de fundaciones",
@@ -48,7 +49,11 @@
       "1A_PRIME": 4.265,
       "2": 8.9,
       "2A_PRIME": 11.885,
-      "3": 16.15
+      "3": 16.15,
+      "ELEVATOR_Y_LOW": 3.205,
+      "ELEVATOR_Y_HIGH": 6.15,
+      "DPRIME_3_STRIP_TOP": 17.349999999999998,
+      "DPRIME_3_STRIP_BOTTOM": 6.949999999999999
     }
   },
   "constants": {
@@ -59,7 +64,7 @@
       "h120": 1.2
     },
     "radier_thickness": 0.15,
-    "slab_thickness": 0.15,
+    "diaphragm_display_thickness": 0.03,
     "stair_width": 4.3,
     "stair_thickness": 0.15
   },
@@ -1583,26 +1588,6 @@
       "y": 11.885,
       "z": 11.83,
       "type": "NODE"
-    },
-    {
-      "id": 1013,
-      "grid_x": "C",
-      "grid_y": "8B",
-      "level": "FOUNDATION",
-      "x": 21.25,
-      "y": -10.719999999999999,
-      "z": -4.16,
-      "type": "NODE"
-    },
-    {
-      "id": 1014,
-      "grid_x": "C",
-      "grid_y": "8A",
-      "level": "FOUNDATION",
-      "x": 21.25,
-      "y": -6.42,
-      "z": -4.16,
-      "type": "NODE"
     }
   ],
   "columns": [
@@ -2809,9 +2794,10 @@
       "type": "BEAM"
     }
   ],
-  "slabs": [
+  "slabs": [],
+  "rigid_diaphragms": [
     {
-      "id": "LS01",
+      "id": "DS01",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1",
@@ -2820,18 +2806,13 @@
       "x2": 3.75,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS02",
+      "id": "DS02",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1",
@@ -2840,18 +2821,13 @@
       "x2": 11.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS03",
+      "id": "DS03",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1",
@@ -2860,18 +2836,13 @@
       "x2": 21.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS04",
+      "id": "DS04",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1",
@@ -2880,18 +2851,13 @@
       "x2": 28.83,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS05",
+      "id": "DS05",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "1",
@@ -2900,18 +2866,13 @@
       "x2": 31.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS06",
+      "id": "DS06",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "1",
@@ -2920,38 +2881,28 @@
       "x2": 31.475,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS07",
+      "id": "DS07",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS08",
+      "id": "DS08",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1A_PRIME",
@@ -2960,18 +2911,13 @@
       "x2": 11.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS09",
+      "id": "DS09",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1A_PRIME",
@@ -2980,18 +2926,13 @@
       "x2": 21.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS10",
+      "id": "DS10",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1A_PRIME",
@@ -3000,38 +2941,28 @@
       "x2": 28.83,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS11",
+      "id": "DS11",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS12",
+      "id": "DS12",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2",
@@ -3040,18 +2971,13 @@
       "x2": 11.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS13",
+      "id": "DS13",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2",
@@ -3060,18 +2986,13 @@
       "x2": 21.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS14",
+      "id": "DS14",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2",
@@ -3080,18 +3001,13 @@
       "x2": 28.83,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS15",
+      "id": "DS15",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2",
@@ -3100,18 +3016,13 @@
       "x2": 31.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS16",
+      "id": "DS16",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2",
@@ -3120,18 +3031,13 @@
       "x2": 31.475,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS17",
+      "id": "DS17",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2A_PRIME",
@@ -3140,18 +3046,13 @@
       "x2": 3.75,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS18",
+      "id": "DS18",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2A_PRIME",
@@ -3160,18 +3061,13 @@
       "x2": 11.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS19",
+      "id": "DS19",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2A_PRIME",
@@ -3180,18 +3076,13 @@
       "x2": 21.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS20",
+      "id": "DS20",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2A_PRIME",
@@ -3200,18 +3091,13 @@
       "x2": 28.83,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS21",
+      "id": "DS21",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2A_PRIME",
@@ -3220,18 +3106,13 @@
       "x2": 31.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "LS22",
+      "id": "DS22",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2A_PRIME",
@@ -3240,18 +3121,13 @@
       "x2": 31.475,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1S",
-      "z_top": -4.01,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -4.01,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L101",
+      "id": "D101",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1",
@@ -3260,18 +3136,13 @@
       "x2": 3.75,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L102",
+      "id": "D102",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1",
@@ -3280,18 +3151,13 @@
       "x2": 11.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L103",
+      "id": "D103",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1",
@@ -3300,18 +3166,13 @@
       "x2": 21.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L104",
+      "id": "D104",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1",
@@ -3320,18 +3181,13 @@
       "x2": 28.83,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L105",
+      "id": "D105",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "1",
@@ -3340,18 +3196,13 @@
       "x2": 31.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L106",
+      "id": "D106",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "1",
@@ -3360,38 +3211,28 @@
       "x2": 31.475,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L107",
+      "id": "D107",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L108",
+      "id": "D108",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1A_PRIME",
@@ -3400,18 +3241,13 @@
       "x2": 11.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L109",
+      "id": "D109",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1A_PRIME",
@@ -3420,18 +3256,13 @@
       "x2": 21.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L110",
+      "id": "D110",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1A_PRIME",
@@ -3440,38 +3271,28 @@
       "x2": 28.83,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L111",
+      "id": "D111",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L112",
+      "id": "D112",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2",
@@ -3480,18 +3301,13 @@
       "x2": 11.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L113",
+      "id": "D113",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2",
@@ -3500,18 +3316,13 @@
       "x2": 21.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L114",
+      "id": "D114",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2",
@@ -3520,18 +3331,13 @@
       "x2": 28.83,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L115",
+      "id": "D115",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2",
@@ -3540,18 +3346,13 @@
       "x2": 31.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L116",
+      "id": "D116",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2",
@@ -3560,18 +3361,13 @@
       "x2": 31.475,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L117",
+      "id": "D117",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2A_PRIME",
@@ -3580,18 +3376,13 @@
       "x2": 3.75,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L118",
+      "id": "D118",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2A_PRIME",
@@ -3600,18 +3391,13 @@
       "x2": 11.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L119",
+      "id": "D119",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2A_PRIME",
@@ -3620,18 +3406,13 @@
       "x2": 21.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L120",
+      "id": "D120",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2A_PRIME",
@@ -3640,18 +3421,13 @@
       "x2": 28.83,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L121",
+      "id": "D121",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2A_PRIME",
@@ -3660,18 +3436,13 @@
       "x2": 31.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L122",
+      "id": "D122",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2A_PRIME",
@@ -3680,18 +3451,13 @@
       "x2": 31.475,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_1",
-      "z_top": -0.05,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": -0.05,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L201",
+      "id": "D201",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1",
@@ -3700,18 +3466,13 @@
       "x2": 3.75,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L202",
+      "id": "D202",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1",
@@ -3720,18 +3481,13 @@
       "x2": 11.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L203",
+      "id": "D203",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1",
@@ -3740,18 +3496,13 @@
       "x2": 21.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L204",
+      "id": "D204",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1",
@@ -3760,18 +3511,13 @@
       "x2": 28.83,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L205",
+      "id": "D205",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "1",
@@ -3780,18 +3526,13 @@
       "x2": 31.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L206",
+      "id": "D206",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "1",
@@ -3800,38 +3541,28 @@
       "x2": 31.475,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L207",
+      "id": "D207",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L208",
+      "id": "D208",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1A_PRIME",
@@ -3840,18 +3571,13 @@
       "x2": 11.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L209",
+      "id": "D209",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1A_PRIME",
@@ -3860,18 +3586,13 @@
       "x2": 21.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L210",
+      "id": "D210",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1A_PRIME",
@@ -3880,38 +3601,28 @@
       "x2": 28.83,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L211",
+      "id": "D211",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L212",
+      "id": "D212",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2",
@@ -3920,18 +3631,13 @@
       "x2": 11.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L213",
+      "id": "D213",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2",
@@ -3940,18 +3646,13 @@
       "x2": 21.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L214",
+      "id": "D214",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2",
@@ -3960,18 +3661,13 @@
       "x2": 28.83,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L215",
+      "id": "D215",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2",
@@ -3980,18 +3676,13 @@
       "x2": 31.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L216",
+      "id": "D216",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2",
@@ -4000,18 +3691,13 @@
       "x2": 31.475,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L217",
+      "id": "D217",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2A_PRIME",
@@ -4020,18 +3706,13 @@
       "x2": 3.75,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L218",
+      "id": "D218",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2A_PRIME",
@@ -4040,18 +3721,13 @@
       "x2": 11.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L219",
+      "id": "D219",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2A_PRIME",
@@ -4060,18 +3736,13 @@
       "x2": 21.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L220",
+      "id": "D220",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2A_PRIME",
@@ -4080,18 +3751,13 @@
       "x2": 28.83,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L221",
+      "id": "D221",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2A_PRIME",
@@ -4100,18 +3766,13 @@
       "x2": 31.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L222",
+      "id": "D222",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2A_PRIME",
@@ -4120,18 +3781,13 @@
       "x2": 31.475,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_2",
-      "z_top": 3.91,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 3.91,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L301",
+      "id": "D301",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1",
@@ -4140,18 +3796,13 @@
       "x2": 3.75,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L302",
+      "id": "D302",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1",
@@ -4160,18 +3811,13 @@
       "x2": 11.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L303",
+      "id": "D303",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1",
@@ -4180,18 +3826,13 @@
       "x2": 21.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L304",
+      "id": "D304",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1",
@@ -4200,18 +3841,13 @@
       "x2": 28.83,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L305",
+      "id": "D305",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "1",
@@ -4220,18 +3856,13 @@
       "x2": 31.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L306",
+      "id": "D306",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "1",
@@ -4240,38 +3871,28 @@
       "x2": 31.475,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L307",
+      "id": "D307",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L308",
+      "id": "D308",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1A_PRIME",
@@ -4280,18 +3901,13 @@
       "x2": 11.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L309",
+      "id": "D309",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1A_PRIME",
@@ -4300,18 +3916,13 @@
       "x2": 21.25,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L310",
+      "id": "D310",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1A_PRIME",
@@ -4320,38 +3931,28 @@
       "x2": 28.83,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L311",
+      "id": "D311",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L312",
+      "id": "D312",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2",
@@ -4360,18 +3961,13 @@
       "x2": 11.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L313",
+      "id": "D313",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2",
@@ -4380,18 +3976,13 @@
       "x2": 21.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L314",
+      "id": "D314",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2",
@@ -4400,18 +3991,13 @@
       "x2": 28.83,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L315",
+      "id": "D315",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2",
@@ -4420,18 +4006,13 @@
       "x2": 31.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L316",
+      "id": "D316",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2",
@@ -4440,18 +4021,13 @@
       "x2": 31.475,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L317",
+      "id": "D317",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2A_PRIME",
@@ -4460,18 +4036,13 @@
       "x2": 3.75,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L318",
+      "id": "D318",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2A_PRIME",
@@ -4480,18 +4051,13 @@
       "x2": 11.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L319",
+      "id": "D319",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2A_PRIME",
@@ -4500,18 +4066,13 @@
       "x2": 21.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L320",
+      "id": "D320",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2A_PRIME",
@@ -4520,18 +4081,13 @@
       "x2": 28.83,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L321",
+      "id": "D321",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2A_PRIME",
@@ -4540,18 +4096,13 @@
       "x2": 31.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L322",
+      "id": "D322",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2A_PRIME",
@@ -4560,18 +4111,13 @@
       "x2": 31.475,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_3",
-      "z_top": 7.87,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 7.87,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L401",
+      "id": "D401",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1",
@@ -4580,18 +4126,13 @@
       "x2": 3.75,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L402",
+      "id": "D402",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1",
@@ -4600,18 +4141,13 @@
       "x2": 11.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L403",
+      "id": "D403",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1",
@@ -4620,18 +4156,13 @@
       "x2": 21.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L404",
+      "id": "D404",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1",
@@ -4640,18 +4171,13 @@
       "x2": 28.83,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L405",
+      "id": "D405",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "1",
@@ -4660,18 +4186,13 @@
       "x2": 31.25,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L406",
+      "id": "D406",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "1",
@@ -4680,178 +4201,328 @@
       "x2": 31.475,
       "y1": 0.0,
       "y2": 4.265,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L407",
+      "id": "D407",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L408",
+      "id": "D408_1",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
       "x1": 3.75,
-      "x2": 11.25,
+      "x2": 9.19,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L409",
+      "id": "D408_2",
+      "grid_x1": "A",
+      "grid_x2": "B",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 5.04,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D408_3",
+      "grid_x1": "A",
+      "grid_x2": "B",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 6.817,
+      "y2": 8.9,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D409_1",
+      "grid_x1": "B",
+      "grid_x2": "C",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 13.31,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D409_2",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
       "x1": 11.25,
-      "x2": 21.25,
+      "x2": 13.31,
       "y1": 4.265,
-      "y2": 8.9,
-      "thickness": 0.15,
+      "y2": 5.04,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L410",
+      "id": "D409_3",
+      "grid_x1": "B",
+      "grid_x2": "C",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 6.817,
+      "y2": 8.9,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_1",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "1A_PRIME",
       "grid_y2": "2",
       "x1": 21.25,
+      "x2": 26.416999999999998,
+      "y1": 4.265,
+      "y2": 8.9,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_2",
+      "grid_x1": "C",
+      "grid_x2": "C_PRIME",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 28.476999999999997,
       "x2": 28.83,
       "y1": 4.265,
       "y2": 8.9,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L411",
+      "id": "D410_3",
+      "grid_x1": "C",
+      "grid_x2": "C_PRIME",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 4.265,
+      "y2": 5.063000000000001,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_4",
+      "grid_x1": "C",
+      "grid_x2": "C_PRIME",
+      "grid_y1": "1A_PRIME",
+      "grid_y2": "2",
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 6.840000000000001,
+      "y2": 8.9,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D411",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
-      "x1": 0.0,
+      "x1": 1.5,
       "x2": 3.75,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L412",
+      "id": "D412_1",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
       "x1": 3.75,
-      "x2": 11.25,
+      "x2": 9.19,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L413",
+      "id": "D412_2",
+      "grid_x1": "A",
+      "grid_x2": "B",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 8.917,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D412_3",
+      "grid_x1": "A",
+      "grid_x2": "B",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 10.693999999999999,
+      "y2": 11.885,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D413_1",
+      "grid_x1": "B",
+      "grid_x2": "C",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 13.31,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D413_2",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
       "x1": 11.25,
-      "x2": 21.25,
+      "x2": 13.31,
       "y1": 8.9,
-      "y2": 11.885,
-      "thickness": 0.15,
+      "y2": 8.917,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L414",
+      "id": "D413_3",
+      "grid_x1": "B",
+      "grid_x2": "C",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 10.693999999999999,
+      "y2": 11.885,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D414_1",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2",
       "grid_y2": "2A_PRIME",
       "x1": 21.25,
+      "x2": 26.416999999999998,
+      "y1": 8.9,
+      "y2": 11.885,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D414_2",
+      "grid_x1": "C",
+      "grid_x2": "C_PRIME",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 28.476999999999997,
       "x2": 28.83,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L415",
+      "id": "D414_3",
+      "grid_x1": "C",
+      "grid_x2": "C_PRIME",
+      "grid_y1": "2",
+      "grid_y2": "2A_PRIME",
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 10.677,
+      "y2": 11.885,
+      "level": "CIELO_4",
+      "z": 11.83,
+      "status": "ACTIVE",
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D415",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2",
@@ -4860,18 +4531,13 @@
       "x2": 31.25,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L416",
+      "id": "D416",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2",
@@ -4880,18 +4546,13 @@
       "x2": 31.475,
       "y1": 8.9,
       "y2": 11.885,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L417",
+      "id": "D417",
       "grid_x1": "A_PRIME",
       "grid_x2": "A",
       "grid_y1": "2A_PRIME",
@@ -4900,18 +4561,13 @@
       "x2": 3.75,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L418",
+      "id": "D418",
       "grid_x1": "A",
       "grid_x2": "B",
       "grid_y1": "2A_PRIME",
@@ -4920,18 +4576,13 @@
       "x2": 11.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L419",
+      "id": "D419",
       "grid_x1": "B",
       "grid_x2": "C",
       "grid_y1": "2A_PRIME",
@@ -4940,18 +4591,13 @@
       "x2": 21.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L420",
+      "id": "D420",
       "grid_x1": "C",
       "grid_x2": "C_PRIME",
       "grid_y1": "2A_PRIME",
@@ -4960,18 +4606,13 @@
       "x2": 28.83,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L421",
+      "id": "D421",
       "grid_x1": "C_PRIME",
       "grid_x2": "D",
       "grid_y1": "2A_PRIME",
@@ -4980,18 +4621,13 @@
       "x2": 31.25,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     },
     {
-      "id": "L422",
+      "id": "D422",
       "grid_x1": "D",
       "grid_x2": "D_PRIME",
       "grid_y1": "2A_PRIME",
@@ -5000,15 +4636,10 @@
       "x2": 31.475,
       "y1": 11.885,
       "y2": 16.15,
-      "thickness": 0.15,
       "level": "CIELO_4",
-      "z_top": 11.83,
-      "reinforcement": [
-        "BOTTOM_F",
-        "CEILING"
-      ],
+      "z": 11.83,
       "status": "ACTIVE",
-      "type": "SLAB"
+      "type": "RIGID_DIAPHRAGM"
     }
   ],
   "walls": [
@@ -5797,166 +5428,8 @@
       "type": "STRUCTURAL_WALL"
     }
   ],
-  "foundations": [
-    {
-      "id": "F001",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 11.25,
-      "center_y": 0.0,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P01",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F002",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 21.25,
-      "center_y": 0.0,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P02",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F003",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 31.475,
-      "center_y": 0.0,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P03",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F004",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 3.75,
-      "center_y": 8.9,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P04",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F005",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 11.25,
-      "center_y": 8.9,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P05",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F006",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 21.25,
-      "center_y": 8.9,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P06",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F007",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 11.25,
-      "center_y": 16.15,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P07",
-      "status": "PENDING_DIMENSIONS"
-    },
-    {
-      "id": "F008",
-      "type": "ISOLATED_FOOTING",
-      "center_x": 21.25,
-      "center_y": 16.15,
-      "width": null,
-      "length": null,
-      "thickness": null,
-      "level": "FOUNDATION",
-      "supporting_element": "P08",
-      "status": "PENDING_DIMENSIONS"
-    }
-  ],
-  "foundation_beams": [
-    {
-      "id": "FB1001",
-      "node_i": 1001,
-      "node_j": 1002,
-      "width": null,
-      "height": null,
-      "z": -4.16,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    },
-    {
-      "id": "FB1002",
-      "node_i": 1002,
-      "node_j": 1003,
-      "width": null,
-      "height": null,
-      "z": -4.16,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    },
-    {
-      "id": "FB1003",
-      "node_i": 1004,
-      "node_j": 1005,
-      "width": null,
-      "height": null,
-      "z": -4.16,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    },
-    {
-      "id": "FB1004",
-      "node_i": 1005,
-      "node_j": 1006,
-      "width": null,
-      "height": null,
-      "z": -4.16,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    },
-    {
-      "id": "FB1005",
-      "node_i": 1007,
-      "node_j": 1008,
-      "width": null,
-      "height": null,
-      "z": -4.16,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    },
-    {
-      "id": "FB_EXT_C_8B_TO_8A",
-      "node_i": 1013,
-      "node_j": 1014,
-      "width": 0.2,
-      "height": 1.505,
-      "z": -7.97,
-      "status": "PENDING_DIMENSIONS",
-      "type": "FOUNDATION_BEAM"
-    }
-  ],
+  "foundations": [],
+  "foundation_beams": [],
   "radiers": [
     {
       "id": "R_EXT_001",
@@ -6658,6 +6131,128 @@
       "type": "STAIR_SIDE_WALL"
     }
   ],
+  "supports": [
+    {
+      "node": 1001,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1002,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1003,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1004,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1005,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1006,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1007,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1008,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1009,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1010,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1011,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1012,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    }
+  ],
   "opensees_status": {
     "created_nodes": [
       1001,
@@ -6811,12 +6406,24 @@
       6025,
       6026,
       6027,
-      6028,
-      1013,
-      1014
+      6028
     ],
     "skipped_nodes_missing_coordinates": [],
+    "fixed_supports": [
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007,
+      1008,
+      1009,
+      1010,
+      1011,
+      1012
+    ],
     "elements_created": 0,
-    "note": "Elements are not created until E, A, G, J, Iy and Iz are explicitly provided."
+    "note": "Foundation-level nodes are fixed. Elements are not created until E, A, G, J, Iy and Iz are explicitly provided."
   }
 }

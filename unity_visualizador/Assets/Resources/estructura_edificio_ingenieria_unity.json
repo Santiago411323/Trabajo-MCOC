@@ -290,6 +290,30 @@
       "z": 11.83
     },
     {
+      "id": 1009,
+      "x": 24.474,
+      "y": -10.719999999999999,
+      "z": -4.16
+    },
+    {
+      "id": 1010,
+      "x": 24.474,
+      "y": -6.42,
+      "z": -4.16
+    },
+    {
+      "id": 1011,
+      "x": 31.524,
+      "y": -10.719999999999999,
+      "z": -4.16
+    },
+    {
+      "id": 1012,
+      "x": 31.524,
+      "y": -6.42,
+      "z": -4.16
+    },
+    {
       "id": 2013,
       "x": 0.0,
       "y": 0.0,
@@ -768,18 +792,6 @@
       "x": 7.5,
       "y": 11.885,
       "z": 11.83
-    },
-    {
-      "id": 1013,
-      "x": 21.25,
-      "y": -10.719999999999999,
-      "z": -4.16
-    },
-    {
-      "id": 1014,
-      "x": 21.25,
-      "y": -6.42,
-      "z": -4.16
     }
   ],
   "elements": [
@@ -2082,84 +2094,6 @@
       "shearJ": 0.0,
       "momentI": 0.0,
       "momentJ": 0.0
-    },
-    {
-      "id": 101,
-      "type": "viga",
-      "nodeI": 1001,
-      "nodeJ": 1002,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
-    },
-    {
-      "id": 102,
-      "type": "viga",
-      "nodeI": 1002,
-      "nodeJ": 1003,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
-    },
-    {
-      "id": 103,
-      "type": "viga",
-      "nodeI": 1004,
-      "nodeJ": 1005,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
-    },
-    {
-      "id": 104,
-      "type": "viga",
-      "nodeI": 1005,
-      "nodeJ": 1006,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
-    },
-    {
-      "id": 105,
-      "type": "viga",
-      "nodeI": 1007,
-      "nodeJ": 1008,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
-    },
-    {
-      "id": 106,
-      "type": "viga",
-      "nodeI": 1013,
-      "nodeJ": 1014,
-      "uniformLoad": 0.0,
-      "axialI": 0.0,
-      "axialJ": 0.0,
-      "shearI": 0.0,
-      "shearJ": 0.0,
-      "momentI": 0.0,
-      "momentJ": 0.0
     }
   ],
   "pointLoads": [],
@@ -2245,7 +2179,7 @@
       "rz": 1
     },
     {
-      "node": 1013,
+      "node": 1009,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -2255,7 +2189,7 @@
       "rz": 1
     },
     {
-      "node": 1014,
+      "node": 1010,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -2263,6 +2197,1258 @@
       "rx": 1,
       "ry": 1,
       "rz": 1
+    },
+    {
+      "node": 1011,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    },
+    {
+      "node": 1012,
+      "type": "fixed",
+      "ux": 1,
+      "uy": 1,
+      "uz": 1,
+      "rx": 1,
+      "ry": 1,
+      "rz": 1
+    }
+  ],
+  "rigidDiaphragms": [
+    {
+      "id": "DS01",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS02",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS03",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS04",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS05",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS06",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS07",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS08",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS09",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS10",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS11",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS12",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS13",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS14",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS15",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS16",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS17",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS18",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS19",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS20",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS21",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "DS22",
+      "level": "CIELO_1S",
+      "z": -4.01,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D101",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D102",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D103",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D104",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D105",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D106",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D107",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D108",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D109",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D110",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D111",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D112",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D113",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D114",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D115",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D116",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D117",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D118",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D119",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D120",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D121",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D122",
+      "level": "CIELO_1",
+      "z": -0.05,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D201",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D202",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D203",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D204",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D205",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D206",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D207",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D208",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D209",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D210",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D211",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D212",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D213",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D214",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D215",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D216",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D217",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D218",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D219",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D220",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D221",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D222",
+      "level": "CIELO_2",
+      "z": 3.91,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D301",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D302",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D303",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D304",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D305",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D306",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D307",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D308",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D309",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D310",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D311",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D312",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D313",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D314",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D315",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D316",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D317",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D318",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D319",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D320",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D321",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D322",
+      "level": "CIELO_3",
+      "z": 7.87,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D401",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D402",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D403",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D404",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D405",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D406",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 0.0,
+      "y2": 4.265,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D407",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D408_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 3.75,
+      "x2": 9.19,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D408_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 4.265,
+      "y2": 5.04,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D408_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 6.817,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D409_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 13.31,
+      "x2": 21.25,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D409_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 4.265,
+      "y2": 5.04,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D409_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 6.817,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 21.25,
+      "x2": 26.416999999999998,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 28.476999999999997,
+      "x2": 28.83,
+      "y1": 4.265,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 4.265,
+      "y2": 5.063000000000001,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D410_4",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 6.840000000000001,
+      "y2": 8.9,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D411",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 1.5,
+      "x2": 3.75,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D412_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 3.75,
+      "x2": 9.19,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D412_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 8.9,
+      "y2": 8.917,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D412_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 9.19,
+      "x2": 11.25,
+      "y1": 10.693999999999999,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D413_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 13.31,
+      "x2": 21.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D413_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 8.9,
+      "y2": 8.917,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D413_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 13.31,
+      "y1": 10.693999999999999,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D414_1",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 21.25,
+      "x2": 26.416999999999998,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D414_2",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 28.476999999999997,
+      "x2": 28.83,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D414_3",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 26.416999999999998,
+      "x2": 28.476999999999997,
+      "y1": 10.677,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D415",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D416",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 8.9,
+      "y2": 11.885,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D417",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 0.0,
+      "x2": 3.75,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D418",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 3.75,
+      "x2": 11.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D419",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 11.25,
+      "x2": 21.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D420",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 21.25,
+      "x2": 28.83,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D421",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 28.83,
+      "x2": 31.25,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
+    },
+    {
+      "id": "D422",
+      "level": "CIELO_4",
+      "z": 11.83,
+      "x1": 31.25,
+      "x2": 31.475,
+      "y1": 11.885,
+      "y2": 16.15,
+      "type": "RIGID_DIAPHRAGM"
     }
   ]
 }
