@@ -165,6 +165,7 @@ def stair_segment_mesh(segment, width, thickness):
 def create_viewer_3d(geometry, output_path):
     fig = go.Figure()
     node_map = {node["id"]: node for node in geometry["nodes"]}
+    beam_load_map = {item["beam_id"]: item for item in geometry.get("beam_tributary_loads", [])}
     trace_levels = []
     trace_parts = []
 
@@ -216,6 +217,9 @@ def create_viewer_3d(geometry, output_path):
             start = (ni["x"], ni["y"], ni["z"])
             end = (nj["x"], nj["y"], nj["z"])
             hovertext = f"ID: {beam['id']}<br>TYPE: BEAM<br>LEVEL: {beam['level']}<br>SECTION: {beam['width']} x {beam['height']} m"
+            tributary_load = beam_load_map.get(beam["id"])
+            if tributary_load:
+                hovertext += f"<br>TRIB AREA: {tributary_load['tributary_area_m2']:.3f} m2<br>D: {tributary_load['loads_kN']['D']:.3f} kN<br>L: {tributary_load['loads_kN']['L']:.3f} kN"
             if add_box(fig, beam_mesh(beam, start, end), "BEAMS", "blue", hovertext=hovertext, opacity=0.75):
                 register([beam["level"]])
             elif add_line(fig, start, end, "BEAMS", "blue", hovertext=hovertext):

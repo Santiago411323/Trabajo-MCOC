@@ -13,6 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = BASE_DIR / "outputs"
 GEOMETRY_PATH = BASE_DIR / "structural_geometry.json"
 UNITY_JSON_PATH = BASE_DIR.parents[1] / "unity_visualizador" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
+UNITY_OPEN_PROJECT_JSON_PATH = BASE_DIR.parents[1] / "Visualizador_MCOC" / "Assets" / "Resources" / "estructura_edificio_ingenieria_unity.json"
+UNITY_OPEN_PROJECT_LEGACY_JSON_PATH = BASE_DIR.parents[1] / "Visualizador_MCOC" / "Assets" / "estructura_3d_unity.json"
 
 
 def save_geometry(geometry):
@@ -48,6 +50,10 @@ def print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path, un
     print(f"Foundations: {len(geometry['foundations'])}")
     print(f"Radiers: {len(geometry['radiers'])}")
     print(f"Supports: {len(geometry.get('supports', []))}")
+    print(f"Tributary area edges: {len(geometry.get('tributary_areas', []))}")
+    print(f"Beams with tributary loads: {len(geometry.get('beam_tributary_loads', []))}")
+    for level, check in geometry.get("tributary_checks", {}).items():
+        print(f"{level}: area={check['panel_area_m2']:.3f} m2, area_error={check['area_error_m2']:.6f} m2, D={check['D_kN']:.3f} kN, L={check['L_kN']:.3f} kN")
     print()
     print(f"Geometry errors: {len(errors)}")
     for error in errors[:20]:
@@ -85,6 +91,8 @@ def main():
     viewer_2d_path = create_viewer_2d(geometry, OUTPUT_DIR / "structural_2d.html")
     viewer_3d_path = create_viewer_3d(geometry, OUTPUT_DIR / "structural_3d.html")
     unity_json_path = export_unity_structure(geometry, UNITY_JSON_PATH)
+    export_unity_structure(geometry, UNITY_OPEN_PROJECT_JSON_PATH)
+    export_unity_structure(geometry, UNITY_OPEN_PROJECT_LEGACY_JSON_PATH)
     print_summary(geometry, errors, warnings, viewer_2d_path, viewer_3d_path, unity_json_path)
 
 

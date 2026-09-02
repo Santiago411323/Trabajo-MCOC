@@ -36,6 +36,7 @@ STRIP_FOOTING = "STRIP_FOOTING"
 FOUNDATION_BEAM = "FOUNDATION_BEAM"
 FOUNDATION_WALL = "FOUNDATION_WALL"
 RADIER = "RADIER"
+REINFORCED_CONCRETE = "HORMIGON_ARMADO"
 
 # Altura repetida informada por el usuario: 396 cm = 3.96 m.
 FLOOR_HEIGHT = 3.96
@@ -68,6 +69,20 @@ VERTICAL_LEVEL_SEQUENCE = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIEL
 FLOOR_BEAM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 DIAPHRAGM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 DIAPHRAGM_DISPLAY_THICKNESS = 0.03
+LOAD_SLAB_THICKNESS = 0.15
+CONCRETE_UNIT_WEIGHT_KG_M3 = 2500.0
+ADDITIONAL_DEAD_LOAD_KG_M2 = 260.0
+LIVE_LOAD_KG_M2 = 500.0
+ROOF_ADDITIONAL_DEAD_LOAD_KG_M2 = 200.0
+ROOF_LIVE_LOAD_KG_M2 = 200.0
+ELEVATOR_ROOF_ADDITIONAL_DEAD_LOAD_KG_M2 = 1500.0
+ELEVATOR_ROOF_LIVE_LOAD_KG_M2 = 100.0
+KGF_M2_TO_KN_M2 = 9.80665 / 1000.0
+LOADED_DIAPHRAGM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+LOAD_COMBINATIONS = {
+    "U_1_4D": {"D": 1.4, "L": 0.0},
+    "U_1_2D_1_6L": {"D": 1.2, "L": 1.6},
+}
 DIAPHRAGM_12_VOID_WIDTH = 1.50
 DIAPHRAGM_12_VOID_PANELS = {
     ("A_PRIME", "A", "1A_PRIME", "2"),
@@ -224,6 +239,44 @@ SUPERSTRUCTURE_BEAM_SPECS = [
 ]
 
 
+def rectangular_section(section_id, width, height, material=REINFORCED_CONCRETE):
+    area = width * height
+    iy = width * height ** 3 / 12.0
+    iz = height * width ** 3 / 12.0
+    torsion_j = iy + iz
+    return {
+        "id": section_id,
+        "shape": "RECTANGULAR",
+        "material": material,
+        "width_m": width,
+        "height_m": height,
+        "area_m2": area,
+        "Iy_m4": iy,
+        "Iz_m4": iz,
+        "J_approx_m4": torsion_j,
+    }
+
+
+MATERIALS = {
+    REINFORCED_CONCRETE: {
+        "id": REINFORCED_CONCRETE,
+        "name": "Hormigon armado",
+        "unit_weight_kN_m3": 25.0,
+        "status": "ACTIVE_ASSUMED_STANDARD_VALUES",
+    }
+}
+
+SECTIONS = {
+    "V30/80": rectangular_section("V30/80", 0.30, 0.80),
+    "V40/80": rectangular_section("V40/80", 0.40, 0.80),
+    "V60/80": rectangular_section("V60/80", 0.60, 0.80),
+    "COL70/70": rectangular_section("COL70/70", COLUMN_BX, COLUMN_BY),
+    "MURO_EQ_25": rectangular_section("MURO_EQ_25", 0.25, FLOOR_HEIGHT),
+    "MURO_EQ_30": rectangular_section("MURO_EQ_30", 0.30, FLOOR_HEIGHT),
+    "MURO_EQ_60": rectangular_section("MURO_EQ_60", 0.60, FLOOR_HEIGHT),
+}
+
+
 def generate_grid_coordinates(axis_names, spans):
     coordinates = {}
 
@@ -300,6 +353,9 @@ def create_diaphragm(diaphragm_number, level, gx1, gx2, gy1, gy2):
     x2 = grid_x.get(gx2)
     if (gx1, gx2, gy1, gy2) in DIAPHRAGM_12_VOID_PANELS:
         x1 += DIAPHRAGM_12_VOID_WIDTH
+    load_profile = "FLOOR"
+    if level == "CIELO_4":
+        load_profile = "ELEVATOR_ROOF" if (gx1, gx2, gy1, gy2) in ELEVATOR_DIAPHRAGM_VOID_PANELS else "ROOF"
     return RigidDiaphragm(
         id=f"D{diaphragm_number}",
         grid_x1=gx1,
@@ -312,6 +368,7 @@ def create_diaphragm(diaphragm_number, level, gx1, gx2, gy1, gy2):
         y2=grid_y.get(gy2),
         level=level,
         z=levels.get(level),
+        load_profile=load_profile,
     )
 
 
@@ -364,9 +421,195 @@ def split_diaphragm_by_voids(diaphragm, voids):
             y2=y2,
             level=diaphragm.level,
             z=diaphragm.z,
+            load_profile=diaphragm.load_profile,
             status=diaphragm.status,
         ))
     return split_diaphragms
+
+
+def diaphragm_edge_areas(dx, dy):
+    total_area = dx * dy
+    short_side = min(dx, dy)
+    long_side = max(dx, dy)
+    ratio = long_side / short_side if short_side > 0 else 0.0
+    areas = {"bottom": 0.0, "right": 0.0, "top": 0.0, "left": 0.0}
+
+    if ratio > 2.0:
+        if dx >= dy:
+            areas["bottom"] = total_area / 2.0
+            areas["top"] = total_area / 2.0
+        else:
+            areas["left"] = total_area / 2.0
+            areas["right"] = total_area / 2.0
+    elif dx <= dy:
+        short_edge_area = dx * dx / 4.0
+        long_edge_area = total_area / 2.0 - short_edge_area
+        areas["bottom"] = short_edge_area
+        areas["top"] = short_edge_area
+        areas["left"] = long_edge_area
+        areas["right"] = long_edge_area
+    else:
+        short_edge_area = dy * dy / 4.0
+        long_edge_area = total_area / 2.0 - short_edge_area
+        areas["left"] = short_edge_area
+        areas["right"] = short_edge_area
+        areas["bottom"] = long_edge_area
+        areas["top"] = long_edge_area
+
+    return ratio, areas
+
+
+def find_beam_for_edge(beams, node_map, level, p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    edge_horizontal = abs(y1 - y2) <= GEOMETRY_TOLERANCE
+    edge_vertical = abs(x1 - x2) <= GEOMETRY_TOLERANCE
+    if not edge_horizontal and not edge_vertical:
+        return None
+
+    for beam in beams:
+        if beam.level != level:
+            continue
+        ni = node_map.get(beam.node_i)
+        nj = node_map.get(beam.node_j)
+        if ni is None or nj is None or None in [ni.x, ni.y, nj.x, nj.y]:
+            continue
+
+        if edge_horizontal:
+            if abs(ni.y - y1) > GEOMETRY_TOLERANCE or abs(nj.y - y1) > GEOMETRY_TOLERANCE:
+                continue
+            beam_x_min, beam_x_max = sorted([ni.x, nj.x])
+            edge_x_min, edge_x_max = sorted([x1, x2])
+            if beam_x_min <= edge_x_min + GEOMETRY_TOLERANCE and beam_x_max >= edge_x_max - GEOMETRY_TOLERANCE:
+                return beam.id
+
+        if edge_vertical:
+            if abs(ni.x - x1) > GEOMETRY_TOLERANCE or abs(nj.x - x1) > GEOMETRY_TOLERANCE:
+                continue
+            beam_y_min, beam_y_max = sorted([ni.y, nj.y])
+            edge_y_min, edge_y_max = sorted([y1, y2])
+            if beam_y_min <= edge_y_min + GEOMETRY_TOLERANCE and beam_y_max >= edge_y_max - GEOMETRY_TOLERANCE:
+                return beam.id
+
+    return None
+
+
+def compute_tributary_loads(rigid_diaphragms, beams, nodes):
+    pp_losa_kg_m2 = LOAD_SLAB_THICKNESS * CONCRETE_UNIT_WEIGHT_KG_M3
+    load_profiles = {
+        "FLOOR": {
+            "description": "Cielo 1 subterraneo a cielo piso 3",
+            "D": {"q_kg_m2": pp_losa_kg_m2 + ADDITIONAL_DEAD_LOAD_KG_M2},
+            "L": {"q_kg_m2": LIVE_LOAD_KG_M2},
+        },
+        "ROOF": {
+            "description": "Cielo piso 4 general",
+            "D": {"q_kg_m2": pp_losa_kg_m2 + ROOF_ADDITIONAL_DEAD_LOAD_KG_M2},
+            "L": {"q_kg_m2": ROOF_LIVE_LOAD_KG_M2},
+        },
+        "ELEVATOR_ROOF": {
+            "description": "Cielo piso 4 zona ascensor",
+            "D": {"q_kg_m2": pp_losa_kg_m2 + ELEVATOR_ROOF_ADDITIONAL_DEAD_LOAD_KG_M2},
+            "L": {"q_kg_m2": ELEVATOR_ROOF_LIVE_LOAD_KG_M2},
+        },
+    }
+    for profile in load_profiles.values():
+        for case in ["D", "L"]:
+            profile[case]["q_kN_m2"] = profile[case]["q_kg_m2"] * KGF_M2_TO_KN_M2
+
+    combinations = {}
+    for profile_id, profile in load_profiles.items():
+        combinations[profile_id] = {}
+        for combo_id, factors in LOAD_COMBINATIONS.items():
+            combinations[profile_id][combo_id] = {
+                "factors": factors,
+                "q_kN_m2": factors["D"] * profile["D"]["q_kN_m2"] + factors["L"] * profile["L"]["q_kN_m2"],
+            }
+
+    node_map = {node.id: node for node in nodes}
+    tributary_areas = []
+    beam_tributary_loads = {}
+    checks_by_level = {}
+
+    for diaphragm in rigid_diaphragms:
+        if diaphragm.level not in LOADED_DIAPHRAGM_LEVELS:
+            continue
+        x_min, x_max = sorted([diaphragm.x1, diaphragm.x2])
+        y_min, y_max = sorted([diaphragm.y1, diaphragm.y2])
+        dx = x_max - x_min
+        dy = y_max - y_min
+        if dx <= 0 or dy <= 0:
+            continue
+        panel_area = dx * dy
+        profile_id = diaphragm.load_profile
+        profile = load_profiles[profile_id]
+        ratio, edge_areas = diaphragm_edge_areas(dx, dy)
+        action = "ONE_WAY" if ratio > 2.0 else "TWO_WAY"
+        edges = {
+            "bottom": ((x_min, y_min), (x_max, y_min), dx),
+            "right": ((x_max, y_min), (x_max, y_max), dy),
+            "top": ((x_max, y_max), (x_min, y_max), dx),
+            "left": ((x_min, y_max), (x_min, y_min), dy),
+        }
+        level_check = checks_by_level.setdefault(diaphragm.level, {"panel_area_m2": 0.0, "tributary_area_m2": 0.0, "D_kN": 0.0, "L_kN": 0.0, "D_expected_kN": 0.0, "L_expected_kN": 0.0})
+        level_check["panel_area_m2"] += panel_area
+        level_check["D_expected_kN"] += panel_area * profile["D"]["q_kN_m2"]
+        level_check["L_expected_kN"] += panel_area * profile["L"]["q_kN_m2"]
+
+        for side, area in edge_areas.items():
+            p1, p2, edge_length = edges[side]
+            beam_id = find_beam_for_edge(beams, node_map, diaphragm.level, p1, p2)
+            loads = {case_id: profile[case_id]["q_kN_m2"] * area for case_id in ["D", "L"]}
+            combo_loads = {combo_id: combo["q_kN_m2"] * area for combo_id, combo in combinations[profile_id].items()}
+            entry = {
+                "diaphragm_id": diaphragm.id,
+                "level": diaphragm.level,
+                "load_profile": profile_id,
+                "side": side,
+                "action": action,
+                "ratio_b_over_a": ratio,
+                "panel_area_m2": panel_area,
+                "tributary_area_m2": area,
+                "edge_length_m": edge_length,
+                "beam_id": beam_id,
+                "loads_kN": loads,
+                "load_combinations_kN": combo_loads,
+                "line_loads_kN_m": {case_id: load / edge_length if edge_length > 0 else 0.0 for case_id, load in loads.items()},
+                "combination_line_loads_kN_m": {combo_id: load / edge_length if edge_length > 0 else 0.0 for combo_id, load in combo_loads.items()},
+            }
+            tributary_areas.append(entry)
+            level_check["tributary_area_m2"] += area
+            level_check["D_kN"] += loads["D"]
+            level_check["L_kN"] += loads["L"]
+
+            if beam_id is None or area <= 0:
+                continue
+            beam_entry = beam_tributary_loads.setdefault(beam_id, {
+                "beam_id": beam_id,
+                "tributary_area_m2": 0.0,
+                "loads_kN": {"D": 0.0, "L": 0.0},
+                "load_combinations_kN": {combo_id: 0.0 for combo_id in LOAD_COMBINATIONS},
+                "source_edges": [],
+            })
+            beam_entry["tributary_area_m2"] += area
+            beam_entry["loads_kN"]["D"] += loads["D"]
+            beam_entry["loads_kN"]["L"] += loads["L"]
+            for combo_id, load in combo_loads.items():
+                beam_entry["load_combinations_kN"][combo_id] += load
+            beam_entry["source_edges"].append({"diaphragm_id": diaphragm.id, "side": side, "tributary_area_m2": area})
+
+    for level, check in checks_by_level.items():
+        check["area_error_m2"] = check["tributary_area_m2"] - check["panel_area_m2"]
+        check["D_error_kN"] = check["D_kN"] - check["D_expected_kN"]
+        check["L_error_kN"] = check["L_kN"] - check["L_expected_kN"]
+
+    return {
+        "load_cases": load_profiles,
+        "load_combinations": combinations,
+        "tributary_areas": tributary_areas,
+        "beam_tributary_loads": list(beam_tributary_loads.values()),
+        "checks_by_level": checks_by_level,
+    }
 
 
 def create_geometry():
@@ -455,7 +698,7 @@ def create_geometry():
                 level_voids.append((vx1, vx1 + void["width_x"], vy1, vy1 + void["length_y"]))
         for row_index, (gy1, gy2) in enumerate(zip(DIAPHRAGM_GRID_Y_AXIS_NAMES, DIAPHRAGM_GRID_Y_AXIS_NAMES[1:]), start=1):
             for col_index, (gx1, gx2) in enumerate(zip(DIAPHRAGM_GRID_X_AXIS_NAMES, DIAPHRAGM_GRID_X_AXIS_NAMES[1:]), start=1):
-                if (gx1, gx2, gy1, gy2) in ELEVATOR_DIAPHRAGM_VOID_PANELS:
+                if level != "CIELO_4" and (gx1, gx2, gy1, gy2) in ELEVATOR_DIAPHRAGM_VOID_PANELS:
                     continue
                 diaphragm_number = f"{DIAPHRAGM_LEVEL_PREFIX[level]}{diaphragm_index:02d}"
                 diaphragm = create_diaphragm(diaphragm_number, level, gx1, gx2, gy1, gy2)
@@ -623,6 +866,8 @@ def create_geometry():
             "rz": 1,
         })
 
+    tributary_load_data = compute_tributary_loads(rigid_diaphragms, beams, nodes)
+
     return {
         "metadata": {
             "name": "UANDES Structural Model",
@@ -631,6 +876,7 @@ def create_geometry():
             "note": "Geometry is parametric. Missing dimensions are kept as null and are not invented.",
             "diaphragm_note": "Rigid diaphragms replace slab panels. No finite-element slabs are generated.",
             "diaphragm_12_void_note": "The panel between A'-A and 1A'-2A' is shortened by 1.50 m from axis A' on every diaphragm level.",
+            "tributary_load_note": "Loads are assigned from rigid diaphragm panel tributary areas, not from finite-element slabs.",
             "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
             "plant_levels": {
                 "FOUNDATION": "Planta de fundaciones",
@@ -647,9 +893,20 @@ def create_geometry():
             "foundation_heights": FOUNDATION_HEIGHTS,
             "radier_thickness": RADIER_THICKNESS,
             "diaphragm_display_thickness": DIAPHRAGM_DISPLAY_THICKNESS,
+            "load_slab_thickness": LOAD_SLAB_THICKNESS,
+            "concrete_unit_weight_kg_m3": CONCRETE_UNIT_WEIGHT_KG_M3,
+            "additional_dead_load_kg_m2": ADDITIONAL_DEAD_LOAD_KG_M2,
+            "live_load_kg_m2": LIVE_LOAD_KG_M2,
+            "roof_additional_dead_load_kg_m2": ROOF_ADDITIONAL_DEAD_LOAD_KG_M2,
+            "roof_live_load_kg_m2": ROOF_LIVE_LOAD_KG_M2,
+            "elevator_roof_additional_dead_load_kg_m2": ELEVATOR_ROOF_ADDITIONAL_DEAD_LOAD_KG_M2,
+            "elevator_roof_live_load_kg_m2": ELEVATOR_ROOF_LIVE_LOAD_KG_M2,
+            "loaded_diaphragm_levels": LOADED_DIAPHRAGM_LEVELS,
             "stair_width": STAIR_WIDTH,
             "stair_thickness": STAIR_THICKNESS,
         },
+        "materials": MATERIALS,
+        "sections": SECTIONS,
         "nodes": to_dict_list(nodes),
         "columns": to_dict_list(columns),
         "beams": to_dict_list(beams),
@@ -662,4 +919,9 @@ def create_geometry():
         "stairs": to_dict_list(stairs),
         "stair_walls": to_dict_list(stair_walls),
         "supports": supports,
+        "loads": tributary_load_data["load_cases"],
+        "load_combinations": tributary_load_data["load_combinations"],
+        "tributary_areas": tributary_load_data["tributary_areas"],
+        "beam_tributary_loads": tributary_load_data["beam_tributary_loads"],
+        "tributary_checks": tributary_load_data["checks_by_level"],
     }

@@ -183,6 +183,13 @@ def invalid_dimensions(geometry):
     for radier in geometry["radiers"]:
         if radier["thickness"] != 0.15:
             messages.append(f"Radier {radier['id']} thickness is not 0.15 m")
+    for level, check in geometry.get("tributary_checks", {}).items():
+        if abs(check.get("area_error_m2", 0.0)) > 1e-6:
+            messages.append(f"Tributary area is not conserved at {level}: {check['area_error_m2']} m2")
+        if abs(check.get("D_error_kN", 0.0)) > 1e-6:
+            messages.append(f"Dead load is not conserved at {level}: {check['D_error_kN']} kN")
+        if abs(check.get("L_error_kN", 0.0)) > 1e-6:
+            messages.append(f"Live load is not conserved at {level}: {check['L_error_kN']} kN")
     return messages
 
 

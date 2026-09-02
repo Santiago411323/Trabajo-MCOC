@@ -8,6 +8,21 @@ public class StructureData
     public ElementData[] elements;
     public PointLoadData[] pointLoads;
     public SupportData[] supports;
+    public RigidDiaphragmData[] rigidDiaphragms;
+}
+
+[Serializable]
+public class RigidDiaphragmData
+{
+    public string id;
+    public string level;
+    public string type;
+    public string load_profile;
+    public float x1;
+    public float x2;
+    public float y1;
+    public float y2;
+    public float z;
 }
 
 [Serializable]
@@ -48,10 +63,19 @@ public class NodeData
 public class ElementData
 {
     public int id;
+    public string elementTag;
+    public string sourceId;
+    public string sectionId;
+    public string materialId;
     public string type;
     public int nodeI;
     public int nodeJ;
     public float uniformLoad;
+    public float tributaryArea;
+    public float deadLoad;
+    public float liveLoad;
+    public float factoredLoad14D;
+    public float factoredLoad12D16L;
     public float axialI;
     public float axialJ;
     public float shearI;

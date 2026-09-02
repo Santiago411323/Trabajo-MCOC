@@ -76,6 +76,7 @@ class RigidDiaphragm:
     y2: Optional[float]
     level: str
     z: Optional[float]
+    load_profile: str = "FLOOR"
     status: str = "ACTIVE"
     type: str = "RIGID_DIAPHRAGM"
 

@@ -12,10 +12,12 @@ public class StructureViewer : MonoBehaviour
     public Material beamMaterial;
     public Material columnMaterial;
     public Material supportMaterial;
+    public Material diaphragmMaterial;
 
     private Material defaultBeamMaterial;
     private Material defaultColumnMaterial;
     private Material defaultSupportMaterial;
+    private Material defaultDiaphragmMaterial;
 
     private readonly Dictionary<int, Vector3> nodes = new Dictionary<int, Vector3>();
     private readonly List<ElementSelectable> selectables = new List<ElementSelectable>();
@@ -57,6 +59,7 @@ public class StructureViewer : MonoBehaviour
         selectables.Clear();
         CreateNodes(data);
         CreateElements(data);
+        CreateRigidDiaphragms(data);
         CreateSupports(data);
         CreatePointLoads(data);
         CreateGlobalAxes();
@@ -98,7 +101,8 @@ public class StructureViewer : MonoBehaviour
             Vector3 direction = end - start;
 
             GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            cylinder.name = $"Elemento_{element.id}_{element.type}";
+            string elementTag = string.IsNullOrEmpty(element.elementTag) ? element.sourceId : element.elementTag;
+            cylinder.name = $"elementTag_{elementTag}_{element.type}_{element.sectionId}";
             cylinder.transform.SetParent(transform);
             cylinder.transform.position = midpoint;
             cylinder.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
@@ -112,6 +116,42 @@ public class StructureViewer : MonoBehaviour
             selectable.startPoint = start;
             selectable.endPoint = end;
             selectables.Add(selectable);
+        }
+    }
+
+    private void CreateRigidDiaphragms(StructureData data)
+    {
+        if (data.rigidDiaphragms == null)
+        {
+            return;
+        }
+
+        foreach (RigidDiaphragmData diaphragm in data.rigidDiaphragms)
+        {
+            float x0 = Mathf.Min(diaphragm.x1, diaphragm.x2);
+            float x1 = Mathf.Max(diaphragm.x1, diaphragm.x2);
+            float y0 = Mathf.Min(diaphragm.y1, diaphragm.y2);
+            float y1 = Mathf.Max(diaphragm.y1, diaphragm.y2);
+            float width = x1 - x0;
+            float length = y1 - y0;
+            if (width <= 0.001f || length <= 0.001f)
+            {
+                continue;
+            }
+
+            GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            panel.name = $"Diafragma_{diaphragm.id}_{diaphragm.level}";
+            panel.transform.SetParent(transform);
+            panel.transform.position = new Vector3((x0 + x1) * 0.5f, diaphragm.z - 0.025f, (y0 + y1) * 0.5f);
+            panel.transform.localScale = new Vector3(width, 0.03f, length);
+            panel.GetComponent<Renderer>().material = DiaphragmMaterial();
+
+            InfoSelectable info = panel.AddComponent<InfoSelectable>();
+            info.info = $"Diafragma rigido {diaphragm.id}\n" +
+                        $"Nivel: {diaphragm.level}\n" +
+                        $"Perfil carga: {diaphragm.load_profile}\n" +
+                        $"Area: {width * length:0.###} m2\n" +
+                        $"No es losa FE: representa restriccion de diafragma.";
         }
     }
 
@@ -152,6 +192,8 @@ public class StructureViewer : MonoBehaviour
             support.transform.position = node + Vector3.down * 0.08f;
             support.transform.localScale = new Vector3(0.55f, 0.14f, 0.55f);
             support.GetComponent<Renderer>().material = SupportMaterial();
+            InfoSelectable info = support.AddComponent<InfoSelectable>();
+            info.info = $"Apoyo empotrado\nNodo: {supportData.node}\nux uy uz rx ry rz restringidos";
             CreateSupportLabel(supportData, "Empotrado", node);
             return;
         }
@@ -285,6 +327,7 @@ public class StructureViewer : MonoBehaviour
         defaultBeamMaterial = CreateMaterial(new Color(0.0f, 0.62f, 0.85f));
         defaultColumnMaterial = CreateMaterial(new Color(0.18f, 0.18f, 0.24f));
         defaultSupportMaterial = CreateMaterial(new Color(0.95f, 0.38f, 0.12f));
+        defaultDiaphragmMaterial = CreateTransparentMaterial(new Color(0.0f, 0.75f, 1.0f, 0.22f));
     }
 
     private Material CreateMaterial(Color color)
@@ -304,6 +347,20 @@ public class StructureViewer : MonoBehaviour
         return material;
     }
 
+    private Material CreateTransparentMaterial(Color color)
+    {
+        Material material = CreateMaterial(color);
+        material.SetFloat("_Mode", 3f);
+        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.DisableKeyword("_ALPHATEST_ON");
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.renderQueue = 3000;
+        return material;
+    }
+
     private Material BeamMaterial()
     {
         return beamMaterial != null ? beamMaterial : defaultBeamMaterial;
@@ -317,5 +374,10 @@ public class StructureViewer : MonoBehaviour
     private Material SupportMaterial()
     {
         return supportMaterial != null ? supportMaterial : defaultSupportMaterial;
+    }
+
+    private Material DiaphragmMaterial()
+    {
+        return diaphragmMaterial != null ? diaphragmMaterial : defaultDiaphragmMaterial;
     }
 }

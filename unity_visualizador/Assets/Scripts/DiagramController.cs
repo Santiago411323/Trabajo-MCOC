@@ -81,11 +81,6 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in elements)
         {
-            if (mode == DiagramMode.Moment && element.data.type != "viga")
-            {
-                continue;
-            }
-
             CreateElementDiagram(element, mode);
         }
     }
@@ -117,6 +112,7 @@ public class DiagramController : MonoBehaviour
         diagramObjects.Add(lineObject);
 
         CreateLabel(points[0], GetValue(element.data, mode, 0f, length), lineObject.transform);
+        CreateLabel(points[segments / 2], GetValue(element.data, mode, 0.5f, length), lineObject.transform);
         CreateLabel(points[segments], GetValue(element.data, mode, 1f, length), lineObject.transform);
     }
 
@@ -126,11 +122,6 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in elements)
         {
-            if (mode == DiagramMode.Moment && element.data.type != "viga")
-            {
-                continue;
-            }
-
             int segments = 20;
             for (int i = 0; i <= segments; i++)
             {

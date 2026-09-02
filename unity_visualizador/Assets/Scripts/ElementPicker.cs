@@ -50,14 +50,19 @@ public class ElementPicker : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 200f))
         {
             ElementSelectable selectable = hit.collider.GetComponent<ElementSelectable>();
-            currentText = selectable != null
-                ? selectable.GetValuesAt(hit.point)
-                : "Seleccionaste un objeto sin resultados.";
+            if (selectable != null)
+            {
+                currentText = selectable.GetValuesAt(hit.point);
+                return;
+            }
+
+            InfoSelectable info = hit.collider.GetComponent<InfoSelectable>();
+            currentText = info != null ? info.GetInfo() : "Seleccionaste un objeto sin resultados.";
         }
     }
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(20, 20, 320, 150), currentText);
+        GUI.Box(new Rect(20, 20, 430, 210), currentText);
     }
 }

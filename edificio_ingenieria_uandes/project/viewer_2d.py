@@ -17,6 +17,7 @@ def hover_text(item, item_type):
 
 def create_viewer_2d(geometry, output_path):
     fig = go.Figure()
+    beam_load_map = {item["beam_id"]: item for item in geometry.get("beam_tributary_loads", [])}
     trace_levels = []
     trace_parts = []
     all_levels = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
@@ -98,13 +99,17 @@ def create_viewer_2d(geometry, output_path):
             nj = node_map.get(element["node_j"])
             if not ni or not nj or not valid_xy(ni) or not valid_xy(nj):
                 continue
+            hovertext = hover_text(element, element["type"])
+            tributary_load = beam_load_map.get(element["id"])
+            if tributary_load:
+                hovertext += f"<br>TRIB AREA: {tributary_load['tributary_area_m2']:.3f} m2<br>D: {tributary_load['loads_kN']['D']:.3f} kN<br>L: {tributary_load['loads_kN']['L']:.3f} kN"
             fig.add_trace(go.Scatter(
                 x=[ni["x"], nj["x"]],
                 y=[ni["y"], nj["y"]],
                 mode="lines",
                 name=collection_name.upper(),
                 line=dict(color=color, width=4),
-                hovertext=hover_text(element, element["type"]),
+                hovertext=hovertext,
                 hoverinfo="text",
             ))
             register([element.get("level", "FOUNDATION")])
