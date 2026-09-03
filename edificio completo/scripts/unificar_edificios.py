@@ -17,6 +17,7 @@ Salidas:
 """
 
 import json
+import math
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -160,6 +161,34 @@ def build_estructura_completa():
             "cargaTributaria": el.get("factoredLoad12D16L", 0.0),
         })
     elementos.extend(e2_elems)
+
+    # --- Calculo de momentos de empotramiento en vigas: M = -w*L^2/12 ---
+    # Los JSON de origen solo traen cortante (shearI/J) y carga repartida
+    # (uniformLoad); no traen momentos. Para que el diagrama de momentos del
+    # viewer muestre valores reales, se calcula el momento de empotramiento de
+    # cada viga con su luz L y su carga repartida w (convencion: negativo en los
+    # extremos de una viga empotrada con carga hacia abajo). Solo se sobrescribe
+    # si el elemento no tiene ya un momento calculado.
+    coords = {n["id"]: (n["x"], n["y"], n["z"]) for n in nodos}
+    for el in elementos:
+        if el.get("type") != "viga":
+            continue
+        if el.get("momentI") != 0.0 or el.get("momentJ") != 0.0:
+            continue
+        w = el.get("uniformLoad", 0.0)
+        if not w:
+            continue
+        a = coords.get(el["nodeI"])
+        b = coords.get(el["nodeJ"])
+        if a is None or b is None:
+            continue
+        luz = math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 + (b[2] - a[2]) ** 2)
+        if luz <= 0.0:
+            continue
+        m = -w * luz * luz / 12.0
+        el["momentI"] = round(m, 6)
+        el["momentJ"] = round(m, 6)
+
 
     # --- Slabs: losas del edificio 1 (desplazadas en Y) + diafragmas del edificio 2 ---
     slabs = []
