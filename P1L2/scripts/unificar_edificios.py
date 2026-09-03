@@ -21,19 +21,19 @@ import math
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-COMPLETO_DIR = os.path.dirname(BASE_DIR)                      # "edificio completo"
+COMPLETO_DIR = os.path.dirname(BASE_DIR)                      # "P1L2"
 RESULT_DIR = os.path.join(COMPLETO_DIR, "resultados")
 
 # Rutas a los JSON de origen (relativos a la raiz del repo)
 REPO_DIR = os.path.normpath(os.path.join(COMPLETO_DIR, ".."))
 EDIFICIO1_JSON = os.path.join(
-    REPO_DIR, "edificio_ingenieria_uandes", "project", "edificio 1",
+    COMPLETO_DIR, "Edificio 1 y 2", "edificio 1",
     "unity_visualizador", "Assets", "Resources", "estructura_edificio1_unity.json")
 EDIFICIO2_JSON = os.path.join(
     REPO_DIR, "edificio_2", "unity_visualizador", "Assets", "Resources",
     "estructura_edificio_ingenieria_unity.json")
 EDIFICIO1_BEAM_LOADS_JSON = os.path.join(
-    REPO_DIR, "edificio_ingenieria_uandes", "project", "edificio 1",
+    COMPLETO_DIR, "Edificio 1 y 2", "edificio 1",
     "resultados", "beam_tributary_loads.json")
 
 OUT_JSON = os.path.join(RESULT_DIR, "estructura_completo_unity.json")

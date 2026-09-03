@@ -1,4 +1,4 @@
-# edificio completo — Edificio de Ingeniería UANDES unificado
+# P1L2 — Edificio de Ingeniería UANDES unificado
 
 Escena Unity que une el **edificio 1** y el **edificio 2** (ambos modelos del mismo
 edificio de Ingeniería UANDES) en una sola pieza continua, como un único edificio.
@@ -36,7 +36,7 @@ El JSON unificado se produce con `scripts/unificar_edificios.py`, que:
 
 ## Cómo abrir en Unity
 
-1. Abrir el proyecto `edificio completo/unity_visualizador/` con Unity 6000.5.10f1.
+1. Abrir el proyecto `P1L2/unity_visualizador/` con Unity 6000.5.10f1.
 2. Abrir la escena `Assets/Scenes/StructureViewerScene.unity` (apunta al JSON
    unificado vía su GUID).
 3. Pulsar **Play**. El edificio completo (edificios 1 y 2 conectados) se visualiza.

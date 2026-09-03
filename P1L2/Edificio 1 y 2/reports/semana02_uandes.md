@@ -115,5 +115,5 @@ Asentamiento vertical coherente (orden decimetrico) con compatibilidad del plano
 ## Ejecutar
 
 ```bat
-.venv\Scripts\python.exe edificio_ingenieria_uandes\project\main_structural.py
+.venv\Scripts\python.exe "P1L2\Edificio 1 y 2\main_structural.py"
 ```
