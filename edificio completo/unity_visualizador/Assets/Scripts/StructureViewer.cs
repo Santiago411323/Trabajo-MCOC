@@ -23,7 +23,6 @@ public class StructureViewer : MonoBehaviour
     private readonly Dictionary<int, Vector3> nodes = new Dictionary<int, Vector3>();
     private readonly List<ElementSelectable> selectables = new List<ElementSelectable>();
     private DiagramController diagramController;
-    private bool structureCreated;
 
     // Grupos de objetos para los toggles
     private readonly List<GameObject> columnObjects = new List<GameObject>();
@@ -63,17 +62,12 @@ public class StructureViewer : MonoBehaviour
     {
         CreateDefaultMaterials();
 
-        if (structureCreated)
-        {
-            return;
-        }
-
         if (structureJson == null)
         {
-            structureJson = Resources.Load<TextAsset>("estructura_gravedad_unity");
+            structureJson = Resources.Load<TextAsset>("estructura_completo_unity");
             if (structureJson == null)
             {
-                Debug.LogError("Asigna estructura_gravedad_unity.json en el campo Structure Json o copialo a Assets/Resources.");
+                Debug.LogError("Asigna estructura_completo_unity.json en el campo Structure Json o copialo a Assets/Resources.");
                 return;
             }
         }
@@ -107,7 +101,6 @@ public class StructureViewer : MonoBehaviour
         CreatePointLoads(data);
         CreateGlobalAxes();
         CreateDiagramController();
-        structureCreated = true;
         RefreshVisibility();
     }
 
@@ -287,6 +280,17 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateDiagramController()
     {
+        if (diagramController != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(diagramController);
+            }
+            else
+            {
+                DestroyImmediate(diagramController);
+            }
+        }
         diagramController = gameObject.AddComponent<DiagramController>();
         diagramController.Initialize(selectables);
     }
