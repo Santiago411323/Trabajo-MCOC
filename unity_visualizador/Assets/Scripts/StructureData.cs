@@ -4,10 +4,15 @@ using System;
 public class StructureData
 {
     public string units;
+    public float q_G;
     public NodeData[] nodes;
     public ElementData[] elements;
-    public PointLoadData[] pointLoads;
+    public WallData[] walls;
     public SupportData[] supports;
+    public DiaphragmData[] diaphragmList;
+    public SlabData[] slabs;
+    public TributaryFloorData[] tributaryList;
+    public PointLoadData[] pointLoads;
 }
 
 [Serializable]
@@ -58,4 +63,52 @@ public class ElementData
     public float shearJ;
     public float momentI;
     public float momentJ;
+    public string piso;
+    public float areaTributaria;
+    public float cargaTributaria;
+}
+
+[Serializable]
+public class WallData
+{
+    public int id;
+    public int nodeI;
+    public int nodeJ;
+    public string type;
+    public float grosor;
+    public float longitud;
+    public string bottom;
+    public string top;
+}
+
+[Serializable]
+public class DiaphragmData
+{
+    public string level;
+    public float x;
+    public float y;
+    public float z;
+    public int maestro;
+    public int[] slaves;
+}
+
+[Serializable]
+public class SlabData
+{
+    public int id;
+    public string nivel;
+    public float x0;
+    public float y0;
+    public float x1;
+    public float y1;
+    public float z;
+}
+
+[Serializable]
+public class TributaryFloorData
+{
+    public string piso;
+    public float area_total;
+    public float carga_total;
+    public int vigas;
 }

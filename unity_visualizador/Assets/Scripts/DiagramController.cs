@@ -81,6 +81,11 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in elements)
         {
+            if (element.data == null)
+            {
+                continue;
+            }
+
             if (mode == DiagramMode.Moment && element.data.type != "viga")
             {
                 continue;
@@ -126,6 +131,11 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in elements)
         {
+            if (element.data == null)
+            {
+                continue;
+            }
+
             if (mode == DiagramMode.Moment && element.data.type != "viga")
             {
                 continue;
@@ -145,6 +155,11 @@ public class DiagramController : MonoBehaviour
 
     private float GetValue(ElementData data, DiagramMode mode, float t, float length)
     {
+        if (data == null)
+        {
+            return 0f;
+        }
+
         if (mode == DiagramMode.Axial)
         {
             return Mathf.Lerp(data.axialI, data.axialJ, t);
