@@ -554,7 +554,7 @@ def main():
 
     # Copiar al proyecto Unity (Assets/Resources)
     unity_resources = os.path.normpath(os.path.join(
-        BASE_DIR, "..", "..", "..", "unity_visualizador", "Assets", "Resources"))
+        BASE_DIR, "unity_visualizador", "Assets", "Resources"))
     unity_path = os.path.join(unity_resources, UNITY_JSON_NAME)
     if os.path.isdir(unity_resources):
         export_unity_json(out, unity_path)
