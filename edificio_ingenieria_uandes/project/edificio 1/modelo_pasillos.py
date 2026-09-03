@@ -31,8 +31,8 @@ Pisos:
   - El modelo se genera en N_PISOS pisos; cada piso tiene su nivel de
     vigas y las columnas van de un nivel al siguiente.
 
-Este script NO aplica cargas ni condiciones de apoyo: solo genera la
-geometria (nodos + elementos frame) y sus visualizaciones.
+Este script genera la geometria (nodos + elementos frame), aplica cargas
+verticales separadas y genera sus visualizaciones.
 """
 
 import os
@@ -157,18 +157,26 @@ else:                                     # "AMBOS" (y cualquier otro valor)
     _MURO_CONFIGS = [_MURO_NEG, _MURO_POS]
 
 # ============================================================
-# LOSAS DE PISO (diafragmas)
+# LOSAS DE PISO (diafragmas y cargas gravitacionales)
 #   Se generan en los niveles de viga (Z en Z_VIGAS) y en el techo
 #   del subterraneo (Z=0), rellenando cada bahia de la cuadricula de
 #   vigas entre los 3 ejes Y principales (P1, COMP, P2). Se subdivide
 #   la cuadricula en TODAS las lineas de viga (aunque no haya columna,
 #   e.g. X=5,15,25, o la columna extra X=7.51 donde exista).
-#   Las bahias que intersectan la huella de un muro estructural se
-#   excluyen del plano de losa comun (quedan como 'zona_muro', con una
-#   losa distinta pendiente de definir).
+#   Las bahias se subdividen para representar los huecos interiores de los
+#   muros estructurales en la extension X negativa.
 LOSAS = True
 LOSA_ESPESOR_M = 0.15        # espesor de losa (m) - referencia
 # Losas en los niveles de vigas (Z=H,2H,...) y en el techo del sotano (Z=0)
+
+# Cargas gravitacionales de losas (kN/m2).
+# La carga muerta incluye el peso propio de la losa y una carga permanente
+# adicional (terminaciones, tabiqueria y cielo). La carga viva es independiente.
+PESO_UNITARIO_LOSA = 25.0             # kN/m3, hormigon armado
+CARGA_MUERTA_ADICIONAL = 1.0          # kN/m2
+CARGA_VIVA = 2.0                       # kN/m2
+FACTOR_COMB_D = 1.2                   # combinacion ultima: 1.2D + 1.6L
+FACTOR_COMB_L = 1.6
 
 # Eliminacion en el 3er piso (Z=12), pasillo 2 (Y=P2): se retiran la 3ra columna
 # (contando la de X negativo como 1ra) y la viga transversal que va hacia el
@@ -1136,6 +1144,65 @@ def construir_opensees(lista_nodos, elems, muros=None, losas=None):
         print(f"  Diafragmas rigidos en {len(nivel_a_nodos)} niveles de losa.")
 
 
+def aplicar_cargas(lista_nodos, losas):
+    """Aplica cargas de losas como cargas nodales equivalentes.
+
+    Cada panel distribuye su carga vertical uniformemente entre sus cuatro
+    nodos esquina. Se crean patrones independientes para D, L y 1.2D+1.6L.
+    Devuelve un resumen serializable para exportarlo a cargas.json.
+    """
+    if not losas:
+        return {"patrones": {}, "paneles": 0, "mensaje": "Sin losas"}
+
+    coord = {nid: (x, y, z) for nid, x, y, z in lista_nodos}
+    q_losa = PESO_UNITARIO_LOSA * LOSA_ESPESOR_M
+    q_dead = q_losa + CARGA_MUERTA_ADICIONAL
+    q_live = CARGA_VIVA
+    q_combo = FACTOR_COMB_D * q_dead + FACTOR_COMB_L * q_live
+    acumuladas = {"D": {}, "L": {}, "COMB": {}}
+    area_total = 0.0
+
+    for losa in losas:
+        nids = losa["nodos"]
+        pts = [coord[n] for n in nids]
+        area = abs(sum(pts[i][0] * pts[(i + 1) % 4][1]
+                       - pts[(i + 1) % 4][0] * pts[i][1]
+                       for i in range(4))) / 2.0
+        area_total += area
+        for nombre, q in (("D", q_dead), ("L", q_live), ("COMB", q_combo)):
+            carga_nodal = q * area / 4.0
+            for nid in nids:
+                acumuladas[nombre][nid] = acumuladas[nombre].get(nid, 0.0) + carga_nodal
+
+    patrones = (("D", 1, q_dead), ("L", 2, q_live), ("COMB", 3, q_combo))
+    for nombre, pattern_tag, _q in patrones:
+        ops.timeSeries("Linear", pattern_tag)
+        ops.pattern("Plain", pattern_tag, pattern_tag)
+        for nid, fuerza in acumuladas[nombre].items():
+            ops.load(nid, 0.0, 0.0, -fuerza, 0.0, 0.0, 0.0)
+
+    return {
+        "unidades": {"carga_superficial": "kN/m2", "fuerza_nodal": "kN"},
+        "supuestos": {
+            "peso_unitario_losa_kN_m3": PESO_UNITARIO_LOSA,
+            "espesor_losa_m": LOSA_ESPESOR_M,
+            "carga_muerta_adicional_kN_m2": CARGA_MUERTA_ADICIONAL,
+            "carga_viva_kN_m2": CARGA_VIVA,
+        },
+        "paneles": len(losas),
+        "area_total_losas_m2": area_total,
+        "patrones": {
+            "D": {"tag": 1, "descripcion": "Carga muerta", "q_kN_m2": q_dead,
+                  "factor": 1.0, "fuerzas_nodales_kN": acumuladas["D"]},
+            "L": {"tag": 2, "descripcion": "Carga viva", "q_kN_m2": q_live,
+                  "factor": 1.0, "fuerzas_nodales_kN": acumuladas["L"]},
+            "COMB": {"tag": 3, "descripcion": "1.2D + 1.6L", "q_equivalente_kN_m2": q_combo,
+                     "factores": {"D": FACTOR_COMB_D, "L": FACTOR_COMB_L},
+                     "fuerzas_nodales_kN": acumuladas["COMB"]},
+        },
+    }
+
+
 # ============================================================
 # 3. VERIFICACION GEOMETRICA
 # ============================================================
@@ -1320,7 +1387,7 @@ def graficar_vista_longitudinal(lista_nodos, elems):
 # ============================================================
 # 5. TABLAS (nodos y elementos)
 # ============================================================
-def exportar_tablas(lista_nodos, elems, muros=None, losas=None):
+def exportar_tablas(lista_nodos, elems, muros=None, losas=None, cargas=None):
     coords = {nid: [x, y, z] for nid, x, y, z in lista_nodos}
     with open(os.path.join(OUT_DIR, "coordenadas_nodos.json"), "w",
               encoding="utf-8") as f:
@@ -1338,6 +1405,9 @@ def exportar_tablas(lista_nodos, elems, muros=None, losas=None):
     with open(os.path.join(OUT_DIR, "losas.json"), "w",
               encoding="utf-8") as f:
         json.dump(losas or [], f, indent=2, ensure_ascii=False)
+    with open(os.path.join(OUT_DIR, "cargas.json"), "w",
+              encoding="utf-8") as f:
+        json.dump(cargas or {}, f, indent=2, ensure_ascii=False)
 
 
 def imprimir_resumen(lista_nodos, elems, Z_NIVELES, muros=None, losas=None):
@@ -1367,6 +1437,8 @@ def imprimir_resumen(lista_nodos, elems, Z_NIVELES, muros=None, losas=None):
     print(f"  Extension voladizo:        vigas de {D_EXT*100:.0f} cm (Y={Y_EXT:.2f} m)")
     print(f"  Extension X negativo:      {EXT_X*100:.0f} cm (3 columnas en X={X_NEG:.0f})")
     print(f"\n  Apoyos empotrados:         suelo sotano (Z=-4) y planta baja (Z=0)")
+    print(f"  Cargas:                    D={PESO_UNITARIO_LOSA * LOSA_ESPESOR_M + CARGA_MUERTA_ADICIONAL:.2f}, "
+          f"L={CARGA_VIVA:.2f} kN/m2; COMB={FACTOR_COMB_D:.1f}D+{FACTOR_COMB_L:.1f}L")
     print(f"\n  Tablas guardadas en {OUT_DIR}")
 
 
@@ -1419,10 +1491,11 @@ def main():
         lista_nodos, elems, muros, losas)
 
     construir_opensees(lista_nodos, elems, muros, losas)
-    print(f"\n  Modelo cargado en OpenSees (geometria sin carga).")
+    cargas = aplicar_cargas(lista_nodos, losas)
+    print(f"\n  Modelo cargado en OpenSees con cargas D, L y COMB.")
 
     imprimir_resumen(lista_nodos, elems, Z_NIVELES, muros, losas)
-    exportar_tablas(lista_nodos, elems, muros, losas)
+    exportar_tablas(lista_nodos, elems, muros, losas, cargas)
 
     print("\nGenerando visualizaciones...")
     graficar_3d(lista_nodos, elems, muros, losas)

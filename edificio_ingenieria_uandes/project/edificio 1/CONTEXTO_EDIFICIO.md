@@ -47,6 +47,10 @@
 | `LOSA_ESPESOR_M` | 0.15 | Espesor de losa (referencia) |
 | E | 23500 MPa | Módulo elástico hormigón |
 | ν | 0.2 | Coeficiente de Poisson |
+| Peso unitario de losa | 25.0 kN/m³ | Hormigón armado |
+| Carga muerta adicional | 1.0 kN/m² | Terminaciones, tabiquería y cielo |
+| Carga viva | 2.0 kN/m² | Parámetro configurable |
+| Combinación última | 1.2D + 1.6L | Parámetros configurables |
 
 ### Ejes Y principales
 - `Y_P1 = +8.90` — línea del **pasillo 1**
@@ -87,10 +91,11 @@ Niveles de viga/losa: **Z = 0, 4, 8, 12, 16**. Losas en los 5 niveles (Z=0 es el
 - GeomTransf: transformación 1 para columnas, 2 para vigas (el tag depende del tipo).
 
 ### Comportamiento de OpenSees (resumen)
-- **Solo geometría**, sin carga. Se crean nodos, `node` (coord en m), `fix` (apoyos), secciones, materiales y elementos `forgeStaU=...` (frame).
+- Se crean nodos, `node` (coord en m), `fix` (apoyos), secciones, elementos frame y patrones de carga gravitacional.
 - **No hay cascarones/placas**: los **muros** y las **losas** NO se crean como elementos shell. 
-  - Los **muros** se exportan a `muros.json`/HTML y en OpenSees se modelan como **vigas equivalentes** (una viga al tope + dos columnas de borde por banda) con la sección real del muro.
-  - Las **losas** se modelan como **diafragmas rígidos por nivel** (`ops.rigidDiaphragm`): un nodo maestro por nivel y los nodos de ese nivel como esclavos (ux, uy, rz).
+   - Los **muros** se exportan a `muros.json`/HTML y en OpenSees se modelan como **vigas equivalentes** (una viga al tope + dos columnas de borde por banda) con la sección real del muro.
+   - Las **losas** se modelan como **diafragmas rígidos por nivel** (`ops.rigidDiaphragm`): un nodo maestro por nivel y los nodos de ese nivel como esclavos (ux, uy, rz).
+   - Las cargas de las losas se distribuyen como cargas nodales equivalentes en sus cuatro nodos esquina. Se crean patrones independientes **D**, **L** y **COMB** (`1.2D + 1.6L`).
 
 ### Apoyos / empotramientos
 - **18 apoyos** fijos en total (`ops.fix`, 6 DOF):
@@ -222,9 +227,10 @@ Detalle técnico de implementación:
 3. `construir_losas(lista_nodos, elems, muros)` → `(losas, nodos_aux)`; se fusionan los `nodos_aux` en `lista_nodos`.
 4. `filtrar_nodos_vivos(lista_nodos, elems, muros, losas)` descarta nodos sin elementos y **reindexa** nodos/elementos/muros/losas (con remapeo de ids de esquina de losas).
 5. `construir_opensees(...)` crea el modelo OpenSees (nodos, apoyos, secciones, elementos frame, diafragmas rígidos).
-6. `imprimir_resumen`, `exportar_tablas` (JSON), `graficar_3d`, `graficar_vista_superior`, `graficar_vista_longitudinal`, `imprimir_tablas`.
+6. `aplicar_cargas(...)` crea los patrones D, L y COMB y distribuye las cargas de las losas.
+7. `imprimir_resumen`, `exportar_tablas` (JSON), `graficar_3d`, `graficar_vista_superior`, `graficar_vista_longitudinal`, `imprimir_tablas`.
 
-Saliada final: coordenadas, elementos, muros, losas en `resultados/`.
+Salida final: coordenadas, elementos, muros, losas y cargas en `resultados/`.
 
 ---
 
@@ -239,6 +245,9 @@ Saliada final: coordenadas, elementos, muros, losas en `resultados/`.
 | Total barras (vigas+col) | 317 |
 | Paneles de muro | 30 (10 `muro_ppal` + 20 `muro_ext`) |
 | Paneles de losa | 101 |
+| Carga muerta superficial D | 4.75 kN/m² (3.75 de peso propio + 1.00 adicional) |
+| Carga viva superficial L | 2.00 kN/m² |
+| Combinación de carga | 1.2D + 1.6L = 8.90 kN/m² equivalente |
 | Diafragmas rígidos | 5 niveles |
 | Apoyos empotrados | 18 |
 
@@ -258,7 +267,7 @@ start resultados/modelo_3d.html
 ```
 
 Salidas generadas en `modelo_pasillos/resultados/`:
-- `coordenadas_nodos.json`, `elementos.json`, `muros.json`, `losas.json`
+- `coordenadas_nodos.json`, `elementos.json`, `muros.json`, `losas.json`, `cargas.json`
 - `modelo_3d.png`, `vista_superior.png`, `vista_longitudinal.png`
 - `modelo_3d.html` (visor 3D con casillas para columnas/vigas/muros/losas)
 
@@ -267,6 +276,7 @@ Salidas generadas en `modelo_pasillos/resultados/`:
 ## 13. Notas para quien retome el trabajo
 
 - **No hay cascarones en OpenSees** en este build: muros y losas van modelados como *frame* (muros) y *diafragma rígido* (losas). Si se quisieran shells reales, habría que añadirlos.
+- El script crea los patrones de carga OpenSees `D` (tag 1), `L` (tag 2) y `COMB` (tag 3). Las cargas se aplican hacia −Z a los nodos de las losas, repartiendo cada panel en sus cuatro esquinas. No se ejecuta todavía un análisis estructural; los patrones quedan definidos para el análisis posterior.
 - La geometría plana se **replica verticalmente** por piso; las reglas por piso (columnas excluidas) se aplican dentro de `construir_modelo`.
 - Los **huecos de losa** están ligados a la huella de los muros (`_huellas_muro`) y solo existen en Z=0→12 de la bahía X=−10→0.
 - Si cambias `MURO_YPOS` o `MUROS_ESTRUCTURALES`, cambiarán las huellas y por tanto los huecos de losa de la zona X negativa. Revisa `_huellas_muro`, `celdas_fuera_hueco` y los parámetros `MURO_*`.

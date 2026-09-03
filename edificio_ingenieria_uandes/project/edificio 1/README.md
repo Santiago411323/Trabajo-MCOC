@@ -1,6 +1,6 @@
 # Modelo Estructural 3D - Dos Pasillos (Vigas + Columnas)
 
-Genera la geometría tridimensional de **dos pasillos paralelos** formados por vigas, columnas, **muros estructurales** y **losas de piso**, en **varios pisos**, lista para exportarse a **OpenSees/OpenSeesPy**. Incluye **apoyos empotrados** en las columnas más bajas (sótano y planta baja); sin cargas.
+Genera la geometría tridimensional de **dos pasillos paralelos** formados por vigas, columnas, **muros estructurales** y **losas de piso**, en **varios pisos**, lista para exportarse a **OpenSees/OpenSeesPy**. Incluye **apoyos empotrados** en las columnas más bajas (sótano y planta baja), cargas muertas, cargas vivas y una combinación última.
 
 **Sistema de coordenadas (metros en OpenSees):**
 - **X**: longitudinal de los pasillos
@@ -21,6 +21,9 @@ Genera la geometría tridimensional de **dos pasillos paralelos** formados por v
 | Sección columnas | 70 × 70 cm |
 | Sección vigas | 60 × 80 cm |
 | Material | E = 23500 MPa, ν = 0.2 |
+| Carga muerta de losa | 3.75 kN/m² de peso propio + 1.00 kN/m² adicional = 4.75 kN/m² |
+| Carga viva | 2.00 kN/m² |
+| Combinación última | 1.2D + 1.6L |
 | Muros estructurales | `MUROS_ESTRUCTURALES=True`; `MURO_YPOS="AMBOS"` (negativo + positivo) |
 | Voladizo X+ (3er piso) | 255 cm → pilares (X=37.55) + 245 cm → pilares (X=40.00) |
 | Pisos con voladizo X+ | 3 |
@@ -68,7 +71,9 @@ Genera la geometría tridimensional de **dos pasillos paralelos** formados por v
     - **Lado negativo (COMP→P2)**: el hueco es el rectángulo **X=-6.7→-3.3 × Y=-4.95→0** (la huella del muro NEG llega **hasta Y=0**). La losa queda en Y=-7.25→-4.95 de esa franja X y fuera de la franja X en ambos lados.
     - **Lado positivo (P1→COMP)**: el hueco es el rectángulo **X=-6.7→-3.3 × Y=3.425→5.0** (envelope del muro POS). La losa queda en Y=0→3.425 y Y=5.0→8.9 de esa franja X y fuera de la franja X en ambos lados.
   - **Exportación**: los paneles se guardan en `resultados/losas.json` (4 nodos esquina + nivel + espesor + detalle) y se visualizan como superficies translúcidas horizontales en `modelo_3d.html` (casillas "Losas de piso" y "Zona de muro").
-  - **En OpenSees**: losas representadas como **diafragmas rígidos por piso**: `ops.rigidDiaphragm` con un **nodo maestro** por nivel y los nodos de ese nivel como esclavos del plano (ux, uy, rz).
+- **En OpenSees**: losas representadas como **diafragmas rígidos por piso**: `ops.rigidDiaphragm` con un **nodo maestro** por nivel y los nodos de ese nivel como esclavos del plano (ux, uy, rz).
+
+- **Cargas gravitacionales**: cada panel de losa distribuye uniformemente su carga entre sus 4 nodos esquina. Se crean tres patrones OpenSees independientes: **D** (muerta), **L** (viva) y **COMB** (`1.2D + 1.6L`), con fuerzas verticales negativas en Z. Los valores son parámetros editables en `modelo_pasillos.py`: `CARGA_MUERTA_ADICIONAL`, `CARGA_VIVA`, `FACTOR_COMB_D` y `FACTOR_COMB_L`.
 
 - **Apoyos empotrados**: las columnas más bajas sin apoyo se **empotran** (6 DOF fijos, `ops.fix`):
   - **Subterráneo**: base en **Z=-4** de las columnas del sótano (X=-10 y X=0, en las **3 líneas Y**) → **6 nodos**.
@@ -105,6 +110,7 @@ Genera la geometría tridimensional de **dos pasillos paralelos** formados por v
 | Columnas piso 4 | Las 3 líneas en X=-10,0,10,20,30,35 + voladizo X+ (37.55/40) + voladizo Y- (Y=-11.37, X=10 y 20) |
 | Voladizos piso 3 | Se eliminan columnas (Z=8→12) y vigas de Z=8: X+ (37.55/40) e Y- (X=10→20); viven solo en piso 4 |
 | Losas de piso | 101 paneles (Z=0,4,8,12,16): huecos interiores en la huella de los muros (X=-6.7→-3.3; NEG hasta Y=0, POS Y=3.425→5) en Z=0→12; losa completa en Z=16 |
+| Cargas | Patrones separados D, L y COMB = 1.2D + 1.6L; cargas nodales equivalentes de los paneles |
 | Diafragmas rígidos | 5 niveles de losa (`ops.rigidDiaphragm`, nodo maestro + esclavos ux/uy/rz) |
 | Apoyos empotrados | 18 nodos base (Z=-4: 6 del sótano; Z=0: 12 de planta baja) |
 
@@ -125,6 +131,7 @@ Genera coordenadas de nodos, conectividad de elementos y las vistas 3D.
 | `elementos.json` | Tabla de conectividad de todos los elementos |
 | `muros.json` | Paneles de muros estructurales (4 nodos esquina + espesor) |
 | `losas.json` | Paneles de losa de piso (4 nodos esquina + nivel + espesor + detalle) |
+| `cargas.json` | Supuestos, intensidades y cargas nodales de D, L y COMB |
 | `modelo_3d.png` | Vista 3D del modelo completo |
 | `vista_superior.png` | Planta (comprueba 890 y 725 cm) |
 | `vista_longitudinal.png` | Perfil (comprueba 500 cm, 7 espacios y pisos) |
