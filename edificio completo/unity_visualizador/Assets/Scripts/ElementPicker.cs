@@ -47,13 +47,39 @@ public class ElementPicker : MonoBehaviour
     {
         Ray ray = targetCamera.ScreenPointToRay(screenPosition);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 200f))
+        RaycastHit[] hits = Physics.RaycastAll(ray, 200f);
+        if (hits.Length == 0)
+        {
+            return;
+        }
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
         {
             ElementSelectable selectable = hit.collider.GetComponent<ElementSelectable>();
-            currentText = selectable != null
-                ? selectable.GetValuesAt(hit.point)
-                : "Seleccionaste un objeto sin resultados.";
+            if (selectable == null)
+            {
+                continue;
+            }
+
+            currentText = selectable.GetValuesAt(hit.point);
+            return;
         }
+
+        foreach (RaycastHit hit in hits)
+        {
+            InfoSelectable info = hit.collider.GetComponent<InfoSelectable>();
+            if (info == null)
+            {
+                continue;
+            }
+
+            currentText = info.GetInfo();
+            return;
+        }
+
+        currentText = "Seleccionaste un objeto sin resultados.";
     }
 
     private void OnGUI()

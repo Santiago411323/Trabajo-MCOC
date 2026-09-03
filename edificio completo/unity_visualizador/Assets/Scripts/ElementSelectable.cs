@@ -27,8 +27,14 @@ public class ElementSelectable : MonoBehaviour
             moment += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
         }
 
-        string result = $"Elemento {data.id} ({data.type})\n" +
-                       $"Posicion: {t * 100f:0}%\n" +
+        string sectionName = !string.IsNullOrEmpty(data.sectionId) ? data.sectionId : data.seccion;
+        string elementTag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
+        string sectionText = !string.IsNullOrEmpty(sectionName)
+            ? $"\nSeccion: {sectionName} ({data.width_m:0.##} x {data.height_m:0.##} m)"
+            : "";
+
+        string result = $"Elemento {elementTag} ({data.type})" + sectionText + "\n" +
+                        $"Posicion: {t * 100f:0}%\n" +
                        $"Axial N: {axial:0.###} kN\n" +
                        $"Corte Vz: {shear:0.###} kN\n" +
                        $"Momento My: {moment:0.###} kN*m";
@@ -36,7 +42,9 @@ public class ElementSelectable : MonoBehaviour
         if (data.type == "viga" && data.areaTributaria > 0f)
         {
             result += $"\nArea tributaria: {data.areaTributaria:0.###} m2\n" +
-                      $"Carga q_G: {data.cargaTributaria:0.##} kN";
+                      $"D: {data.deadLoad:0.###} kN | L: {data.liveLoad:0.###} kN\n" +
+                      $"U=1.4D: {data.factoredLoad14D:0.###} kN\n" +
+                      $"U=1.2D+1.6L: {data.factoredLoad12D16L:0.###} kN";
         }
 
         return result;

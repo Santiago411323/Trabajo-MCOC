@@ -142,24 +142,69 @@ public class StructureViewer : MonoBehaviour
             Vector3 midpoint = (start + end) * 0.5f;
             Vector3 direction = end - start;
 
-            GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            cylinder.name = $"Elemento_{element.id}_{element.type}";
-            cylinder.transform.SetParent(transform);
-            cylinder.transform.position = midpoint;
-            cylinder.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-            cylinder.transform.localScale = new Vector3(elementRadius, direction.magnitude * 0.5f, elementRadius);
-
-            Renderer renderer = cylinder.GetComponent<Renderer>();
             bool isColumn = element.type == "columna";
-            renderer.material = isColumn ? ColumnMaterial() : BeamMaterial();
-            (isColumn ? columnObjects : beamObjects).Add(cylinder);
+            float sectionWidth = GetSectionWidth(element, isColumn);
+            float sectionHeight = GetSectionHeight(element, isColumn);
 
-            ElementSelectable selectable = cylinder.AddComponent<ElementSelectable>();
+            GameObject member = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            member.name = $"Elemento_{element.id}_{element.type}_{GetSectionName(element)}";
+            member.transform.SetParent(transform);
+            member.transform.position = midpoint;
+            member.transform.rotation = GetMemberRotation(direction, isColumn);
+            member.transform.localScale = new Vector3(sectionWidth, direction.magnitude, sectionHeight);
+
+            Renderer renderer = member.GetComponent<Renderer>();
+            renderer.material = isColumn ? ColumnMaterial() : BeamMaterial();
+            (isColumn ? columnObjects : beamObjects).Add(member);
+
+            ElementSelectable selectable = member.AddComponent<ElementSelectable>();
             selectable.data = element;
             selectable.startPoint = start;
             selectable.endPoint = end;
             selectables.Add(selectable);
         }
+    }
+
+    private string GetSectionName(ElementData element)
+    {
+        if (!string.IsNullOrEmpty(element.sectionId)) return element.sectionId;
+        if (!string.IsNullOrEmpty(element.seccion)) return element.seccion;
+        return element.type == "columna" ? "COL70/70" : "V60/80";
+    }
+
+    private float GetSectionWidth(ElementData element, bool isColumn)
+    {
+        if (element.width_m > 0.001f) return element.width_m;
+
+        string sectionName = GetSectionName(element);
+        if (sectionName == "V30/80") return 0.30f;
+        if (sectionName == "V40/80") return 0.40f;
+        if (sectionName == "V60/80") return 0.60f;
+        if (sectionName == "V30/45") return 0.30f;
+        return isColumn ? 0.70f : 0.60f;
+    }
+
+    private float GetSectionHeight(ElementData element, bool isColumn)
+    {
+        if (element.height_m > 0.001f) return element.height_m;
+
+        string sectionName = GetSectionName(element);
+        if (sectionName == "V30/45") return 0.45f;
+        if (sectionName == "V30/80" || sectionName == "V40/80" || sectionName == "V60/80") return 0.80f;
+        return isColumn ? 0.70f : 0.80f;
+    }
+
+    private Quaternion GetMemberRotation(Vector3 direction, bool isColumn)
+    {
+        Vector3 axis = direction.normalized;
+        if (isColumn || Mathf.Abs(Vector3.Dot(axis, Vector3.up)) > 0.95f)
+        {
+            return Quaternion.FromToRotation(Vector3.up, axis);
+        }
+
+        Vector3 localX = Vector3.Cross(axis, Vector3.up).normalized;
+        Vector3 localZ = Vector3.Cross(localX, axis).normalized;
+        return Quaternion.LookRotation(localZ, axis);
     }
 
     private void CreateWalls(StructureData data)
@@ -229,6 +274,13 @@ public class StructureViewer : MonoBehaviour
             plane.transform.position = center;
             plane.transform.localScale = new Vector3(px * 2f, 0.02f, py * 2f);
             plane.GetComponent<Renderer>().material = DiaphragmMaterial();
+
+            InfoSelectable info = plane.AddComponent<InfoSelectable>();
+            info.info = $"Diafragma rigido\n" +
+                        $"Nivel: {dia.level}\n" +
+                        $"Nodo maestro: {dia.maestro}\n" +
+                        $"Esclavos: {(dia.slaves != null ? dia.slaves.Length : 0)}";
+
             diaphragmObjects.Add(plane);
         }
     }
@@ -255,6 +307,20 @@ public class StructureViewer : MonoBehaviour
             plane.transform.position = center;
             plane.transform.localScale = new Vector3(dx, thickness, dy);
             plane.GetComponent<Renderer>().material = DiaphragmMaterial();
+
+            float area = dx * dy;
+            float qG = data.q_G;
+            float totalLoad = area * qG;
+            InfoSelectable info = plane.AddComponent<InfoSelectable>();
+            info.info = $"Losa / diafragma de area\n" +
+                        $"ID: {slab.id}\n" +
+                        $"Nivel: {slab.nivel}\n" +
+                        $"Area: {area:0.###} m2\n" +
+                        $"Dimensiones: {dx:0.###} x {dy:0.###} m\n" +
+                        $"qG: {qG:0.###} kN/m2\n" +
+                        $"Carga gravitacional estimada: {totalLoad:0.###} kN\n" +
+                        $"Nota: visualizada como panel; no es shell OpenSees.";
+
             diaphragmObjects.Add(plane);
         }
     }

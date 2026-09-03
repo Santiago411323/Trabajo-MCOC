@@ -32,6 +32,9 @@ EDIFICIO1_JSON = os.path.join(
 EDIFICIO2_JSON = os.path.join(
     REPO_DIR, "edificio_2", "unity_visualizador", "Assets", "Resources",
     "estructura_edificio_ingenieria_unity.json")
+EDIFICIO1_BEAM_LOADS_JSON = os.path.join(
+    REPO_DIR, "edificio_ingenieria_uandes", "project", "edificio 1",
+    "resultados", "beam_tributary_loads.json")
 
 OUT_JSON = os.path.join(RESULT_DIR, "estructura_completo_unity.json")
 UNITY_JSON_NAME = "estructura_completo_unity.json"
@@ -61,6 +64,74 @@ OFFSET_Z = 4.17
 # el edificio 1). El edificio 1 usa ids pequenos; usamos base alta.
 ID_OFFSET = 100000
 
+SECTIONS = {
+    "V30/45": {"id": "V30/45", "shape": "RECTANGULAR", "width_m": 0.30, "height_m": 0.45},
+    "V30/80": {"id": "V30/80", "shape": "RECTANGULAR", "width_m": 0.30, "height_m": 0.80},
+    "V40/80": {"id": "V40/80", "shape": "RECTANGULAR", "width_m": 0.40, "height_m": 0.80},
+    "V60/80": {"id": "V60/80", "shape": "RECTANGULAR", "width_m": 0.60, "height_m": 0.80},
+    "COL70/70": {"id": "COL70/70", "shape": "RECTANGULAR", "width_m": 0.70, "height_m": 0.70},
+}
+
+
+def inferir_seccion(el):
+    if el.get("sectionId"):
+        return el["sectionId"]
+    tipo = el.get("tipo", "") or el.get("type", "")
+    seccion = el.get("seccion", "")
+    if tipo == "columna" or seccion == "COL":
+        return "COL70/70"
+    if tipo == "viga_long_voladizo_p2":
+        return "V30/45"
+    if seccion in SECTIONS:
+        return seccion
+    if seccion == "V":
+        return "V60/80"
+    return "V60/80" if el.get("type") == "viga" else "COL70/70"
+
+
+def agregar_seccion(el):
+    out = dict(el)
+    section_id = inferir_seccion(out)
+    section = SECTIONS.get(section_id, SECTIONS["V60/80"])
+    out["sectionId"] = section_id
+    out["width_m"] = section["width_m"]
+    out["height_m"] = section["height_m"]
+    return out
+
+
+def cargar_cargas_vigas_edificio1():
+    if not os.path.exists(EDIFICIO1_BEAM_LOADS_JSON):
+        return {}
+    data = cargar_json(EDIFICIO1_BEAM_LOADS_JSON)
+    return {item["beam_index"] + 1: item for item in data.get("beam_tributary_loads", [])}
+
+
+def enriquecer_edificio1(el, cargas_por_id):
+    out = agregar_seccion(el)
+    out["sourceBuilding"] = "edificio_1"
+    out["sourceId"] = el.get("sourceId", el.get("id"))
+    out["elementTag"] = el.get("elementTag", f"E1_{el.get('id')}")
+
+    carga = cargas_por_id.get(el.get("id"))
+    if carga:
+        out["areaTributaria"] = carga.get("tributary_area_m2", out.get("areaTributaria", 0.0))
+        out["deadLoad"] = carga.get("loads_kN", {}).get("D", 0.0)
+        out["liveLoad"] = carga.get("loads_kN", {}).get("L", 0.0)
+        out["factoredLoad14D"] = carga.get("load_combinations_kN", {}).get("U_1_4D", 0.0)
+        out["factoredLoad12D16L"] = carga.get("load_combinations_kN", {}).get("U_1_2D_1_6L", out.get("cargaTributaria", 0.0))
+        out["cargaTributaria"] = out["factoredLoad12D16L"]
+        out["gravityLoad"] = out["factoredLoad12D16L"]
+        out["sourceEdges"] = carga.get("source_edges", [])
+    else:
+        gravity_load = out.get("cargaTributaria", 0.0)
+        out["deadLoad"] = gravity_load
+        out["liveLoad"] = 0.0
+        out["factoredLoad14D"] = 1.4 * gravity_load
+        out["factoredLoad12D16L"] = 1.2 * gravity_load
+        out["gravityLoad"] = gravity_load
+        out["loadNote"] = "Edificio 1 sin desglose D/L para este elemento: se usa D=cargaTributaria y L=0."
+    return out
+
 
 def cargar_json(path):
     with open(path, encoding="utf-8") as f:
@@ -81,7 +152,7 @@ def convertir_slabs(e2):
     slabs = []
     for d in e2.get("rigidDiaphragms", []):
         slabs.append({
-            "id": d["id"],
+            "id": str(d["id"]),
             "nivel": d.get("level", ""),
             "x0": round(d["x1"] + OFFSET_X, 6),
             "y0": round(d["y1"] + OFFSET_Y, 6),
@@ -95,9 +166,11 @@ def convertir_slabs(e2):
 def transformar_elementos(e2_elements, id_map):
     out = []
     for i, el in enumerate(e2_elements):
-        out.append({
+        out.append(agregar_seccion({
             "id": el["id"],
             "type": el.get("type", "viga"),
+            "seccion": el.get("seccion", ""),
+            "sectionId": el.get("sectionId", ""),
             "nodeI": id_map[el["nodeI"]],
             "nodeJ": id_map[el["nodeJ"]],
             "uniformLoad": el.get("uniformLoad", 0.0),
@@ -110,13 +183,14 @@ def transformar_elementos(e2_elements, id_map):
             "piso": el.get("piso", ""),
             "areaTributaria": el.get("tributaryArea", 0.0),
             "cargaTributaria": el.get("factoredLoad12D16L", 0.0),
-        })
+        }))
     return out
 
 
 def build_estructura_completa():
     e1 = cargar_json(EDIFICIO1_JSON)
     e2 = cargar_json(EDIFICIO2_JSON)
+    cargas_e1 = cargar_cargas_vigas_edificio1()
 
     # --- Nodos: edificio 1 (desplazado en Y para centrado) + edificio 2 (transformado) ---
     nodos = []
@@ -139,17 +213,26 @@ def build_estructura_completa():
         prox_id += 1
 
     # --- Elementos: edificio 1 + edificio 2 (remap ids) ---
-    elementos = list(e1.get("elements", []))
+    elementos = [enriquecer_edificio1(el, cargas_e1) for el in e1.get("elements", [])]
     id_e = max((el["id"] for el in elementos), default=0)
     e2_elems = []
     for el in e2.get("elements", []):
         id_e += 1
-        e2_elems.append({
+        e2_elems.append(agregar_seccion({
             "id": id_e,
             "type": el.get("type", "viga"),
+            "seccion": el.get("seccion", ""),
+            "sectionId": el.get("sectionId", ""),
+            "sourceBuilding": "edificio_2",
+            "sourceId": el.get("sourceId", el.get("id")),
+            "elementTag": el.get("elementTag", el.get("sourceId", f"E2_{el.get('id')}")),
             "nodeI": id_map[el["nodeI"]],
             "nodeJ": id_map[el["nodeJ"]],
             "uniformLoad": el.get("uniformLoad", 0.0),
+            "deadLoad": el.get("deadLoad", 0.0),
+            "liveLoad": el.get("liveLoad", 0.0),
+            "factoredLoad14D": el.get("factoredLoad14D", 0.0),
+            "factoredLoad12D16L": el.get("factoredLoad12D16L", 0.0),
             "axialI": el.get("axialI", 0.0),
             "axialJ": el.get("axialJ", 0.0),
             "shearI": el.get("shearI", 0.0),
@@ -159,7 +242,7 @@ def build_estructura_completa():
             "piso": "",
             "areaTributaria": el.get("tributaryArea", 0.0),
             "cargaTributaria": el.get("factoredLoad12D16L", 0.0),
-        })
+        }))
     elementos.extend(e2_elems)
 
     # --- Calculo de momentos de empotramiento en vigas: M = -w*L^2/12 ---
@@ -194,6 +277,7 @@ def build_estructura_completa():
     slabs = []
     for s in e1.get("slabs", []):
         ss = dict(s)
+        ss["id"] = f"L{ss.get('id')}"
         ss["y0"] = round(s["y0"] + OFFSET_Y_E1, 6)
         ss["y1"] = round(s["y1"] + OFFSET_Y_E1, 6)
         slabs.append(ss)
@@ -238,6 +322,7 @@ def build_estructura_completa():
         "tributaryList": tributary,
         "localAxes": e1.get("localAxes", []),
         "pointLoads": point_loads,
+        "sections": SECTIONS,
         "statistics": (
             e1.get("statistics", {})
             if isinstance(e1.get("statistics"), dict)

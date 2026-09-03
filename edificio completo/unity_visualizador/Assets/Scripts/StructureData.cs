@@ -56,7 +56,18 @@ public class ElementData
     public string type;
     public int nodeI;
     public int nodeJ;
+    public string seccion;
+    public string sectionId;
+    public string elementTag;
+    public string sourceBuilding;
+    public string sourceId;
+    public float width_m;
+    public float height_m;
     public float uniformLoad;
+    public float deadLoad;
+    public float liveLoad;
+    public float factoredLoad14D;
+    public float factoredLoad12D16L;
     public float axialI;
     public float axialJ;
     public float shearI;
@@ -95,7 +106,7 @@ public class DiaphragmData
 [Serializable]
 public class SlabData
 {
-    public int id;
+    public string id;
     public string nivel;
     public float x0;
     public float y0;
