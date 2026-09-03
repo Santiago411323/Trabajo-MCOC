@@ -11,3 +11,20 @@ Visualizador_MCOC/
 **/unity_visualizador/Obj/
 **/unity_visualizador/Build/
 **/unity_visualizador/Builds/
+
+# Caches de proyectos Unity dentro de "edificio completo" (regenerables)
+edificio completo/Library/
+edificio completo/Logs/
+edificio completo/UserSettings/
+edificio completo/Temp/
+edificio completo/Obj/
+edificio completo/Build/
+edificio completo/Builds/
+**/edificio completo/**/Library/
+**/edificio completo/**/Temp/
+**/edificio completo/**/Obj/
+**/edificio completo/**/Build/
+**/edificio completo/**/Builds/
+*.csproj
+*.slnx
+.vsconfig
