@@ -4,10 +4,10 @@ __pycache__/
 .vscode/
 .idea/
 Visualizador_MCOC/
-unity_visualizador/Library/
-unity_visualizador/Logs/
-unity_visualizador/UserSettings/
-unity_visualizador/Temp/
-unity_visualizador/Obj/
-unity_visualizador/Build/
-unity_visualizador/Builds/
+**/unity_visualizador/Library/
+**/unity_visualizador/Logs/
+**/unity_visualizador/UserSettings/
+**/unity_visualizador/Temp/
+**/unity_visualizador/Obj/
+**/unity_visualizador/Build/
+**/unity_visualizador/Builds/
