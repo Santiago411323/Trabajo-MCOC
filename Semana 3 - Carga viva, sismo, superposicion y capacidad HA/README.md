@@ -107,12 +107,21 @@ P1L2/unity_visualizador/Assets/Resources/semana3_resultados_unity.json
 En Unity:
 
 ```text
+Proyecto correcto: P1L2/unity_visualizador
 1 = diagrama axial
 2 = diagrama de corte
 3 = diagrama de momento
 4 = primeros puntos de curva P-M HA
 0 = ocultar diagramas
 ```
+
+Para ubicar la carpeta correcta en Windows se puede ejecutar desde la raiz:
+
+```text
+ABRIR_UNITY_SEMANA3.bat
+```
+
+No abrir la carpeta vieja `edificio completo/unity_visualizador`, porque despues de reorganizar el repositorio el visualizador correcto quedo en `P1L2/unity_visualizador`.
 
 Consulta puntual de una viga:
 
