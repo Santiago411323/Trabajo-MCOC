@@ -26,6 +26,12 @@ Si el repositorio esta descargado en `Descargas`, se puede abrir con `Windows + 
 %USERPROFILE%\Downloads\Trabajo-MCOC\EJECUTAR_SEMANA3.bat
 ```
 
+Si se descargo como ZIP desde GitHub, normalmente la carpeta se llama `Trabajo-MCOC-main`:
+
+```text
+%USERPROFILE%\Downloads\Trabajo-MCOC-main\EJECUTAR_SEMANA3.bat
+```
+
 Si esta en el Escritorio:
 
 ```text
@@ -34,6 +40,8 @@ Si esta en el Escritorio:
 
 Ese archivo abre PowerShell con `-NoExit`, crea `.venv`, instala `openseespy` y `matplotlib`, y abre el menu de Semana 3.
 Al cerrar el menu, la consola queda abierta para poder leer resultados o errores.
+
+Importante: `%USERPROFILE%` es para pegarlo en `Windows + R`. Si se escribe dentro de PowerShell, se debe usar `$env:USERPROFILE` o la ruta completa.
 
 Tambien se puede ejecutar manualmente con PowerShell:
 

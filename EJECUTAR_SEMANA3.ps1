@@ -1,5 +1,31 @@
 $ErrorActionPreference = "Stop"
-$repo = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$semana3Script = "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py"
+$repoCandidates = @(
+    $scriptDir,
+    (Join-Path $scriptDir "Trabajo-MCOC-main"),
+    (Join-Path $scriptDir "Trabajo-MCOC"),
+    (Join-Path $env:USERPROFILE "Downloads\Trabajo-MCOC-main"),
+    (Join-Path $env:USERPROFILE "Downloads\Trabajo-MCOC"),
+    (Join-Path $env:USERPROFILE "Desktop\Trabajo-MCOC-main"),
+    (Join-Path $env:USERPROFILE "Desktop\Trabajo-MCOC")
+)
+
+$repo = $null
+foreach ($candidate in $repoCandidates) {
+    if (Test-Path -LiteralPath (Join-Path $candidate $semana3Script)) {
+        $repo = $candidate
+        break
+    }
+}
+
+if ($null -eq $repo) {
+    Write-Host "ERROR: No encontre la carpeta del repositorio Trabajo-MCOC."
+    Write-Host "Descomprime el ZIP completo y ejecuta EJECUTAR_SEMANA3.bat desde dentro de Trabajo-MCOC-main."
+    Write-Host "Ejemplo: Downloads\Trabajo-MCOC-main\EJECUTAR_SEMANA3.bat"
+    return
+}
+
 Set-Location $repo
 
 Write-Host "================================================"
@@ -18,7 +44,7 @@ Write-Host "Instalando/actualizando dependencias necesarias..."
 
 Write-Host ""
 Write-Host "Abriendo menu interactivo Semana 3..."
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py"
+& ".venv\Scripts\python.exe" $semana3Script
 
 Write-Host ""
 Write-Host "Programa terminado. Esta ventana queda abierta."
