@@ -7,12 +7,34 @@ Construir los casos base para la interaccion posterior del modelo completo y com
 El script principal reutiliza el JSON del edificio completo:
 
 ```text
-edificio completo/unity_visualizador/Assets/Resources/estructura_completo_unity.json
+P1L2/unity_visualizador/Assets/Resources/estructura_completo_unity.json
 ```
 
 ## Ejecucion
 
 Desde la raiz del repo:
+
+La forma mas facil para Windows es ejecutar este archivo que esta en la raiz del repositorio:
+
+```text
+EJECUTAR_SEMANA3.bat
+```
+
+Si el repositorio esta descargado en `Descargas`, se puede abrir con `Windows + R` pegando una ruta como esta:
+
+```text
+%USERPROFILE%\Downloads\Trabajo-MCOC\EJECUTAR_SEMANA3.bat
+```
+
+Si esta en el Escritorio:
+
+```text
+%USERPROFILE%\Desktop\Trabajo-MCOC\EJECUTAR_SEMANA3.bat
+```
+
+Ese archivo crea `.venv`, instala `openseespy` y `matplotlib`, y abre el menu de Semana 3.
+
+Tambien se puede ejecutar manualmente con PowerShell:
 
 ```powershell
 & ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\semana3.py"
