@@ -11,7 +11,8 @@ public class DiagramController : MonoBehaviour
         None,
         Axial,
         Shear,
-        Moment
+        Moment,
+        InteractionPM
     }
 
     public float diagramScale = 0.45f;
@@ -20,11 +21,13 @@ public class DiagramController : MonoBehaviour
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
     private DiagramMode currentMode = DiagramMode.None;
     private float currentMaxValue = 1f;
+    private Semana3UnityResults semana3Results;
 
     public void Initialize(List<ElementSelectable> selectables)
     {
         elements.Clear();
         elements.AddRange(selectables);
+        LoadSemana3Results();
         ShowDiagram(DiagramMode.None);
     }
 
@@ -46,6 +49,10 @@ public class DiagramController : MonoBehaviour
         {
             ShowDiagram(DiagramMode.Moment);
         }
+        if (PressedKey(KeyCode.Alpha4))
+        {
+            ShowDiagram(DiagramMode.InteractionPM);
+        }
     }
 
     private bool PressedKey(KeyCode key)
@@ -61,6 +68,7 @@ public class DiagramController : MonoBehaviour
         if (key == KeyCode.Alpha1) return keyboard.digit1Key.wasPressedThisFrame;
         if (key == KeyCode.Alpha2) return keyboard.digit2Key.wasPressedThisFrame;
         if (key == KeyCode.Alpha3) return keyboard.digit3Key.wasPressedThisFrame;
+        if (key == KeyCode.Alpha4) return keyboard.digit4Key.wasPressedThisFrame;
         return false;
 #else
         return Input.GetKeyDown(key);
@@ -72,7 +80,7 @@ public class DiagramController : MonoBehaviour
         currentMode = mode;
         ClearDiagram();
 
-        if (mode == DiagramMode.None)
+        if (mode == DiagramMode.None || mode == DiagramMode.InteractionPM)
         {
             return;
         }
@@ -86,7 +94,7 @@ public class DiagramController : MonoBehaviour
                 continue;
             }
 
-            if (mode == DiagramMode.Moment && element.data.type != "viga")
+            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && element.data.type != "viga")
             {
                 continue;
             }
@@ -121,8 +129,9 @@ public class DiagramController : MonoBehaviour
         line.material = CreateMaterial(GetColor(mode));
         diagramObjects.Add(lineObject);
 
-        CreateLabel(points[0], GetValue(element.data, mode, 0f, length), lineObject.transform);
-        CreateLabel(points[segments], GetValue(element.data, mode, 1f, length), lineObject.transform);
+        CreateLabel(points[0], GetValue(element.data, mode, 0f, length), UnitFor(mode), lineObject.transform);
+        CreateLabel(points[segments / 2], GetValue(element.data, mode, 0.5f, length), UnitFor(mode), lineObject.transform);
+        CreateLabel(points[segments], GetValue(element.data, mode, 1f, length), UnitFor(mode), lineObject.transform);
     }
 
     private float GetMaxValue(DiagramMode mode)
@@ -136,7 +145,7 @@ public class DiagramController : MonoBehaviour
                 continue;
             }
 
-            if (mode == DiagramMode.Moment && element.data.type != "viga")
+            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && element.data.type != "viga")
             {
                 continue;
             }
@@ -202,17 +211,24 @@ public class DiagramController : MonoBehaviour
     {
         if (mode == DiagramMode.Axial) return Color.red;
         if (mode == DiagramMode.Shear) return new Color(1f, 0.55f, 0f);
+        if (mode == DiagramMode.InteractionPM) return Color.green;
         return Color.magenta;
     }
 
-    private void CreateLabel(Vector3 position, float value, Transform parent)
+    private string UnitFor(DiagramMode mode)
+    {
+        if (mode == DiagramMode.Moment) return " kN*m";
+        return " kN";
+    }
+
+    private void CreateLabel(Vector3 position, float value, string unit, Transform parent)
     {
         GameObject labelObject = new GameObject("ValorDiagrama");
         labelObject.transform.SetParent(parent);
         labelObject.transform.position = position + Vector3.up * 0.12f;
 
         TextMesh text = labelObject.AddComponent<TextMesh>();
-        text.text = value.ToString("0.0");
+        text.text = value.ToString("0.0") + unit;
         text.characterSize = 0.18f;
         text.anchor = TextAnchor.MiddleCenter;
         text.color = Color.white;
@@ -238,12 +254,157 @@ public class DiagramController : MonoBehaviour
 
     private void OnGUI()
     {
-        string text = "Diagramas: 0 ocultar | 1 axial | 2 corte | 3 momento";
-        text += $"\nActual: {currentMode}";
+        GUILayout.BeginArea(new Rect(20, Screen.height - 122f, 390, 102), GUI.skin.box);
+        GUILayout.Label("Diagramas OpenSees");
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("0 Ocultar")) ShowDiagram(DiagramMode.None);
+        if (GUILayout.Button("1 Axial")) ShowDiagram(DiagramMode.Axial);
+        if (GUILayout.Button("2 Corte")) ShowDiagram(DiagramMode.Shear);
+        if (GUILayout.Button("3 Momento")) ShowDiagram(DiagramMode.Moment);
+        GUILayout.EndHorizontal();
+        if (GUILayout.Button("4 Curva P-M HA")) ShowDiagram(DiagramMode.InteractionPM);
+        GUILayout.Label($"Actual: {currentMode}");
+        GUILayout.EndArea();
+
         if (currentMode == DiagramMode.Moment)
         {
-            text += " | solo vigas";
+            GUI.Label(new Rect(420, Screen.height - 112f, 320, 24), "Momento My: valores OpenSees + qL2/8 en vigas");
         }
-        GUI.Box(new Rect(20, 180, 360, 55), text);
+        if (currentMode == DiagramMode.InteractionPM)
+        {
+            DrawPMPanel();
+        }
     }
+
+    private void LoadSemana3Results()
+    {
+        TextAsset resultsJson = Resources.Load<TextAsset>("semana3_resultados_unity");
+        if (resultsJson == null)
+        {
+            semana3Results = null;
+            return;
+        }
+
+        semana3Results = JsonUtility.FromJson<Semana3UnityResults>(resultsJson.text);
+    }
+
+    private void DrawPMPanel()
+    {
+        Rect rect = new Rect(Mathf.Max(20f, Screen.width - 520f), Mathf.Max(285f, Screen.height - 330f), 500f, 310f);
+        GUILayout.BeginArea(rect, GUI.skin.box);
+        if (semana3Results == null || semana3Results.pmPoints == null || semana3Results.pmPoints.Length == 0)
+        {
+            semana3Results = DefaultSemana3Results();
+            GUILayout.Label("Usando puntos P-M por defecto de Semana 3.");
+        }
+
+        GUILayout.Label(semana3Results.capacityTitle);
+        GUILayout.Label($"Seccion: {semana3Results.sectionId} | {semana3Results.b_m:0.00} x {semana3Results.h_m:0.00} m");
+        GUILayout.Label($"fc'={semana3Results.fc_MPa:0.0} MPa | fy={semana3Results.fy_MPa:0.0} MPa | barras={semana3Results.steelBars} | rho={semana3Results.rho_percent:0.###}%");
+        DrawPMChart(new Rect(18f, 82f, 250f, 175f));
+        GUILayout.Space(185f);
+        foreach (PMPoint point in semana3Results.pmPoints)
+        {
+            GUILayout.Label($"{point.label}: P={point.P_kN:0.0} kN, M={point.M_kN_m:0.0} kN*m");
+        }
+        GUILayout.Label("Interpretacion: aumenta M con P moderado; cerca de Po baja hacia M~0.");
+        GUILayout.EndArea();
+    }
+
+    private void DrawPMChart(Rect chartRect)
+    {
+        GUI.Box(chartRect, "");
+        float maxM = 1f;
+        float maxP = Mathf.Max(1f, semana3Results.Po_kN);
+        foreach (PMPoint point in semana3Results.pmPoints)
+        {
+            maxM = Mathf.Max(maxM, point.M_kN_m);
+            maxP = Mathf.Max(maxP, point.P_kN);
+        }
+
+        Vector2 previous = Vector2.zero;
+        for (int i = 0; i < semana3Results.pmPoints.Length; i++)
+        {
+            PMPoint point = semana3Results.pmPoints[i];
+            float x = chartRect.x + 30f + point.M_kN_m / maxM * (chartRect.width - 45f);
+            float y = chartRect.y + chartRect.height - 25f - point.P_kN / maxP * (chartRect.height - 45f);
+            Vector2 current = new Vector2(x, y);
+            if (i > 0)
+            {
+                DrawGuiLine(previous, current, Color.green, 2f);
+            }
+            GUI.Label(new Rect(x - 5f, y - 8f, 80f, 18f), "o");
+            previous = current;
+        }
+
+        GUI.Label(new Rect(chartRect.x + 8f, chartRect.y + 5f, 120f, 20f), "P [kN]");
+        GUI.Label(new Rect(chartRect.x + chartRect.width - 90f, chartRect.y + chartRect.height - 22f, 80f, 20f), "M [kN*m]");
+    }
+
+    private void DrawGuiLine(Vector2 start, Vector2 end, Color color, float width)
+    {
+        Matrix4x4 matrix = GUI.matrix;
+        Color oldColor = GUI.color;
+        GUI.color = color;
+        Vector2 delta = end - start;
+        float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+        GUIUtility.RotateAroundPivot(angle, start);
+        GUI.DrawTexture(new Rect(start.x, start.y, delta.magnitude, width), Texture2D.whiteTexture);
+        GUI.matrix = matrix;
+        GUI.color = oldColor;
+    }
+
+    private Semana3UnityResults DefaultSemana3Results()
+    {
+        return new Semana3UnityResults
+        {
+            capacityTitle = "Parte D - Capacidad HA COL70/70_FIBER",
+            sectionId = "COL70/70_FIBER",
+            b_m = 0.70f,
+            h_m = 0.70f,
+            fc_MPa = 25.0f,
+            fy_MPa = 420.0f,
+            steelBars = 8,
+            barArea_m2 = 0.000510f,
+            Ast_m2 = 0.004080f,
+            rho_percent = 0.833f,
+            Po_kN = 12039.4f,
+            interpretation = "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento; cerca de Po baja hacia M~0.",
+            pmPoints = new PMPoint[]
+            {
+                new PMPoint { label = "Punto 1", P_kN = 0.0f, M_kN_m = 256.373f, phi_1_m = 0.002400f },
+                new PMPoint { label = "Punto 2", P_kN = 1805.910f, M_kN_m = 606.264f, phi_1_m = 0.002400f },
+                new PMPoint { label = "Punto 3", P_kN = 3611.820f, M_kN_m = 865.979f, phi_1_m = 0.002400f },
+                new PMPoint { label = "Punto 4", P_kN = 7223.640f, M_kN_m = 891.056f, phi_1_m = 0.002400f },
+                new PMPoint { label = "Punto 5", P_kN = 12039.400f, M_kN_m = 26.010f, phi_1_m = 0.001060f }
+            }
+        };
+    }
+}
+
+[System.Serializable]
+public class Semana3UnityResults
+{
+    public string capacityTitle;
+    public string sectionId;
+    public float b_m;
+    public float h_m;
+    public float fc_MPa;
+    public float fy_MPa;
+    public int steelBars;
+    public float barArea_m2;
+    public float Ast_m2;
+    public float rho_percent;
+    public float Po_kN;
+    public string interpretation;
+    public PMPoint[] pmPoints;
+}
+
+[System.Serializable]
+public class PMPoint
+{
+    public string label;
+    public float P_kN;
+    public float M_kN_m;
+    public float phi_1_m;
 }

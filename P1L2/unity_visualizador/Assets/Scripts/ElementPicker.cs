@@ -7,6 +7,7 @@ public class ElementPicker : MonoBehaviour
 {
     public Camera targetCamera;
     public string currentText = "Toca o haz click sobre una barra.";
+    private Vector2 resultScroll;
 
     private void Awake()
     {
@@ -84,6 +85,30 @@ public class ElementPicker : MonoBehaviour
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(20, 20, 320, 150), currentText);
+        float width = Mathf.Min(460f, Screen.width - 390f);
+        if (width < 300f)
+        {
+            width = Screen.width - 40f;
+        }
+
+        float height = Mathf.Min(420f, Screen.height - 40f);
+        float x = Mathf.Max(20f, Screen.width - width - 20f);
+        Rect panelRect = new Rect(x, 20f, width, height);
+        Rect scrollRect = new Rect(panelRect.x + 12f, panelRect.y + 32f, width - 24f, height - 44f);
+
+        GUIStyle textStyle = new GUIStyle(GUI.skin.textArea)
+        {
+            wordWrap = true,
+            alignment = TextAnchor.UpperLeft,
+            padding = new RectOffset(10, 10, 10, 10)
+        };
+
+        float contentHeight = Mathf.Max(scrollRect.height - 20f, textStyle.CalcHeight(new GUIContent(currentText), scrollRect.width - 20f) + 20f);
+        Rect viewRect = new Rect(0f, 0f, scrollRect.width - 20f, contentHeight);
+
+        GUI.Box(panelRect, "Resultados seleccionados");
+        resultScroll = GUI.BeginScrollView(scrollRect, resultScroll, viewRect);
+        GUI.TextArea(viewRect, currentText, textStyle);
+        GUI.EndScrollView();
     }
 }

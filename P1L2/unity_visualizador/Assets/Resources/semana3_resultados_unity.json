@@ -1,0 +1,46 @@
+{
+  "capacityTitle": "Parte D - Capacidad HA COL70/70_FIBER",
+  "sectionId": "COL70/70_FIBER",
+  "b_m": 0.7,
+  "h_m": 0.7,
+  "fc_MPa": 25.0,
+  "fy_MPa": 420.0,
+  "steelBars": 8,
+  "barArea_m2": 0.00051,
+  "Ast_m2": 0.00408,
+  "rho_percent": 0.8326530612244899,
+  "Po_kN": 12039.399999999998,
+  "interpretation": "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento por mayor bloque comprimido. Cerca de Po domina la compresion axial y la capacidad a momento baja hacia cero.",
+  "pmPoints": [
+    {
+      "label": "Punto 1",
+      "P_kN": 8.526512829121202e-14,
+      "M_kN_m": 256.3731755970607,
+      "phi_1_m": 0.0024000000000000002
+    },
+    {
+      "label": "Punto 2",
+      "P_kN": 1805.9099999999992,
+      "M_kN_m": 606.2637204610089,
+      "phi_1_m": 0.0024000000000000002
+    },
+    {
+      "label": "Punto 3",
+      "P_kN": 3611.8199999999993,
+      "M_kN_m": 865.9792791204444,
+      "phi_1_m": 0.0024000000000000002
+    },
+    {
+      "label": "Punto 4",
+      "P_kN": 7223.639999999993,
+      "M_kN_m": 891.055687418961,
+      "phi_1_m": 0.0024000000000000002
+    },
+    {
+      "label": "Punto 5",
+      "P_kN": 12039.399999999996,
+      "M_kN_m": 26.010000000001554,
+      "phi_1_m": 0.0010600000000000002
+    }
+  ]
+}
