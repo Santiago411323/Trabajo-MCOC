@@ -33,6 +33,7 @@ Si esta en el Escritorio:
 ```
 
 Ese archivo crea `.venv`, instala `openseespy` y `matplotlib`, y abre el menu de Semana 3.
+Al cerrar el menu, la consola queda abierta para poder leer resultados o errores.
 
 Tambien se puede ejecutar manualmente con PowerShell:
 
