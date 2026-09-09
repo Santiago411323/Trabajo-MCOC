@@ -6,41 +6,44 @@
   "fc_MPa": 25.0,
   "fy_MPa": 420.0,
   "steelBars": 8,
-  "barArea_m2": 0.00051,
-  "Ast_m2": 0.00408,
-  "rho_percent": 0.8326530612244899,
-  "Po_kN": 12039.399999999998,
-  "interpretation": "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento por mayor bloque comprimido. Cerca de Po domina la compresion axial y la capacidad a momento baja hacia cero.",
+  "barArea_m2": 0.0004908738521234052,
+  "barArea_mm2": 490.87385212340524,
+  "barDiameter_mm": 25.000000000000004,
+  "Ast_m2": 0.003926990816987242,
+  "Ast_mm2": 3926.990816987242,
+  "rho_percent": 0.8014266973443351,
+  "Po_kN": 11978.387588273663,
+  "interpretation": "La curva M-phi se extendio hasta curvaturas altas para pasar el tramo elastico y capturar la fluencia del acero. Luego el momento tiende a estabilizarse porque el acero queda plastificado y el hormigon comprimido controla la respuesta.",
   "pmPoints": [
     {
       "label": "Punto 1",
-      "P_kN": 8.526512829121202e-14,
-      "M_kN_m": 256.3731755970607,
-      "phi_1_m": 0.0024000000000000002
+      "P_kN": 1.5347723092418164e-12,
+      "M_kN_m": 510.9592562050946,
+      "phi_1_m": 0.08
     },
     {
       "label": "Punto 2",
-      "P_kN": 1805.9099999999992,
-      "M_kN_m": 606.2637204610089,
-      "phi_1_m": 0.0024000000000000002
+      "P_kN": 1796.7581382410508,
+      "M_kN_m": 978.5696257050508,
+      "phi_1_m": 0.0184
     },
     {
       "label": "Punto 3",
-      "P_kN": 3611.8199999999993,
-      "M_kN_m": 865.9792791204444,
-      "phi_1_m": 0.0024000000000000002
+      "P_kN": 3593.5162764821025,
+      "M_kN_m": 1231.8250345285483,
+      "phi_1_m": 0.0308
     },
     {
       "label": "Punto 4",
-      "P_kN": 7223.639999999993,
-      "M_kN_m": 891.055687418961,
-      "phi_1_m": 0.0024000000000000002
+      "P_kN": 7187.032552964198,
+      "M_kN_m": 1199.3906888506779,
+      "phi_1_m": 0.024
     },
     {
       "label": "Punto 5",
-      "P_kN": 12039.399999999996,
-      "M_kN_m": 26.010000000001554,
-      "phi_1_m": 0.0010600000000000002
+      "P_kN": 11978.387588273656,
+      "M_kN_m": 27.746644491276236,
+      "phi_1_m": 0.045200000000000004
     }
   ]
 }

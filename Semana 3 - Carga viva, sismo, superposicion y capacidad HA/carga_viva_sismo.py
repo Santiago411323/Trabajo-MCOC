@@ -42,6 +42,7 @@ E_CONCRETE = 25_000_000.0
 NU_CONCRETE = 0.20
 G_CONCRETE = E_CONCRETE / (2.0 * (1.0 + NU_CONCRETE))
 DEFAULT_LAMBDAS = {"G": 1.0, "Q": 0.5, "EX": 1.0, "EY": 0.3}
+BAR_DIAMETER_MM = 25.0
 
 
 def load_json(path):
@@ -650,7 +651,7 @@ def make_column_fibers():
     fc = 25_000.0
     fy = 420_000.0
     es = 200_000_000.0
-    bar_area = 0.000510
+    bar_area = math.pi * (BAR_DIAMETER_MM / 1000.0) ** 2 / 4.0
     fibers = []
     nx = ny = 20
     for ix in range(nx):
@@ -674,6 +675,11 @@ def make_column_fibers():
     return {"b": b, "h": h, "cover": cover, "fc": fc, "fy": fy, "Es": es, "bar_area_m2": bar_area, "fibers": fibers, "rebar_xy": rebar_xy}
 
 
+def bar_diameter_mm(bar_area_m2):
+    area_mm2 = bar_area_m2 * 1_000_000.0
+    return math.sqrt(4.0 * area_mm2 / math.pi)
+
+
 def define_opensees_fiber_section():
     if ops is None:
         raise RuntimeError("Falta instalar openseespy para declarar la Fiber Section.")
@@ -691,7 +697,7 @@ def define_opensees_fiber_section():
     es = 200_000_000.0
     b = h = 0.70
     cover = 0.05
-    bar_area = 0.000510
+    bar_area = math.pi * (BAR_DIAMETER_MM / 1000.0) ** 2 / 4.0
 
     ops.uniaxialMaterial("Concrete01", concrete_tag, fc, epsc0, fcu, epscu)
     ops.uniaxialMaterial("Steel01", steel_tag, fy, es, 0.01)
@@ -710,27 +716,42 @@ def define_opensees_fiber_section():
         "concrete_material": {"tag": concrete_tag, "type": "Concrete01", "fc_kN_m2": fc, "epsc0": epsc0, "fcu_kN_m2": fcu, "epscu": epscu},
         "steel_material": {"tag": steel_tag, "type": "Steel01", "fy_kN_m2": fy, "Es_kN_m2": es, "b": 0.01},
         "patch": "rect concrete 20 x 20",
-        "reinforcement": "3 barras abajo, 2 al medio, 3 arriba; area 0.000510 m2 por barra",
+        "reinforcement": "3 barras abajo, 2 al medio, 3 arriba; diametro 25 mm por barra",
     }
 
 
 def section_response(section, eps0, phi):
     p = 0.0
     m = 0.0
+    max_steel_strain = 0.0
+    max_concrete_strain = 0.0
     for fiber in section["fibers"]:
         eps = eps0 - phi * fiber["y"]
-        stress = concrete_stress(eps, section["fc"]) if fiber["type"] == "concrete" else steel_stress(eps, section["fy"], section["Es"])
+        if fiber["type"] == "concrete":
+            stress = concrete_stress(eps, section["fc"])
+            max_concrete_strain = max(max_concrete_strain, eps)
+        else:
+            stress = steel_stress(eps, section["fy"], section["Es"])
+            max_steel_strain = max(max_steel_strain, abs(eps))
         force = stress * fiber["area"]
         p += force
         m += force * fiber["y"]
-    return p, m
+    return p, m, max_steel_strain, max_concrete_strain
 
 
 def solve_eps0_for_p(section, phi, target_p):
     lo, hi = -0.02, 0.02
+    p_lo, _, _, _ = section_response(section, lo, phi)
+    p_hi, _, _, _ = section_response(section, hi, phi)
+    while p_lo > target_p and lo > -1.0:
+        lo *= 2.0
+        p_lo, _, _, _ = section_response(section, lo, phi)
+    while p_hi < target_p and hi < 1.0:
+        hi *= 2.0
+        p_hi, _, _, _ = section_response(section, hi, phi)
     for _ in range(80):
         mid = 0.5 * (lo + hi)
-        p, _ = section_response(section, mid, phi)
+        p, _, _, _ = section_response(section, mid, phi)
         if p < target_p:
             lo = mid
         else:
@@ -741,15 +762,30 @@ def solve_eps0_for_p(section, phi, target_p):
 def fiber_section_capacity():
     section = make_column_fibers()
     opensees_section = define_opensees_fiber_section()
-    phis = [i * 0.00002 for i in range(1, 121)]
+    phis = [i * 0.00010 for i in range(1, 801)]
+    steel_yield_strain = section["fy"] / section["Es"]
     mphi = []
+    first_yield = None
     for phi in phis:
         eps0 = solve_eps0_for_p(section, phi, 0.0)
-        p, m = section_response(section, eps0, phi)
-        mphi.append({"phi_1_m": phi, "P_kN": p, "M_kN_m": abs(m)})
+        p, m, max_steel_strain, max_concrete_strain = section_response(section, eps0, phi)
+        row = {
+            "phi_1_m": phi,
+            "P_kN": p,
+            "M_kN_m": abs(m),
+            "eps0": eps0,
+            "max_steel_strain": max_steel_strain,
+            "max_concrete_strain": max_concrete_strain,
+            "steel_yielded": max_steel_strain >= steel_yield_strain,
+        }
+        if first_yield is None and row["steel_yielded"]:
+            first_yield = row.copy()
+        mphi.append(row)
 
     ag = section["b"] * section["h"]
     ast = len(section["rebar_xy"]) * section["bar_area_m2"]
+    bar_area_mm2 = section["bar_area_m2"] * 1_000_000.0
+    ast_mm2 = ast * 1_000_000.0
     po = 0.85 * section["fc"] * (ag - ast) + section["fy"] * ast
     pm_targets = [0.0, 0.15 * po, 0.30 * po, 0.60 * po, po]
     pm = []
@@ -757,7 +793,7 @@ def fiber_section_capacity():
         best = None
         for phi in phis:
             eps0 = solve_eps0_for_p(section, phi, target)
-            p, m = section_response(section, eps0, phi)
+            p, m, _, _ = section_response(section, eps0, phi)
             candidate = {"P_kN": p, "M_kN_m": abs(m), "phi_1_m": phi, "P_objetivo_kN": target}
             if best is None or candidate["M_kN_m"] > best["M_kN_m"]:
                 best = candidate
@@ -769,9 +805,14 @@ def fiber_section_capacity():
             "opensees_section_tag": opensees_section["section_tag"],
             "b_m": section["b"],
             "h_m": section["h"],
+            "b_mm": section["b"] * 1000.0,
+            "h_mm": section["h"] * 1000.0,
             "recubrimiento_m": section["cover"],
+            "recubrimiento_mm": section["cover"] * 1000.0,
             "Ag_m2": ag,
+            "Ag_mm2": ag * 1_000_000.0,
             "Ast_m2": ast,
+            "Ast_mm2": ast_mm2,
             "cuantia_refuerzo": ast / ag,
             "fc_MPa": section["fc"] / 1000.0,
             "fy_MPa": section["fy"] / 1000.0,
@@ -779,13 +820,18 @@ def fiber_section_capacity():
             "concrete_fibers": 400,
             "steel_bars": len(section["rebar_xy"]),
             "bar_area_m2": section["bar_area_m2"],
+            "bar_area_mm2": bar_area_mm2,
+            "bar_diameter_mm": bar_diameter_mm(section["bar_area_m2"]),
+            "steel_yield_strain": steel_yield_strain,
             "Po_kN": po,
         },
         "opensees_definition": opensees_section,
         "reinforcement_coordinates_xy_m": [{"x": x, "y": y} for x, y in section["rebar_xy"]],
+        "reinforcement_coordinates_xy_mm": [{"x": x * 1000.0, "y": y * 1000.0} for x, y in section["rebar_xy"]],
         "m_phi": mphi,
+        "m_phi_first_steel_yield": first_yield,
         "p_m_points": pm,
-        "interpretacion": "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento por mayor bloque comprimido. Cerca de Po domina la compresion axial y la capacidad a momento baja hacia cero.",
+        "interpretacion": "La curva M-phi se extendio hasta curvaturas altas para pasar el tramo elastico y capturar la fluencia del acero. Luego el momento tiende a estabilizarse porque el acero queda plastificado y el hormigon comprimido controla la respuesta.",
     }
 
 
@@ -813,9 +859,15 @@ def plot_capacity(capacity):
 
     plt.figure(figsize=(7, 4))
     plt.plot([p["phi_1_m"] for p in capacity["m_phi"]], [p["M_kN_m"] for p in capacity["m_phi"]], "b-")
+    first_yield = capacity.get("m_phi_first_steel_yield")
+    if first_yield:
+        plt.plot(first_yield["phi_1_m"], first_yield["M_kN_m"], "ro", label="Primera fluencia acero")
+        plt.axvline(first_yield["phi_1_m"], color="r", linestyle="--", linewidth=0.9, alpha=0.7)
     plt.xlabel("Curvatura phi [1/m]")
     plt.ylabel("Momento [kN m]")
-    plt.title("M-phi COL70/70 fiber (P=0 aprox.)")
+    plt.title("M-phi COL70/70 fiber completa (P=0 aprox.)")
+    if first_yield:
+        plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(OUTPUT_PATH.parent / "M_phi_COL70_70.png", dpi=160)
@@ -843,7 +895,10 @@ def export_capacity_for_unity(capacity):
         "fy_MPa": section["fy_MPa"],
         "steelBars": section["steel_bars"],
         "barArea_m2": section["bar_area_m2"],
+        "barArea_mm2": section["bar_area_mm2"],
+        "barDiameter_mm": section["bar_diameter_mm"],
         "Ast_m2": section["Ast_m2"],
+        "Ast_mm2": section["Ast_mm2"],
         "rho_percent": 100.0 * section["cuantia_refuerzo"],
         "Po_kN": section["Po_kN"],
         "interpretation": capacity["interpretacion"],
@@ -866,15 +921,21 @@ def print_capacity(capacity):
     print(f"Seccion Fiber: {section['id']}")
     print("\nDiscretizacion")
     print(f"  b x h                     = {section['b_m']:.2f} x {section['h_m']:.2f} m")
+    print(f"  b x h                     = {section['b_mm']:.0f} x {section['h_mm']:.0f} mm")
     print(f"  Fibras de hormigon        = {section['concrete_fibers']} (20 x 20)")
     print(f"  Barras de acero           = {section['steel_bars']}")
     print(f"  Recubrimiento             = {section['recubrimiento_m']:.3f} m")
+    print(f"  Recubrimiento             = {section['recubrimiento_mm']:.0f} mm")
     print("\nMateriales")
     print(f"  Hormigon Concrete01       = fc' {section['fc_MPa']:.1f} MPa")
     print(f"  Acero Steel01             = fy {section['fy_MPa']:.1f} MPa, Es {section['Es_MPa']:.0f} MPa")
     print("\nRefuerzo")
     print(f"  Area por barra            = {section['bar_area_m2']:.6f} m2")
+    print(f"  Area por barra            = {section['bar_area_mm2']:.1f} mm2")
+    print(f"  Diametro equivalente barra = {section['bar_diameter_mm']:.1f} mm")
     print(f"  Ast total                 = {section['Ast_m2']:.6f} m2")
+    print(f"  Ast total                 = {section['Ast_mm2']:.1f} mm2")
+    print(f"  Ag bruta                  = {section['Ag_mm2']:.1f} mm2")
     print(f"  Cuantia                   = {100.0 * section['cuantia_refuerzo']:.3f} %")
     print(f"  Po aproximado             = {section['Po_kN']:.3f} kN")
     print("\nPrimeros puntos curva P-M")
@@ -882,6 +943,12 @@ def print_capacity(capacity):
         print(f"  Punto {index}: P = {point['P_kN']:.3f} kN, M = {point['M_kN_m']:.3f} kN*m, phi = {point['phi_1_m']:.6f} 1/m")
     print("\nInterpretacion")
     print(f"  {capacity['interpretacion']}")
+    first_yield = capacity.get("m_phi_first_steel_yield")
+    if first_yield:
+        print("\nCurva momento-curvatura M-phi")
+        print(f"  Curvatura maxima analizada       = {capacity['m_phi'][-1]['phi_1_m']:.6f} 1/m")
+        print(f"  Deformacion de fluencia acero    = {section['steel_yield_strain']:.6f}")
+        print(f"  Primera fluencia del acero       = phi {first_yield['phi_1_m']:.6f} 1/m, M {first_yield['M_kN_m']:.3f} kN*m")
     print("\nGraficos generados")
     print(f"  {OUTPUT_PATH.parent / 'fiber_COL70_70.png'}")
     print(f"  {OUTPUT_PATH.parent / 'M_phi_COL70_70.png'}")

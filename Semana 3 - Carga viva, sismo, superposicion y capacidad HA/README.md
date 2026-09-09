@@ -269,23 +269,36 @@ Resultados principales obtenidos:
 ```text
 Seccion: COL70/70_FIBER
 b x h = 0.70 x 0.70 m
+b x h = 700 x 700 mm
 Hormigon: Concrete01, fc' = 25 MPa
 Acero: Steel01, fy = 420 MPa, Es = 200000 MPa
 Fibras de hormigon = 400 (20 x 20)
-Refuerzo = 8 barras, area por barra = 0.000510 m2
-Ast = 0.004080 m2
-Cuantia = 0.833 %
-Po aproximado = 12039.400 kN
+Refuerzo = 8 barras de diametro 25 mm
+Area por barra = 0.000491 m2
+Area por barra = 490.9 mm2
+Ast = 0.003927 m2
+Ast = 3927.0 mm2
+Ag = 490000 mm2
+Cuantia = 0.801 %
+Po aproximado = 11978.388 kN
 ```
 
 Primeros puntos P-M reportados:
 
 ```text
-P =     0.000 kN, M = 256.373 kN*m
-P =  1805.910 kN, M = 606.264 kN*m
-P =  3611.820 kN, M = 865.979 kN*m
-P =  7223.640 kN, M = 891.056 kN*m
-P = 12039.400 kN, M =  26.010 kN*m
+P =     0.000 kN, M = 510.959 kN*m
+P =  1796.758 kN, M = 978.570 kN*m
+P =  3593.516 kN, M = 1231.825 kN*m
+P =  7187.033 kN, M = 1199.391 kN*m
+P = 11978.388 kN, M =  27.747 kN*m
+```
+
+La curva M-phi se extendio hasta `phi = 0.080 1/m`. La primera fluencia del acero aparece aproximadamente en:
+
+```text
+eps_y = fy / Es = 0.002100
+phi_y = 0.004200 1/m
+M_y = 425.871 kN*m
 ```
 
 Interpretacion inicial:

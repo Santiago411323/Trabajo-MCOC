@@ -301,6 +301,7 @@ public class DiagramController : MonoBehaviour
         GUILayout.Label(semana3Results.capacityTitle);
         GUILayout.Label($"Seccion: {semana3Results.sectionId} | {semana3Results.b_m:0.00} x {semana3Results.h_m:0.00} m");
         GUILayout.Label($"fc'={semana3Results.fc_MPa:0.0} MPa | fy={semana3Results.fy_MPa:0.0} MPa | barras={semana3Results.steelBars} | rho={semana3Results.rho_percent:0.###}%");
+        GUILayout.Label($"Barra: diam. {semana3Results.barDiameter_mm:0.0} mm | As={semana3Results.barArea_mm2:0.0} mm2 | Ast={semana3Results.Ast_mm2:0.0} mm2");
         DrawPMChart(new Rect(18f, 82f, 250f, 175f));
         GUILayout.Space(185f);
         foreach (PMPoint point in semana3Results.pmPoints)
@@ -365,18 +366,21 @@ public class DiagramController : MonoBehaviour
             fc_MPa = 25.0f,
             fy_MPa = 420.0f,
             steelBars = 8,
-            barArea_m2 = 0.000510f,
-            Ast_m2 = 0.004080f,
-            rho_percent = 0.833f,
-            Po_kN = 12039.4f,
+            barArea_m2 = 0.000491f,
+            barArea_mm2 = 490.9f,
+            barDiameter_mm = 25.0f,
+            Ast_m2 = 0.003927f,
+            Ast_mm2 = 3927.0f,
+            rho_percent = 0.801f,
+            Po_kN = 11978.4f,
             interpretation = "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento; cerca de Po baja hacia M~0.",
             pmPoints = new PMPoint[]
             {
-                new PMPoint { label = "Punto 1", P_kN = 0.0f, M_kN_m = 256.373f, phi_1_m = 0.002400f },
-                new PMPoint { label = "Punto 2", P_kN = 1805.910f, M_kN_m = 606.264f, phi_1_m = 0.002400f },
-                new PMPoint { label = "Punto 3", P_kN = 3611.820f, M_kN_m = 865.979f, phi_1_m = 0.002400f },
-                new PMPoint { label = "Punto 4", P_kN = 7223.640f, M_kN_m = 891.056f, phi_1_m = 0.002400f },
-                new PMPoint { label = "Punto 5", P_kN = 12039.400f, M_kN_m = 26.010f, phi_1_m = 0.001060f }
+                new PMPoint { label = "Punto 1", P_kN = 0.0f, M_kN_m = 510.959f, phi_1_m = 0.080000f },
+                new PMPoint { label = "Punto 2", P_kN = 1796.758f, M_kN_m = 978.570f, phi_1_m = 0.018400f },
+                new PMPoint { label = "Punto 3", P_kN = 3593.516f, M_kN_m = 1231.825f, phi_1_m = 0.030800f },
+                new PMPoint { label = "Punto 4", P_kN = 7187.033f, M_kN_m = 1199.391f, phi_1_m = 0.024000f },
+                new PMPoint { label = "Punto 5", P_kN = 11978.388f, M_kN_m = 27.747f, phi_1_m = 0.045200f }
             }
         };
     }
@@ -393,7 +397,10 @@ public class Semana3UnityResults
     public float fy_MPa;
     public int steelBars;
     public float barArea_m2;
+    public float barArea_mm2;
+    public float barDiameter_mm;
     public float Ast_m2;
+    public float Ast_mm2;
     public float rho_percent;
     public float Po_kN;
     public string interpretation;
