@@ -648,7 +648,7 @@ def steel_stress(eps, fy, es):
 def make_column_fibers():
     b = h = 0.70
     cover = 0.05
-    fc = 25_000.0
+    fc = 30_000.0  # H-30
     fy = 420_000.0
     es = 200_000_000.0
     bar_area = math.pi * (BAR_DIAMETER_MM / 1000.0) ** 2 / 4.0
@@ -689,9 +689,9 @@ def define_opensees_fiber_section():
     concrete_tag = 1
     steel_tag = 2
     section_tag = 1
-    fc = -25_000.0
+    fc = -30_000.0  # H-30
     epsc0 = -0.002
-    fcu = -20_000.0
+    fcu = -25_500.0
     epscu = -0.003
     fy = 420_000.0
     es = 200_000_000.0

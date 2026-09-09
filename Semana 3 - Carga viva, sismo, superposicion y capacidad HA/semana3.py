@@ -23,7 +23,7 @@ import openseespy.opensees as ops
 ROOT = Path(__file__).resolve().parents[1]
 BASE = Path(__file__).resolve().parent
 OUT = BASE / "resultados"
-COMPLETE_JSON = ROOT / "edificio completo" / "unity_visualizador" / "Assets" / "Resources" / "estructura_completo_unity.json"
+COMPLETE_JSON = ROOT / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / "estructura_completo_unity.json"
 
 E_CONCRETE = 25_000_000.0  # kN/m2
 NU = 0.20
@@ -368,7 +368,7 @@ def steel_stress(eps, fy, es):
 def make_column_fibers():
     b = h = 0.70
     cover = 0.05
-    fc = 25_000.0
+    fc = 30_000.0  # H-30
     fy = 420_000.0
     es = 200_000_000.0
     bar_area = math.pi * (BAR_DIAMETER_MM / 1000.0) ** 2 / 4.0
@@ -493,9 +493,9 @@ def define_opensees_fiber_section():
     concrete_tag = 1
     steel_tag = 2
     section_tag = 1
-    fc = -25_000.0
+    fc = -30_000.0  # H-30
     epsc0 = -0.002
-    fcu = -20_000.0
+    fcu = -25_500.0
     epscu = -0.003
     fy = 420_000.0
     es = 200_000_000.0

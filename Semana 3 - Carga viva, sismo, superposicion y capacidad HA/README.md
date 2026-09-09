@@ -237,14 +237,14 @@ Esto confirma que el modelo lineal cumple superposicion para los casos construid
 Se construye una seccion `Fiber` de columna:
 
 ```text
-COL70/70_FIBER
+COL70/70_FIBER (H-30)
 b = 0.70 m
 h = 0.70 m
-fc' = 25 MPa
+fc' = 30 MPa
 fy = 420 MPa
 400 fibras de hormigon
 8 barras de acero
-Area por barra = 0.000510 m2
+Diametro de barra = 25 mm
 ```
 
 Ademas se declara una `ops.section("Fiber", ...)` en OpenSees con:
@@ -270,7 +270,7 @@ Resultados principales obtenidos:
 Seccion: COL70/70_FIBER
 b x h = 0.70 x 0.70 m
 b x h = 700 x 700 mm
-Hormigon: Concrete01, fc' = 25 MPa
+Hormigon: Concrete01, fc' = 30 MPa (H-30)
 Acero: Steel01, fy = 420 MPa, Es = 200000 MPa
 Fibras de hormigon = 400 (20 x 20)
 Refuerzo = 8 barras de diametro 25 mm
@@ -280,10 +280,20 @@ Ast = 0.003927 m2
 Ast = 3927.0 mm2
 Ag = 490000 mm2
 Cuantia = 0.801 %
-Po aproximado = 11978.388 kN
+Po aproximado = 14044.198 kN
 ```
 
-Puntos P-M simplificados reportados:
+Puntos P-M reportados (metodo de fibras, f'c = 30 MPa):
+
+```text
+P =     0.000 kN, M = 514.519 kN*m
+P =  2106.630 kN, M = 1074.664 kN*m
+P =  4213.259 kN, M = 1388.095 kN*m
+P =  8426.519 kN, M = 1375.427 kN*m
+P = 14044.198 kN, M =  33.296 kN*m
+```
+
+Puntos P-M simplificados (metodo nominal, bloque de tensiones):
 
 ```text
 A) Compresion pura:      Pn = 11978.388 kN, Mn =    0.000 kN*m, phi = 0.65
