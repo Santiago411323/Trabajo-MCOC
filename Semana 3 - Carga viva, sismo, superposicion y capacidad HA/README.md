@@ -283,14 +283,14 @@ Cuantia = 0.801 %
 Po aproximado = 11978.388 kN
 ```
 
-Primeros puntos P-M reportados:
+Puntos P-M simplificados reportados:
 
 ```text
-P =     0.000 kN, M = 510.959 kN*m
-P =  1796.758 kN, M = 978.570 kN*m
-P =  3593.516 kN, M = 1231.825 kN*m
-P =  7187.033 kN, M = 1199.391 kN*m
-P = 11978.388 kN, M =  27.747 kN*m
+A) Compresion pura:      Pn = 11978.388 kN, Mn =    0.000 kN*m, phi = 0.65
+B) Balance:              Pn =  5020.930 kN, Mn = 1270.813 kN*m, phi = 0.65
+C) Ultima falla ductil:  Pn =  2825.149 kN, Mn = 1130.504 kN*m, phi = 0.90
+D) Flexion pura:         Pn =     0.000 kN, Mn =  513.175 kN*m, phi = 0.90
+E) Traccion pura:        Pn = -1649.336 kN, Mn =    0.000 kN*m, phi = 0.90
 ```
 
 La curva M-phi se extendio hasta `phi = 0.080 1/m`. La primera fluencia del acero aparece aproximadamente en:

@@ -13,37 +13,47 @@
   "Ast_mm2": 3926.990816987242,
   "rho_percent": 0.8014266973443351,
   "Po_kN": 11978.387588273663,
-  "interpretation": "La curva M-phi se extendio hasta curvaturas altas para pasar el tramo elastico y capturar la fluencia del acero. Luego el momento tiende a estabilizarse porque el acero queda plastificado y el hormigon comprimido controla la respuesta.",
+  "interpretation": "El diagrama P-M se construye con cinco estados manuales: compresion pura, balance, ultima falla ductil, flexion pura y traccion pura. La curva M-phi se mantiene como verificacion fibra a fibra de momento-curvatura.",
   "pmPoints": [
     {
-      "label": "Punto 1",
-      "P_kN": 1.5347723092418164e-12,
-      "M_kN_m": 510.9592562050946,
-      "phi_1_m": 0.08
+      "label": "A) Compresion pura",
+      "P_kN": 11978.387588273663,
+      "M_kN_m": 0.0,
+      "phiP_kN": 7785.951932377881,
+      "phiM_kN_m": 0.0,
+      "phi_1_m": 0.0
     },
     {
-      "label": "Punto 2",
-      "P_kN": 1796.7581382410508,
-      "M_kN_m": 978.5696257050508,
-      "phi_1_m": 0.0184
+      "label": "B) Balance",
+      "P_kN": 5020.93017446567,
+      "M_kN_m": 1270.813168492073,
+      "phiP_kN": 3263.604613402685,
+      "phiM_kN_m": 826.0285595198475,
+      "phi_1_m": 0.0
     },
     {
-      "label": "Punto 3",
-      "P_kN": 3593.5162764821025,
-      "M_kN_m": 1231.8250345285483,
-      "phi_1_m": 0.0308
+      "label": "C) Ultima falla ductil",
+      "P_kN": 2825.1492783123726,
+      "M_kN_m": 1130.503519168185,
+      "phiP_kN": 2542.6343504811352,
+      "phiM_kN_m": 1017.4531672513665,
+      "phi_1_m": 0.0
     },
     {
-      "label": "Punto 4",
-      "P_kN": 7187.032552964198,
-      "M_kN_m": 1199.3906888506779,
-      "phi_1_m": 0.024
+      "label": "D) Flexion pura",
+      "P_kN": 0.0,
+      "M_kN_m": 513.1746866604899,
+      "phiP_kN": 0.0,
+      "phiM_kN_m": 461.85721799444093,
+      "phi_1_m": 0.0
     },
     {
-      "label": "Punto 5",
-      "P_kN": 11978.387588273656,
-      "M_kN_m": 27.746644491276236,
-      "phi_1_m": 0.045200000000000004
+      "label": "E) Traccion pura",
+      "P_kN": -1649.3361431346416,
+      "M_kN_m": 0.0,
+      "phiP_kN": -1484.4025288211774,
+      "phiM_kN_m": 0.0,
+      "phi_1_m": 0.0
     }
   ]
 }

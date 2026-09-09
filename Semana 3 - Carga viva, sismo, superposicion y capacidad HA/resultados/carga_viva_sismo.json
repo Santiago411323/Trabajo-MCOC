@@ -11569,36 +11569,161 @@
     },
     "p_m_points": [
       {
-        "P_kN": 1.5347723092418164e-12,
-        "M_kN_m": 510.9592562050946,
-        "phi_1_m": 0.08,
-        "P_objetivo_kN": 0.0
+        "estado": "A) Compresion pura",
+        "phi_reduccion": 0.65,
+        "eps_cu": null,
+        "eps_st_ultima_fila": null,
+        "c_mm": null,
+        "a_mm": 700.0,
+        "Cc_kN": null,
+        "Pn_kN": 11978.387588273663,
+        "Mn_kN_m": 0.0,
+        "phiPn_kN": 7785.951932377881,
+        "phiMn_kN_m": 0.0,
+        "nota": "Toda la seccion trabaja en compresion; momento nulo o despreciable."
       },
       {
-        "P_kN": 1796.7581382410508,
-        "M_kN_m": 978.5696257050508,
-        "phi_1_m": 0.0184,
-        "P_objetivo_kN": 1796.7581382410494
+        "estado": "B) Balance",
+        "phi_reduccion": 0.65,
+        "eps_cu": 0.003,
+        "eps_st_ultima_fila": 0.002,
+        "c_mm": 390.0,
+        "a_mm": 331.5,
+        "Cc_kN": 4931.0625,
+        "Pn_kN": 5020.93017446567,
+        "Mn_kN_m": 1270.813168492073,
+        "phiPn_kN": 3263.604613402685,
+        "phiMn_kN_m": 826.0285595198475,
+        "steel_rows": [
+          {
+            "fila": "superior",
+            "barras": 3,
+            "d_mm": 50.0,
+            "eps_si": 0.0026153846153846153,
+            "fs_MPa": 420.0,
+            "Fs_kN": 618.5010536754907,
+            "fluye": true
+          },
+          {
+            "fila": "media",
+            "barras": 2,
+            "d_mm": 350.0,
+            "eps_si": 0.0003076923076923077,
+            "fs_MPa": 61.53846153846154,
+            "Fs_kN": 60.41524333826526,
+            "fluye": false
+          },
+          {
+            "fila": "inferior_traccion",
+            "barras": 3,
+            "d_mm": 650.0,
+            "eps_si": -0.002,
+            "fs_MPa": -400.0,
+            "Fs_kN": -589.0486225480863,
+            "fluye": false
+          }
+        ]
       },
       {
-        "P_kN": 3593.5162764821025,
-        "M_kN_m": 1231.8250345285483,
-        "phi_1_m": 0.0308,
-        "P_objetivo_kN": 3593.516276482099
+        "estado": "C) Ultima falla ductil",
+        "phi_reduccion": 0.9,
+        "eps_cu": 0.003,
+        "eps_st_ultima_fila": 0.005,
+        "c_mm": 243.75,
+        "a_mm": 207.1875,
+        "Cc_kN": 3081.9140625,
+        "Pn_kN": 2825.1492783123726,
+        "Mn_kN_m": 1130.503519168185,
+        "phiPn_kN": 2542.6343504811352,
+        "phiMn_kN_m": 1017.4531672513665,
+        "steel_rows": [
+          {
+            "fila": "superior",
+            "barras": 3,
+            "d_mm": 50.0,
+            "eps_si": 0.0023846153846153848,
+            "fs_MPa": 420.0,
+            "Fs_kN": 618.5010536754907,
+            "fluye": true
+          },
+          {
+            "fila": "media",
+            "barras": 2,
+            "d_mm": 350.0,
+            "eps_si": -0.0013076923076923079,
+            "fs_MPa": -261.5384615384616,
+            "Fs_kN": -256.7647841876274,
+            "fluye": false
+          },
+          {
+            "fila": "inferior_traccion",
+            "barras": 3,
+            "d_mm": 650.0,
+            "eps_si": -0.005,
+            "fs_MPa": -420.0,
+            "Fs_kN": -618.5010536754907,
+            "fluye": true
+          }
+        ]
       },
       {
-        "P_kN": 7187.032552964198,
-        "M_kN_m": 1199.3906888506779,
-        "phi_1_m": 0.024,
-        "P_objetivo_kN": 7187.032552964198
+        "estado": "D) Flexion pura",
+        "phi_reduccion": 0.9,
+        "eps_cu": 0.003,
+        "eps_st_ultima_fila": null,
+        "c_mm": 65.22067744752135,
+        "a_mm": 55.43757583039315,
+        "Cc_kN": 824.6339404770982,
+        "Pn_kN": 0.0,
+        "Mn_kN_m": 513.1746866604899,
+        "phiPn_kN": 0.0,
+        "phiMn_kN_m": 461.85721799444093,
+        "steel_rows": [
+          {
+            "fila": "superior",
+            "barras": 3,
+            "d_mm": 50.0,
+            "eps_si": 0.0007001158854767369,
+            "fs_MPa": 140.0231770953474,
+            "Fs_kN": 206.20114898205284,
+            "fluye": false
+          },
+          {
+            "fila": "media",
+            "barras": 2,
+            "d_mm": 350.0,
+            "eps_si": -0.013099188801662843,
+            "fs_MPa": -420.0,
+            "Fs_kN": -412.3340357836604,
+            "fluye": true
+          },
+          {
+            "fila": "inferior_traccion",
+            "barras": 3,
+            "d_mm": 650.0,
+            "eps_si": -0.02689849348880242,
+            "fs_MPa": -420.0,
+            "Fs_kN": -618.5010536754907,
+            "fluye": true
+          }
+        ],
+        "nota": "c se obtiene iterando hasta Pn ~= 0."
       },
       {
-        "P_kN": 11978.387588273656,
-        "M_kN_m": 27.746644491276236,
-        "phi_1_m": 0.045200000000000004,
-        "P_objetivo_kN": 11978.387588273663
+        "estado": "E) Traccion pura",
+        "phi_reduccion": 0.9,
+        "eps_cu": null,
+        "eps_st_ultima_fila": null,
+        "c_mm": null,
+        "a_mm": 0.0,
+        "Cc_kN": 0.0,
+        "Pn_kN": -1649.3361431346416,
+        "Mn_kN_m": 0.0,
+        "phiPn_kN": -1484.4025288211774,
+        "phiMn_kN_m": 0.0,
+        "nota": "Hormigon traccionado agrietado; solo aporta el acero en fluencia."
       }
     ],
-    "interpretacion": "La curva M-phi se extendio hasta curvaturas altas para pasar el tramo elastico y capturar la fluencia del acero. Luego el momento tiende a estabilizarse porque el acero queda plastificado y el hormigon comprimido controla la respuesta."
+    "interpretacion": "El diagrama P-M se construye con cinco estados manuales: compresion pura, balance, ultima falla ductil, flexion pura y traccion pura. La curva M-phi se mantiene como verificacion fibra a fibra de momento-curvatura."
   }
 }

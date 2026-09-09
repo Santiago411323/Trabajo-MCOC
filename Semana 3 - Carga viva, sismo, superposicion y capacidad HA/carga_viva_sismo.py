@@ -759,6 +759,134 @@ def solve_eps0_for_p(section, phi, target_p):
     return 0.5 * (lo + hi)
 
 
+def steel_force_from_strain(eps, area_mm2, fy_mpa, es_mpa):
+    stress_mpa = max(-fy_mpa, min(fy_mpa, es_mpa * eps))
+    return stress_mpa * area_mm2 / 1000.0, stress_mpa
+
+
+def steel_rows_mm(section):
+    h_mm = section["h"] * 1000.0
+    cover_mm = section["cover"] * 1000.0
+    bar_area_mm2 = section["bar_area_m2"] * 1_000_000.0
+    return [
+        {"fila": "superior", "bars": 3, "d_mm": cover_mm, "area_mm2": 3 * bar_area_mm2},
+        {"fila": "media", "bars": 2, "d_mm": h_mm / 2.0, "area_mm2": 2 * bar_area_mm2},
+        {"fila": "inferior_traccion", "bars": 3, "d_mm": h_mm - cover_mm, "area_mm2": 3 * bar_area_mm2},
+    ]
+
+
+def nominal_pm_from_c(section, c_mm, label, phi_factor, eps_tension):
+    b_mm = section["b"] * 1000.0
+    h_mm = section["h"] * 1000.0
+    fc_mpa = section["fc"] / 1000.0
+    fy_mpa = section["fy"] / 1000.0
+    es_mpa = section["Es"] / 1000.0
+    eps_cu = 0.003
+    beta1 = 0.85
+    a_mm = min(beta1 * c_mm, h_mm)
+    concrete_force_kN = 0.85 * fc_mpa * a_mm * b_mm / 1000.0
+    concrete_moment_kN_m = concrete_force_kN * (h_mm / 2.0 - a_mm / 2.0) / 1000.0
+    steel_detail = []
+    pn_kN = concrete_force_kN
+    mn_kN_m = concrete_moment_kN_m
+
+    for row in steel_rows_mm(section):
+        eps_si = eps_cu * (c_mm - row["d_mm"]) / c_mm
+        force_kN, stress_mpa = steel_force_from_strain(eps_si, row["area_mm2"], fy_mpa, es_mpa)
+        moment_kN_m = force_kN * (h_mm / 2.0 - row["d_mm"]) / 1000.0
+        pn_kN += force_kN
+        mn_kN_m += moment_kN_m
+        steel_detail.append({
+            "fila": row["fila"],
+            "barras": row["bars"],
+            "d_mm": row["d_mm"],
+            "eps_si": eps_si,
+            "fs_MPa": stress_mpa,
+            "Fs_kN": force_kN,
+            "fluye": abs(stress_mpa) >= fy_mpa - 1e-9,
+        })
+
+    return {
+        "estado": label,
+        "phi_reduccion": phi_factor,
+        "eps_cu": eps_cu,
+        "eps_st_ultima_fila": eps_tension,
+        "c_mm": c_mm,
+        "a_mm": a_mm,
+        "Cc_kN": concrete_force_kN,
+        "Pn_kN": pn_kN,
+        "Mn_kN_m": abs(mn_kN_m),
+        "phiPn_kN": phi_factor * pn_kN,
+        "phiMn_kN_m": phi_factor * abs(mn_kN_m),
+        "steel_rows": steel_detail,
+    }
+
+
+def find_flexural_pure_point(section):
+    lo = 1.0
+    hi = section["h"] * 1000.0 * 2.0
+    for _ in range(100):
+        mid = 0.5 * (lo + hi)
+        point = nominal_pm_from_c(section, mid, "D) Flexion pura", 0.90, None)
+        if point["Pn_kN"] > 0.0:
+            hi = mid
+        else:
+            lo = mid
+    point = nominal_pm_from_c(section, 0.5 * (lo + hi), "D) Flexion pura", 0.90, None)
+    point["nota"] = "c se obtiene iterando hasta Pn ~= 0."
+    return point
+
+
+def simplified_pm_points(section, po_kN):
+    h_mm = section["h"] * 1000.0
+    cover_mm = section["cover"] * 1000.0
+    dt_mm = h_mm - cover_mm
+    eps_cu = 0.003
+    ast_mm2 = len(section["rebar_xy"]) * section["bar_area_m2"] * 1_000_000.0
+    fy_mpa = section["fy"] / 1000.0
+
+    pure_compression = {
+        "estado": "A) Compresion pura",
+        "phi_reduccion": 0.65,
+        "eps_cu": None,
+        "eps_st_ultima_fila": None,
+        "c_mm": None,
+        "a_mm": h_mm,
+        "Cc_kN": None,
+        "Pn_kN": po_kN,
+        "Mn_kN_m": 0.0,
+        "phiPn_kN": 0.65 * po_kN,
+        "phiMn_kN_m": 0.0,
+        "nota": "Toda la seccion trabaja en compresion; momento nulo o despreciable.",
+    }
+    balance_eps_st = 0.002
+    ductile_eps_st = 0.005
+    balance_c = eps_cu * dt_mm / (eps_cu + balance_eps_st)
+    ductile_c = eps_cu * dt_mm / (eps_cu + ductile_eps_st)
+    pure_tension_pn = -ast_mm2 * fy_mpa / 1000.0
+    pure_tension = {
+        "estado": "E) Traccion pura",
+        "phi_reduccion": 0.90,
+        "eps_cu": None,
+        "eps_st_ultima_fila": None,
+        "c_mm": None,
+        "a_mm": 0.0,
+        "Cc_kN": 0.0,
+        "Pn_kN": pure_tension_pn,
+        "Mn_kN_m": 0.0,
+        "phiPn_kN": 0.90 * pure_tension_pn,
+        "phiMn_kN_m": 0.0,
+        "nota": "Hormigon traccionado agrietado; solo aporta el acero en fluencia.",
+    }
+    return [
+        pure_compression,
+        nominal_pm_from_c(section, balance_c, "B) Balance", 0.65, balance_eps_st),
+        nominal_pm_from_c(section, ductile_c, "C) Ultima falla ductil", 0.90, ductile_eps_st),
+        find_flexural_pure_point(section),
+        pure_tension,
+    ]
+
+
 def fiber_section_capacity():
     section = make_column_fibers()
     opensees_section = define_opensees_fiber_section()
@@ -787,17 +915,7 @@ def fiber_section_capacity():
     bar_area_mm2 = section["bar_area_m2"] * 1_000_000.0
     ast_mm2 = ast * 1_000_000.0
     po = 0.85 * section["fc"] * (ag - ast) + section["fy"] * ast
-    pm_targets = [0.0, 0.15 * po, 0.30 * po, 0.60 * po, po]
-    pm = []
-    for target in pm_targets:
-        best = None
-        for phi in phis:
-            eps0 = solve_eps0_for_p(section, phi, target)
-            p, m, _, _ = section_response(section, eps0, phi)
-            candidate = {"P_kN": p, "M_kN_m": abs(m), "phi_1_m": phi, "P_objetivo_kN": target}
-            if best is None or candidate["M_kN_m"] > best["M_kN_m"]:
-                best = candidate
-        pm.append(best)
+    pm = simplified_pm_points(section, po)
 
     return {
         "section": {
@@ -831,7 +949,7 @@ def fiber_section_capacity():
         "m_phi": mphi,
         "m_phi_first_steel_yield": first_yield,
         "p_m_points": pm,
-        "interpretacion": "La curva M-phi se extendio hasta curvaturas altas para pasar el tramo elastico y capturar la fluencia del acero. Luego el momento tiende a estabilizarse porque el acero queda plastificado y el hormigon comprimido controla la respuesta.",
+        "interpretacion": "El diagrama P-M se construye con cinco estados manuales: compresion pura, balance, ultima falla ductil, flexion pura y traccion pura. La curva M-phi se mantiene como verificacion fibra a fibra de momento-curvatura.",
     }
 
 
@@ -873,11 +991,13 @@ def plot_capacity(capacity):
     plt.savefig(OUTPUT_PATH.parent / "M_phi_COL70_70.png", dpi=160)
     plt.close()
 
-    plt.figure(figsize=(5, 5))
-    plt.plot([p["M_kN_m"] for p in capacity["p_m_points"]], [p["P_kN"] for p in capacity["p_m_points"]], "ro-")
+    plt.figure(figsize=(6, 5))
+    plt.plot([p["Mn_kN_m"] for p in capacity["p_m_points"]], [p["Pn_kN"] for p in capacity["p_m_points"]], "ro-")
+    for point in capacity["p_m_points"]:
+        plt.annotate(point["estado"].split(")")[0], (point["Mn_kN_m"], point["Pn_kN"]), textcoords="offset points", xytext=(5, 5), fontsize=8)
     plt.xlabel("M [kN m]")
     plt.ylabel("P [kN]")
-    plt.title("Primeros puntos P-M COL70/70 fiber")
+    plt.title("P-M simplificado COL70/70: estados A-E")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(OUTPUT_PATH.parent / "P_M_COL70_70.png", dpi=160)
@@ -904,10 +1024,12 @@ def export_capacity_for_unity(capacity):
         "interpretation": capacity["interpretacion"],
         "pmPoints": [
             {
-                "label": f"Punto {index}",
-                "P_kN": point["P_kN"],
-                "M_kN_m": point["M_kN_m"],
-                "phi_1_m": point["phi_1_m"],
+                "label": point["estado"],
+                "P_kN": point["Pn_kN"],
+                "M_kN_m": point["Mn_kN_m"],
+                "phiP_kN": point["phiPn_kN"],
+                "phiM_kN_m": point["phiMn_kN_m"],
+                "phi_1_m": 0.0,
             }
             for index, point in enumerate(capacity["p_m_points"], start=1)
         ],
@@ -938,9 +1060,12 @@ def print_capacity(capacity):
     print(f"  Ag bruta                  = {section['Ag_mm2']:.1f} mm2")
     print(f"  Cuantia                   = {100.0 * section['cuantia_refuerzo']:.3f} %")
     print(f"  Po aproximado             = {section['Po_kN']:.3f} kN")
-    print("\nPrimeros puntos curva P-M")
-    for index, point in enumerate(capacity["p_m_points"], start=1):
-        print(f"  Punto {index}: P = {point['P_kN']:.3f} kN, M = {point['M_kN_m']:.3f} kN*m, phi = {point['phi_1_m']:.6f} 1/m")
+    print("\nPuntos curva P-M simplificada")
+    for point in capacity["p_m_points"]:
+        c_text = "-" if point.get("c_mm") is None else f"{point['c_mm']:.1f} mm"
+        eps_text = "-" if point.get("eps_st_ultima_fila") is None else f"{point['eps_st_ultima_fila']:.4f}"
+        print(f"  {point['estado']}: Pn = {point['Pn_kN']:.3f} kN, Mn = {point['Mn_kN_m']:.3f} kN*m, phi = {point['phi_reduccion']:.2f}, c = {c_text}, eps_t = {eps_text}")
+        print(f"      phi*Pn = {point['phiPn_kN']:.3f} kN, phi*Mn = {point['phiMn_kN_m']:.3f} kN*m")
     print("\nInterpretacion")
     print(f"  {capacity['interpretacion']}")
     first_yield = capacity.get("m_phi_first_steel_yield")

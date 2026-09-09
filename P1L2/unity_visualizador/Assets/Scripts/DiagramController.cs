@@ -376,11 +376,11 @@ public class DiagramController : MonoBehaviour
             interpretation = "Al aumentar P de compresion desde cero, aumenta inicialmente la capacidad a momento; cerca de Po baja hacia M~0.",
             pmPoints = new PMPoint[]
             {
-                new PMPoint { label = "Punto 1", P_kN = 0.0f, M_kN_m = 510.959f, phi_1_m = 0.080000f },
-                new PMPoint { label = "Punto 2", P_kN = 1796.758f, M_kN_m = 978.570f, phi_1_m = 0.018400f },
-                new PMPoint { label = "Punto 3", P_kN = 3593.516f, M_kN_m = 1231.825f, phi_1_m = 0.030800f },
-                new PMPoint { label = "Punto 4", P_kN = 7187.033f, M_kN_m = 1199.391f, phi_1_m = 0.024000f },
-                new PMPoint { label = "Punto 5", P_kN = 11978.388f, M_kN_m = 27.747f, phi_1_m = 0.045200f }
+                new PMPoint { label = "A) Compresion pura", P_kN = 11978.388f, M_kN_m = 0.0f, phi_1_m = 0.0f },
+                new PMPoint { label = "B) Balance", P_kN = 5020.930f, M_kN_m = 1270.813f, phi_1_m = 0.0f },
+                new PMPoint { label = "C) Ultima falla ductil", P_kN = 2825.149f, M_kN_m = 1130.504f, phi_1_m = 0.0f },
+                new PMPoint { label = "D) Flexion pura", P_kN = 0.0f, M_kN_m = 513.175f, phi_1_m = 0.0f },
+                new PMPoint { label = "E) Traccion pura", P_kN = -1649.336f, M_kN_m = 0.0f, phi_1_m = 0.0f }
             }
         };
     }
