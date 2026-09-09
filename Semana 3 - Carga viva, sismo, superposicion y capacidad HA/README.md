@@ -296,10 +296,10 @@ P = 14044.198 kN, M =  33.296 kN*m
 Puntos P-M simplificados (metodo nominal, bloque de tensiones):
 
 ```text
-A) Compresion pura:      Pn = 11978.388 kN, Mn =    0.000 kN*m, phi = 0.65
-B) Balance:              Pn =  5020.930 kN, Mn = 1270.813 kN*m, phi = 0.65
-C) Ultima falla ductil:  Pn =  2825.149 kN, Mn = 1130.504 kN*m, phi = 0.90
-D) Flexion pura:         Pn =     0.000 kN, Mn =  513.175 kN*m, phi = 0.90
+A) Compresion pura:      Pn = 14044.198 kN, Mn =    0.000 kN*m, phi = 0.65
+B) Balance:              Pn =  6007.143 kN, Mn = 1452.523 kN*m, phi = 0.65
+C) Ultima falla ductil:  Pn =  3441.532 kN, Mn = 1282.384 kN*m, phi = 0.90
+D) Flexion pura:         Pn =     0.000 kN, Mn =  517.113 kN*m, phi = 0.90
 E) Traccion pura:        Pn = -1649.336 kN, Mn =    0.000 kN*m, phi = 0.90
 ```
 
