@@ -46,8 +46,6 @@ public class StructureViewer : MonoBehaviour
     private bool showIds = false;
     private bool showLocalAxes = false;
 
-    private string pickerText = "Toca o haz click sobre una barra.";
-
     private void Start()
     {
         CreateStructure();
@@ -101,7 +99,20 @@ public class StructureViewer : MonoBehaviour
         CreatePointLoads(data);
         CreateGlobalAxes();
         CreateDiagramController();
+        MarkGeneratedDontSave();
         RefreshVisibility();
+    }
+
+    private void MarkGeneratedDontSave()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (child != null)
+            {
+                child.gameObject.hideFlags = HideFlags.DontSave;
+            }
+        }
     }
 
     private void ClearStructureChildren()

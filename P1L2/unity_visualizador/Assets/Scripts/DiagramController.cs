@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
+[ExecuteAlways]
 public class DiagramController : MonoBehaviour
 {
     private enum DiagramMode
@@ -15,7 +16,11 @@ public class DiagramController : MonoBehaviour
         InteractionPM
     }
 
-    public float diagramScale = 0.45f;
+    public float diagramScale = 1.3f;
+    public float axialMultiplier = 0.9f;
+    public float shearMultiplier = 1.0f;
+    public float momentMultiplier = 1.2f;
+    public float diagramBaseOffset = 0.06f;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
@@ -29,27 +34,28 @@ public class DiagramController : MonoBehaviour
         elements.AddRange(selectables);
         LoadSemana3Results();
         ShowDiagram(DiagramMode.None);
+        Debug.Log($"[DiagramController] listo con {elements.Count} elementos");
     }
 
     private void Update()
     {
-        if (PressedKey(KeyCode.Alpha0))
+        if (Application.isPlaying && PressedKey(KeyCode.Alpha0))
         {
             ShowDiagram(DiagramMode.None);
         }
-        if (PressedKey(KeyCode.Alpha1))
+        if (Application.isPlaying && PressedKey(KeyCode.Alpha1))
         {
             ShowDiagram(DiagramMode.Axial);
         }
-        if (PressedKey(KeyCode.Alpha2))
+        if (Application.isPlaying && PressedKey(KeyCode.Alpha2))
         {
             ShowDiagram(DiagramMode.Shear);
         }
-        if (PressedKey(KeyCode.Alpha3))
+        if (Application.isPlaying && PressedKey(KeyCode.Alpha3))
         {
             ShowDiagram(DiagramMode.Moment);
         }
-        if (PressedKey(KeyCode.Alpha4))
+        if (Application.isPlaying && PressedKey(KeyCode.Alpha4))
         {
             ShowDiagram(DiagramMode.InteractionPM);
         }
@@ -59,20 +65,16 @@ public class DiagramController : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null)
+        if (keyboard != null)
         {
-            return false;
+            if (key == KeyCode.Alpha0) return keyboard.digit0Key.wasPressedThisFrame;
+            if (key == KeyCode.Alpha1) return keyboard.digit1Key.wasPressedThisFrame;
+            if (key == KeyCode.Alpha2) return keyboard.digit2Key.wasPressedThisFrame;
+            if (key == KeyCode.Alpha3) return keyboard.digit3Key.wasPressedThisFrame;
+            if (key == KeyCode.Alpha4) return keyboard.digit4Key.wasPressedThisFrame;
         }
-
-        if (key == KeyCode.Alpha0) return keyboard.digit0Key.wasPressedThisFrame;
-        if (key == KeyCode.Alpha1) return keyboard.digit1Key.wasPressedThisFrame;
-        if (key == KeyCode.Alpha2) return keyboard.digit2Key.wasPressedThisFrame;
-        if (key == KeyCode.Alpha3) return keyboard.digit3Key.wasPressedThisFrame;
-        if (key == KeyCode.Alpha4) return keyboard.digit4Key.wasPressedThisFrame;
-        return false;
-#else
-        return Input.GetKeyDown(key);
 #endif
+        return Input.GetKeyDown(key);
     }
 
     private void ShowDiagram(DiagramMode mode)
@@ -86,6 +88,9 @@ public class DiagramController : MonoBehaviour
         }
 
         currentMaxValue = GetMaxValue(mode);
+        int created = 0;
+        int edificio1 = 0;
+        int edificio2 = 0;
 
         foreach (ElementSelectable element in elements)
         {
@@ -100,7 +105,18 @@ public class DiagramController : MonoBehaviour
             }
 
             CreateElementDiagram(element, mode);
+            created++;
+            if (element.data.sourceBuilding == "edificio_2")
+            {
+                edificio2++;
+            }
+            else
+            {
+                edificio1++;
+            }
         }
+
+        Debug.Log($"[DiagramController] modo {mode}: {created} diagramas (edificio_1: {edificio1}, edificio_2: {edificio2}), max={currentMaxValue:0.###}");
     }
 
     private void CreateElementDiagram(ElementSelectable element, DiagramMode mode)
@@ -116,16 +132,18 @@ public class DiagramController : MonoBehaviour
             float t = i / (float)segments;
             Vector3 basePoint = Vector3.Lerp(element.startPoint, element.endPoint, t);
             float value = GetValue(element.data, mode, t, length);
-            points[i] = basePoint + offsetDirection * value / currentMaxValue * ScaleFor(mode);
+            points[i] = basePoint + offsetDirection * (diagramBaseOffset + value / currentMaxValue * ScaleFor(mode));
         }
 
         GameObject lineObject = new GameObject($"Diagrama_{mode}_E{element.data.id}");
         lineObject.transform.SetParent(transform);
+        lineObject.hideFlags = HideFlags.DontSave;
         LineRenderer line = lineObject.AddComponent<LineRenderer>();
         line.positionCount = points.Length;
         line.SetPositions(points);
-        line.startWidth = 0.035f;
-        line.endWidth = 0.035f;
+        line.startWidth = 0.08f;
+        line.endWidth = 0.08f;
+        line.useWorldSpace = true;
         line.material = CreateMaterial(GetColor(mode));
         diagramObjects.Add(lineObject);
 
@@ -186,9 +204,9 @@ public class DiagramController : MonoBehaviour
 
     private float ScaleFor(DiagramMode mode)
     {
-        if (mode == DiagramMode.Axial) return diagramScale * 0.75f;
-        if (mode == DiagramMode.Shear) return diagramScale * 0.9f;
-        return diagramScale;
+        if (mode == DiagramMode.Axial) return diagramScale * axialMultiplier;
+        if (mode == DiagramMode.Shear) return diagramScale * shearMultiplier;
+        return diagramScale * momentMultiplier;
     }
 
     private Vector3 GetOffsetDirection(Vector3 axis, DiagramMode mode)
@@ -225,20 +243,43 @@ public class DiagramController : MonoBehaviour
     {
         GameObject labelObject = new GameObject("ValorDiagrama");
         labelObject.transform.SetParent(parent);
-        labelObject.transform.position = position + Vector3.up * 0.12f;
+        labelObject.hideFlags = HideFlags.DontSave;
+        labelObject.transform.position = position + Vector3.up * 0.18f;
 
         TextMesh text = labelObject.AddComponent<TextMesh>();
         text.text = value.ToString("0.0") + unit;
-        text.characterSize = 0.18f;
+        text.characterSize = 0.2f;
         text.anchor = TextAnchor.MiddleCenter;
         text.color = Color.white;
     }
 
     private Material CreateMaterial(Color color)
     {
-        Shader shader = Shader.Find("Sprites/Default");
+        Shader shader = Shader.Find("Custom/AlwaysOnTopLine");
+        if (shader == null)
+        {
+            shader = Shader.Find("Unlit/Color");
+        }
+        if (shader == null)
+        {
+            shader = Shader.Find("Sprites/Default");
+        }
+        if (shader == null)
+        {
+            shader = Shader.Find("Standard");
+        }
+
         Material material = new Material(shader);
         material.color = color;
+        if (shader.name == "Custom/AlwaysOnTopLine")
+        {
+            material.renderQueue = 5000;
+        }
+        else
+        {
+            material.renderQueue = 4000;
+        }
+
         return material;
     }
 
@@ -246,7 +287,14 @@ public class DiagramController : MonoBehaviour
     {
         foreach (GameObject diagramObject in diagramObjects)
         {
-            Destroy(diagramObject);
+            if (Application.isPlaying)
+            {
+                Destroy(diagramObject);
+            }
+            else
+            {
+                DestroyImmediate(diagramObject);
+            }
         }
 
         diagramObjects.Clear();
@@ -265,6 +313,10 @@ public class DiagramController : MonoBehaviour
         if (GUILayout.Button("4 Curva P-M HA")) ShowDiagram(DiagramMode.InteractionPM);
         GUILayout.Label($"Actual: {currentMode}");
         GUILayout.EndArea();
+        string useHint = Application.isPlaying
+            ? "Teclas 1-4 o botones para cambiar de diagrama."
+            : "Modo edicion: usa los botones (las teclas requieren Play).";
+        GUI.Label(new Rect(20, Screen.height - 40f, 420, 24), useHint);
 
         if (currentMode == DiagramMode.Moment)
         {

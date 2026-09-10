@@ -61,8 +61,8 @@ public static class MCOCSetup
             camera = cameraObject.AddComponent<Camera>();
         }
 
-        camera.transform.position = new Vector3(8f, 6f, -8f);
-        camera.transform.rotation = Quaternion.Euler(35f, -35f, 0f);
+        camera.transform.position = new Vector3(-0.7f, 48f, -55f);
+        camera.transform.rotation = Quaternion.Euler(35f, 40f, 0f);
 
         if (camera.GetComponent<ElementPicker>() == null)
         {

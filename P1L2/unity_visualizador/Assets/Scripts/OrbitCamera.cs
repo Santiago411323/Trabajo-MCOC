@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class OrbitCamera : MonoBehaviour
 {
     public Transform target;
-    public float distance = 10f;
+    public float distance = 75f;
     public float xSpeed = 120f;
     public float ySpeed = 80f;
     public float zoomSpeed = 4f;
@@ -20,7 +20,7 @@ public class OrbitCamera : MonoBehaviour
         if (target == null)
         {
             GameObject pivot = new GameObject("CameraPivot");
-            pivot.transform.position = new Vector3(3f, 1.6f, 2.5f);
+            pivot.transform.position = new Vector3(-0.7f, 5f, -4.5f);
             target = pivot.transform;
         }
 

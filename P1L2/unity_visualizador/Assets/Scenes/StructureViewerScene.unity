@@ -299,7 +299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OrbitCamera
   target: {fileID: 0}
-  distance: 10
+  distance: 75
   xSpeed: 120
   ySpeed: 80
   zoomSpeed: 4
@@ -385,8 +385,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 551111196}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.28678823, y: -0.28678823, z: 0.09042398, w: 0.90957606}
-  m_LocalPosition: {x: 8, y: 6, z: -8}
+  m_LocalRotation: {x: 0.28265, y: 0.3262, z: 0, w: 0.89615}
+  m_LocalPosition: {x: -0.7, y: 48, z: -55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
