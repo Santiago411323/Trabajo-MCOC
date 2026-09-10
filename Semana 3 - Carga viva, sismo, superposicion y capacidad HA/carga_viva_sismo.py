@@ -635,6 +635,227 @@ def print_superposition(superposition):
     print(f"  Error abs max  = {errors['max_element_force_abs']:.3e}")
 
 
+def phi_moment_at(phi_points, p_demand):
+    pts = sorted(phi_points, key=lambda point: point["phiPn_kN"])
+    if not pts:
+        return None
+    if p_demand > pts[-1]["phiPn_kN"] or p_demand < pts[0]["phiPn_kN"]:
+        return None
+    for i in range(len(pts) - 1):
+        p0 = pts[i]["phiPn_kN"]
+        p1 = pts[i + 1]["phiPn_kN"]
+        if p0 <= p_demand <= p1:
+            t = (p_demand - p0) / (p1 - p0) if p1 != p0 else 0.0
+            return max(0.0, pts[i]["phiMn_kN_m"] + t * (pts[i + 1]["phiMn_kN_m"] - pts[i]["phiMn_kN_m"]))
+    return pts[-1]["phiMn_kN_m"]
+
+
+def supported_components(adjacency, support_nodes):
+    visited = set()
+    components = []
+    for node_id in adjacency:
+        if node_id in visited:
+            continue
+        visited.add(node_id)
+        stack = [node_id]
+        component = []
+        while stack:
+            current = stack.pop()
+            component.append(current)
+            for nxt in adjacency.get(current, ()):
+                if nxt not in visited:
+                    visited.add(nxt)
+                    stack.append(nxt)
+        if any(node in support_nodes for node in component):
+            components.append(component)
+    for component in components:
+        for node_id in component:
+            yield node_id
+
+
+def verify_building(data, live_transfer, seismic, lambdas):
+    if ops is None:
+        raise RuntimeError("Falta instalar openseespy para correr la verificacion.")
+    nodes = node_map(data)
+    load_sets = {
+        "G": dead_nodal_loads(data),
+        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
+        "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
+    }
+    combined = combine_nodal_loads(load_sets, lambdas)
+
+    build_model(data)
+    apply_nodal_loads(combined)
+    ops.system("BandGeneral")
+    ops.numberer("RCM")
+    ops.constraints("Plain")
+    ops.integrator("LoadControl", 1.0)
+    ops.algorithm("Linear")
+    ops.analysis("Static")
+    ops.analyze(1)
+    ops.reactions()
+
+    reactions = [0.0, 0.0, 0.0]
+    for support in data.get("supports", []):
+        node = support.get("node")
+        if node in nodes:
+            reaction = ops.nodeReaction(node)
+            reactions[0] += reaction[0]
+            reactions[1] += reaction[1]
+            reactions[2] += reaction[2]
+
+    connected = {element["nodeI"] for element in data.get("elements", [])} | {element["nodeJ"] for element in data.get("elements", [])}
+    adjacency = {node_id: set() for node_id in nodes}
+    for element in data.get("elements", []):
+        ni = element.get("nodeI")
+        nj = element.get("nodeJ")
+        if ni in nodes and nj in nodes:
+            adjacency[ni].add(nj)
+            adjacency[nj].add(ni)
+    support_nodes = {support.get("node") for support in data.get("supports", []) if support.get("node") in nodes}
+    supported = set()
+    if support_nodes:
+        for node_id in supported_components(adjacency, support_nodes):
+            supported.add(node_id)
+    main_building = "edificio_1"
+    building_columns = {
+        building: [
+            element for element in data.get("elements", [])
+            if element.get("type") == "columna"
+            and element.get("sourceBuilding") == building
+            and element.get("nodeI") in nodes
+            and element.get("nodeJ") in nodes
+        ]
+        for building in {element.get("sourceBuilding") for element in data.get("elements", []) if element.get("type") == "columna"}
+    }
+    candidate_control = [
+        node for node in nodes.values()
+        if node["id"] in connected
+        and node["id"] in supported
+        and any(node["id"] in (element.get("nodeI"), element.get("nodeJ")) for element in building_columns.get(main_building, []))
+    ]
+    if not candidate_control:
+        candidate_control = [node for node in nodes.values() if node["id"] in connected and node["id"] in supported]
+    if not candidate_control:
+        candidate_control = [node for node in nodes.values() if node["id"] in connected]
+    control_node = max(candidate_control, key=lambda n: (n["z"], n["x"] ** 2 + n["y"] ** 2))["id"]
+    displacement = list(ops.nodeDisp(control_node))[:3]
+
+    section = make_column_fibers()
+    ag = section["b"] * section["h"]
+    ast = len(section["rebar_xy"]) * section["bar_area_m2"]
+    po = 0.85 * section["fc"] * (ag - ast) + section["fy"] * ast
+    pm_points = simplified_pm_points(section, po)
+    phi_points = [{"phiPn_kN": point["phiPn_kN"], "phiMn_kN_m": point["phiMn_kN_m"]} for point in pm_points]
+    phi_po = max(point["phiPn_kN"] for point in phi_points)
+
+    supported_columns = [
+        element for element in building_columns.get(main_building, [])
+        if element["nodeI"] in supported and element["nodeJ"] in supported
+    ]
+    excluded_other_buildings = [
+        element for building, columns in building_columns.items()
+        if building != main_building
+        for element in columns
+    ]
+    floating_columns = [
+        element for element in building_columns.get(main_building, [])
+        if element not in supported_columns
+    ]
+
+    column_rows = []
+    for element in supported_columns:
+        try:
+            force = ops.eleForce(element["id"])
+        except Exception:
+            continue
+        if not force or len(force) < 12:
+            continue
+        p_compression = max(-force[0], -force[6], 0.0)
+        m_demand = max(abs(force[4]), abs(force[5]), abs(force[10]), abs(force[11]))
+        m_allow = phi_moment_at(phi_points, p_compression)
+        axial_util = p_compression / phi_po if phi_po else 0.0
+        if m_allow is None or m_allow <= 0.0:
+            flex_util = 0.0 if m_demand == 0.0 else float("inf")
+        else:
+            flex_util = m_demand / m_allow
+        ratio = max(axial_util, flex_util) if flex_util != float("inf") else float("inf")
+        column_rows.append({
+            "element_id": element["id"],
+            "element_tag": element_tag(element),
+            "piso_z_m": element_mid_z(element, nodes),
+            "P_demanda_kN": round(p_compression, 2),
+            "M_demanda_kN_m": round(m_demand, 2),
+            "phiMn_disponible_kN_m": None if m_allow is None else round(m_allow, 2),
+            "utilizacion_axial": round(axial_util, 3),
+            "utilizacion_flexion": None if flex_util == float("inf") else round(flex_util, 3),
+            "utilizacion_total": None if ratio == float("inf") else round(ratio, 3),
+            "cumple": ratio <= 1.0,
+        })
+
+    failing = [row for row in column_rows if not row["cumple"]]
+    worst = max(column_rows, key=lambda row: row["utilizacion_total"] if row["utilizacion_total"] is not None else float("inf"), default=None)
+    return {
+        "lambdas": lambdas,
+        "combinacion": "R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY",
+        "control_node": control_node,
+        "desplazamiento_control_m": displacement,
+        "reacciones_globales_Fx_Fy_Fz_kN": reactions,
+        "capacidad_columna_70_70": {"Po_kN": po, "phiPo_kN": phi_po, "puntos_pm": pm_points},
+        "edificio_analizado": main_building,
+        "columnas_edificio_1_excluidas_no_apoyadas": len(floating_columns),
+        "columnas_excluidas_otros_edificios": len(excluded_other_buildings),
+        "otro_edificio_artefacto": any(building != main_building for building in building_columns),
+        "columnas_evaluadas": len(column_rows),
+        "columnas_no_cumplen": len(failing),
+        "peor_columna": worst,
+        "detalle_columnas": column_rows,
+        "veredicto": "NO CUMPLE" if failing else ("CUMPLE" if column_rows else "SIN DATOS"),
+    }
+
+
+def print_verification(verdict, q_q, seismic_coeff):
+    print("\nParte E - Verificacion: aguanta?")
+    print(f"q_Q = {q_q:.4f} kN/m2 | Coef sismico = {seismic_coeff}")
+    print("Combinacion: R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY")
+    for case, factor in verdict["lambdas"].items():
+        print(f"  lambda_{case} = {factor:.3f}")
+
+    print("\nSanidad global del modelo")
+    print(f"  Nodo de control = {verdict['control_node']}")
+    u = verdict["desplazamiento_control_m"]
+    print(f"  Desplazamiento ux, uy, uz [m] = {[round(value, 5) for value in u]}")
+    print(f"  |u| = {math.sqrt(sum(value * value for value in u)):.4f} m")
+    if math.sqrt(sum(value * value for value in u)) > 0.25:
+        print("  ATENCION: |u| es grande para un modelo lineal; verificar rigideces/soportes. Demandas referenciales.")
+    print(f"  Reacciones Fx, Fy, Fz [kN] = {[round(value, 1) for value in verdict['reacciones_globales_Fx_Fy_Fz_kN']]}")
+
+    print(f"\nColumnas evaluadas (edificio 1) = {verdict['columnas_evaluadas']} | No cumplen = {verdict['columnas_no_cumplen']}")
+    if verdict.get("columnas_excluidas_otros_edificios"):
+        print(f"  Columnas de otro edificio excluidas del chequeo: {verdict['columnas_excluidas_otros_edificios']} (modelo lineal no fisico: se deforma decenas de metros)")
+    if verdict.get("columnas_edificio_1_excluidas_no_apoyadas"):
+        print(f"  Columnas de edificio 1 sin apoyo excluidas: {verdict['columnas_edificio_1_excluidas_no_apoyadas']}")
+    print("  Nota: P y M salen del modelo elastico (cargas de losas a traves de vigas); resultado referencial.")
+    worst = verdict["peor_columna"]
+    if worst:
+        print("Peor columna:")
+        print(f"  {worst['element_tag']} en z={worst['piso_z_m']:.2f} m: P demanda = {worst['P_demanda_kN']:.1f} kN, M demanda = {worst['M_demanda_kN_m']:.1f} kN*m")
+        if worst["phiMn_disponible_kN_m"] is not None:
+            print(f"  phiMn disponible = {worst['phiMn_disponible_kN_m']:.1f} kN*m | M/phiMn = {worst['utilizacion_flexion']:.3f}")
+        print(f"  Utilizacion total = {worst['utilizacion_total']}  (<= 1.0 significa que aguanta)")
+
+    print(f"\n==> VEREDICTO: {verdict['veredicto']}")
+    if verdict["veredicto"] == "CUMPLE":
+        print("  Todas las columnas quedan dentro del diagrama P-M con esta combinacion.")
+    elif verdict["veredicto"] == "NO CUMPLE":
+        print("  Columnas que sobrepasan el diagrama P-M:")
+        for row in verdict["detalle_columnas"]:
+            if not row["cumple"]:
+                print(f"    {row['element_tag']} (z={row['piso_z_m']:.2f} m): P={row['P_demanda_kN']:.0f} kN, M={row['M_demanda_kN_m']:.0f} kN*m, utilizacion={row['utilizacion_total']}")
+        print("  Soluciones: reducir cargas (SC/coef), agrandar la seccion, o aumentar el refuerzo.")
+
+
 def concrete_stress(eps, fc):
     if eps <= 0.0:
         return 0.0
@@ -1114,6 +1335,7 @@ def interactive_menu():
         print("6. Capacidad HA Fiber Section            (sin ID)")
         print("7. Ejemplos de IDs disponibles           (sin ID)")
         print("8. Ruta del JSON completo de resultados  (sin ID)")
+        print("9. Verificacion: aguanta? (demanda P-M)  (sin ID, pide lambdas)")
         print("0. Salir")
         option = input("Elige una opcion: ").strip()
 
@@ -1150,6 +1372,10 @@ def interactive_menu():
             print_id_examples(data, live_transfer)
         elif option == "8":
             print(f"\nJSON completo: {OUTPUT_PATH}")
+        elif option == "9":
+            lambdas = ask_lambdas()
+            verdict = verify_building(data, live_transfer, seismic, lambdas)
+            print_verification(verdict, q_q, seismic_coeff)
         else:
             print("Opcion no valida.")
 
@@ -1167,6 +1393,7 @@ def main():
     parser.add_argument("--lambdaEX", type=float, default=DEFAULT_LAMBDAS["EX"], help="Factor lambda_EX")
     parser.add_argument("--lambdaEY", type=float, default=DEFAULT_LAMBDAS["EY"], help="Factor lambda_EY")
     parser.add_argument("--capacidad-ha", action="store_true", help="Corre Parte D: Fiber Section HA, M-phi y puntos P-M")
+    parser.add_argument("--verifica", action="store_true", help="Corre Parte E: demanda vs capacidad P-M (aguanta?)")
     args = parser.parse_args()
 
     if args.menu or len(sys.argv) == 1:
@@ -1198,6 +1425,12 @@ def main():
         write_json(OUTPUT_PATH, result)
         print_capacity(capacity)
         print(f"salida = {OUTPUT_PATH}")
+        return
+
+    if args.verifica:
+        lambdas = {"G": args.lambdaG, "Q": args.lambdaQ, "EX": args.lambdaEX, "EY": args.lambdaEY}
+        verdict = verify_building(data, live_transfer, seismic, lambdas)
+        print_verification(verdict, q_q, args.coef_sismo)
         return
 
     if args.id:
