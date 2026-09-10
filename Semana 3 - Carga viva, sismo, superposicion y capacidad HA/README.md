@@ -237,14 +237,25 @@ Esto confirma que el modelo lineal cumple superposicion para los casos construid
 Se construye una seccion `Fiber` de columna:
 
 ```text
-COL70/70_FIBER (H-30)
+COL70/70_FIBER (H-25)
 b = 0.70 m
 h = 0.70 m
-fc' = 30 MPa
+fc' = 25 MPa
 fy = 420 MPa
 400 fibras de hormigon
-8 barras de acero
+3 barras inferiores + 2 centrales + 3 superiores
 Diametro de barra = 25 mm
+```
+
+La armadura se modifica al inicio de `carga_viva_sismo.py`:
+
+```python
+BAR_DIAMETER_MM = 25.0
+REBAR_BARS_INFERIOR = 3
+REBAR_BARS_CENTRO = 2
+REBAR_BARS_SUPERIOR = 3
+CONCRETE_FIBERS_X = 20
+CONCRETE_FIBERS_Y = 20
 ```
 
 Ademas se declara una `ops.section("Fiber", ...)` en OpenSees con:
@@ -253,7 +264,7 @@ Ademas se declara una `ops.section("Fiber", ...)` en OpenSees con:
 Concrete01
 Steel01
 patch rect 20x20
-layer straight para 8 barras
+layer straight usando la cantidad de barras configurada por fila
 ```
 
 Graficos generados:
@@ -270,25 +281,27 @@ Resultados principales obtenidos:
 Seccion: COL70/70_FIBER
 b x h = 0.70 x 0.70 m
 b x h = 700 x 700 mm
-Hormigon: Concrete01, fc' = 30 MPa (H-30)
+Hormigon: Concrete01, fc' = 25 MPa (H-25)
 Acero: Steel01, fy = 420 MPa, Es = 200000 MPa
 Fibras de hormigon = 400 (20 x 20)
-Refuerzo = 8 barras de diametro 25 mm
+Refuerzo = 8 barras de diametro 25 mm (3 inferior, 2 centro, 3 superior)
 Area por barra = 0.000491 m2
 Area por barra = 490.9 mm2
 Ast = 0.003927 m2
 Ast = 3927.0 mm2
 Ag = 490000 mm2
 Cuantia = 0.801 %
-Po aproximado = 14044.198 kN
+Po aproximado = 11978.388 kN
 ```
 
-Puntos P-M reportados (metodo de fibras, f'c = 30 MPa):
+Puntos P-M reportados (metodo manual simplificado, f'c = 25 MPa):
 
 ```text
-P =     0.000 kN, M = 514.519 kN*m
-P =  2106.630 kN, M = 1074.664 kN*m
-P =  4213.259 kN, M = 1388.095 kN*m
+A) Compresion pura: Pn = 11978.388 kN, Mn = 0.000 kN*m
+B) Balance: Pn = 5020.930 kN, Mn = 1270.813 kN*m
+C) Ultima falla ductil: Pn = 2825.149 kN, Mn = 1130.504 kN*m
+D) Flexion pura: Pn = 0.000 kN, Mn = 513.175 kN*m
+E) Traccion pura: Pn = -1649.336 kN, Mn = 0.000 kN*m
 P =  8426.519 kN, M = 1375.427 kN*m
 P = 14044.198 kN, M =  33.296 kN*m
 ```

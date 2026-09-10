@@ -243,10 +243,32 @@ h = 700 mm
 El refuerzo usado es:
 
 ```text
-8 barras de diametro 25 mm
+3 barras inferiores + 2 barras centrales + 3 barras superiores
+8 barras totales de diametro 25 mm
 As por barra = 490.9 mm2
 Ast total = 3927.0 mm2
 ```
+
+La configuracion se cambia al inicio de `carga_viva_sismo.py`:
+
+```python
+BAR_DIAMETER_MM = 25.0
+REBAR_BARS_INFERIOR = 3
+REBAR_BARS_CENTRO = 2
+REBAR_BARS_SUPERIOR = 3
+CONCRETE_FIBERS_X = 20
+CONCRETE_FIBERS_Y = 20
+```
+
+Si quieres, por ejemplo, 4 barras abajo, 2 al centro y 4 arriba, solo cambias:
+
+```python
+REBAR_BARS_INFERIOR = 4
+REBAR_BARS_CENTRO = 2
+REBAR_BARS_SUPERIOR = 4
+```
+
+El codigo reparte automaticamente las barras de cada fila entre ambos bordes laterales de la columna. Ya no hay que editar coordenadas manualmente.
 
 La discretizacion de fibras se crea en:
 

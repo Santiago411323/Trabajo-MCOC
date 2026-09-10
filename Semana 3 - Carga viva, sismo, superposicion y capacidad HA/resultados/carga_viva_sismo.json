@@ -4261,7 +4261,12 @@
       "fy_MPa": 420.0,
       "Es_MPa": 200000.0,
       "concrete_fibers": 400,
+      "concrete_fibers_x": 20,
+      "concrete_fibers_y": 20,
       "steel_bars": 8,
+      "steel_bars_inferior": 3,
+      "steel_bars_centro": 2,
+      "steel_bars_superior": 3,
       "bar_area_m2": 0.0004908738521234052,
       "bar_area_mm2": 490.87385212340524,
       "bar_diameter_mm": 25.000000000000004,
@@ -4286,72 +4291,88 @@
         "b": 0.01
       },
       "patch": "rect concrete 20 x 20",
-      "reinforcement": "3 barras abajo, 2 al medio, 3 arriba; diametro 25 mm por barra"
+      "reinforcement": "3 barras abajo, 2 al centro, 3 arriba; diametro 25 mm por barra"
     },
     "reinforcement_coordinates_xy_m": [
       {
+        "fila": "inferior",
         "x": -0.3,
         "y": -0.3
       },
       {
+        "fila": "inferior",
         "x": 0.0,
         "y": -0.3
       },
       {
+        "fila": "inferior",
         "x": 0.3,
         "y": -0.3
       },
       {
+        "fila": "centro",
         "x": -0.3,
         "y": 0.0
       },
       {
+        "fila": "centro",
         "x": 0.3,
         "y": 0.0
       },
       {
+        "fila": "superior",
         "x": -0.3,
         "y": 0.3
       },
       {
+        "fila": "superior",
         "x": 0.0,
         "y": 0.3
       },
       {
+        "fila": "superior",
         "x": 0.3,
         "y": 0.3
       }
     ],
     "reinforcement_coordinates_xy_mm": [
       {
+        "fila": "inferior",
         "x": -300.0,
         "y": -300.0
       },
       {
+        "fila": "inferior",
         "x": 0.0,
         "y": -300.0
       },
       {
+        "fila": "inferior",
         "x": 300.0,
         "y": -300.0
       },
       {
+        "fila": "centro",
         "x": -300.0,
         "y": 0.0
       },
       {
+        "fila": "centro",
         "x": 300.0,
         "y": 0.0
       },
       {
+        "fila": "superior",
         "x": -300.0,
         "y": 300.0
       },
       {
+        "fila": "superior",
         "x": 0.0,
         "y": 300.0
       },
       {
+        "fila": "superior",
         "x": 300.0,
         "y": 300.0
       }

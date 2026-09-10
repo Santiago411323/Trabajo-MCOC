@@ -42,7 +42,15 @@ E_CONCRETE = 25_000_000.0
 NU_CONCRETE = 0.20
 G_CONCRETE = E_CONCRETE / (2.0 * (1.0 + NU_CONCRETE))
 DEFAULT_LAMBDAS = {"G": 1.0, "Q": 0.5, "EX": 1.0, "EY": 0.3}
+
+# Configuracion simple de la armadura de la columna COL70/70.
+# Cambia estas lineas para modificar diametro, barras y fibras de hormigon.
 BAR_DIAMETER_MM = 25.0
+REBAR_BARS_INFERIOR = 3
+REBAR_BARS_CENTRO = 2
+REBAR_BARS_SUPERIOR = 3
+CONCRETE_FIBERS_X = 20
+CONCRETE_FIBERS_Y = 20
 
 
 def load_json(path):
@@ -866,6 +874,29 @@ def steel_stress(eps, fy, es):
     return max(-fy, min(fy, es * eps))
 
 
+def evenly_spaced_positions(start, end, count):
+    if count <= 0:
+        return []
+    if count == 1:
+        return [0.5 * (start + end)]
+    return [start + i * (end - start) / (count - 1) for i in range(count)]
+
+
+def rebar_coordinates(b, h, cover):
+    x_left = -b / 2.0 + cover
+    x_right = b / 2.0 - cover
+    rows = [
+        ("inferior", -h / 2.0 + cover, REBAR_BARS_INFERIOR),
+        ("centro", 0.0, REBAR_BARS_CENTRO),
+        ("superior", h / 2.0 - cover, REBAR_BARS_SUPERIOR),
+    ]
+    coords = []
+    for row_name, y, bars in rows:
+        for x in evenly_spaced_positions(x_left, x_right, bars):
+            coords.append({"fila": row_name, "x": x, "y": y})
+    return coords
+
+
 def make_column_fibers():
     b = h = 0.70
     cover = 0.05
@@ -874,26 +905,20 @@ def make_column_fibers():
     es = 200_000_000.0
     bar_area = math.pi * (BAR_DIAMETER_MM / 1000.0) ** 2 / 4.0
     fibers = []
-    nx = ny = 20
+    nx = CONCRETE_FIBERS_X
+    ny = CONCRETE_FIBERS_Y
     for ix in range(nx):
         x = -b / 2.0 + (ix + 0.5) * b / nx
         for iy in range(ny):
             y = -h / 2.0 + (iy + 0.5) * h / ny
             fibers.append({"type": "concrete", "x": x, "y": y, "area": b / nx * h / ny})
 
-    rebar_xy = [
-        (-b / 2 + cover, -h / 2 + cover),
-        (0.0, -h / 2 + cover),
-        (b / 2 - cover, -h / 2 + cover),
-        (-b / 2 + cover, 0.0),
-        (b / 2 - cover, 0.0),
-        (-b / 2 + cover, h / 2 - cover),
-        (0.0, h / 2 - cover),
-        (b / 2 - cover, h / 2 - cover),
-    ]
-    for x, y in rebar_xy:
+    rebar_xy = rebar_coordinates(b, h, cover)
+    for bar in rebar_xy:
+        x = bar["x"]
+        y = bar["y"]
         fibers.append({"type": "steel", "x": x, "y": y, "area": bar_area})
-    return {"b": b, "h": h, "cover": cover, "fc": fc, "fy": fy, "Es": es, "bar_area_m2": bar_area, "fibers": fibers, "rebar_xy": rebar_xy}
+    return {"b": b, "h": h, "cover": cover, "fc": fc, "fy": fy, "Es": es, "bar_area_m2": bar_area, "fibers": fibers, "rebar_xy": rebar_xy, "concrete_fibers_x": nx, "concrete_fibers_y": ny}
 
 
 def bar_diameter_mm(bar_area_m2):
@@ -923,21 +948,30 @@ def define_opensees_fiber_section():
     ops.uniaxialMaterial("Concrete01", concrete_tag, fc, epsc0, fcu, epscu)
     ops.uniaxialMaterial("Steel01", steel_tag, fy, es, 0.01)
     ops.section("Fiber", section_tag)
-    ops.patch("rect", concrete_tag, 20, 20, -h / 2, -b / 2, h / 2, b / 2)
+    ops.patch("rect", concrete_tag, CONCRETE_FIBERS_Y, CONCRETE_FIBERS_X, -h / 2, -b / 2, h / 2, b / 2)
     y_bot = -h / 2 + cover
     y_mid = 0.0
     y_top = h / 2 - cover
     z_left = -b / 2 + cover
     z_right = b / 2 - cover
-    ops.layer("straight", steel_tag, 3, bar_area, y_bot, z_left, y_bot, z_right)
-    ops.layer("straight", steel_tag, 2, bar_area, y_mid, z_left, y_mid, z_right)
-    ops.layer("straight", steel_tag, 3, bar_area, y_top, z_left, y_top, z_right)
+    rebar_layers = [
+        ("inferior", REBAR_BARS_INFERIOR, y_bot),
+        ("centro", REBAR_BARS_CENTRO, y_mid),
+        ("superior", REBAR_BARS_SUPERIOR, y_top),
+    ]
+    for _, bars, y in rebar_layers:
+        if bars <= 0:
+            continue
+        if bars == 1:
+            ops.layer("straight", steel_tag, bars, bar_area, y, 0.0, y, 0.0)
+        else:
+            ops.layer("straight", steel_tag, bars, bar_area, y, z_left, y, z_right)
     return {
         "section_tag": section_tag,
         "concrete_material": {"tag": concrete_tag, "type": "Concrete01", "fc_kN_m2": fc, "epsc0": epsc0, "fcu_kN_m2": fcu, "epscu": epscu},
         "steel_material": {"tag": steel_tag, "type": "Steel01", "fy_kN_m2": fy, "Es_kN_m2": es, "b": 0.01},
-        "patch": "rect concrete 20 x 20",
-        "reinforcement": "3 barras abajo, 2 al medio, 3 arriba; diametro 25 mm por barra",
+        "patch": f"rect concrete {CONCRETE_FIBERS_X} x {CONCRETE_FIBERS_Y}",
+        "reinforcement": f"{REBAR_BARS_INFERIOR} barras abajo, {REBAR_BARS_CENTRO} al centro, {REBAR_BARS_SUPERIOR} arriba; diametro {BAR_DIAMETER_MM:g} mm por barra",
     }
 
 
@@ -990,9 +1024,9 @@ def steel_rows_mm(section):
     cover_mm = section["cover"] * 1000.0
     bar_area_mm2 = section["bar_area_m2"] * 1_000_000.0
     return [
-        {"fila": "superior", "bars": 3, "d_mm": cover_mm, "area_mm2": 3 * bar_area_mm2},
-        {"fila": "media", "bars": 2, "d_mm": h_mm / 2.0, "area_mm2": 2 * bar_area_mm2},
-        {"fila": "inferior_traccion", "bars": 3, "d_mm": h_mm - cover_mm, "area_mm2": 3 * bar_area_mm2},
+        {"fila": "superior", "bars": REBAR_BARS_SUPERIOR, "d_mm": cover_mm, "area_mm2": REBAR_BARS_SUPERIOR * bar_area_mm2},
+        {"fila": "media", "bars": REBAR_BARS_CENTRO, "d_mm": h_mm / 2.0, "area_mm2": REBAR_BARS_CENTRO * bar_area_mm2},
+        {"fila": "inferior_traccion", "bars": REBAR_BARS_INFERIOR, "d_mm": h_mm - cover_mm, "area_mm2": REBAR_BARS_INFERIOR * bar_area_mm2},
     ]
 
 
@@ -1156,8 +1190,13 @@ def fiber_section_capacity():
             "fc_MPa": section["fc"] / 1000.0,
             "fy_MPa": section["fy"] / 1000.0,
             "Es_MPa": section["Es"] / 1000.0,
-            "concrete_fibers": 400,
+            "concrete_fibers": section["concrete_fibers_x"] * section["concrete_fibers_y"],
+            "concrete_fibers_x": section["concrete_fibers_x"],
+            "concrete_fibers_y": section["concrete_fibers_y"],
             "steel_bars": len(section["rebar_xy"]),
+            "steel_bars_inferior": REBAR_BARS_INFERIOR,
+            "steel_bars_centro": REBAR_BARS_CENTRO,
+            "steel_bars_superior": REBAR_BARS_SUPERIOR,
             "bar_area_m2": section["bar_area_m2"],
             "bar_area_mm2": bar_area_mm2,
             "bar_diameter_mm": bar_diameter_mm(section["bar_area_m2"]),
@@ -1165,8 +1204,8 @@ def fiber_section_capacity():
             "Po_kN": po,
         },
         "opensees_definition": opensees_section,
-        "reinforcement_coordinates_xy_m": [{"x": x, "y": y} for x, y in section["rebar_xy"]],
-        "reinforcement_coordinates_xy_mm": [{"x": x * 1000.0, "y": y * 1000.0} for x, y in section["rebar_xy"]],
+        "reinforcement_coordinates_xy_m": [{"fila": bar["fila"], "x": bar["x"], "y": bar["y"]} for bar in section["rebar_xy"]],
+        "reinforcement_coordinates_xy_mm": [{"fila": bar["fila"], "x": bar["x"] * 1000.0, "y": bar["y"] * 1000.0} for bar in section["rebar_xy"]],
         "m_phi": mphi,
         "m_phi_first_steel_yield": first_yield,
         "p_m_points": pm,
@@ -1265,7 +1304,7 @@ def print_capacity(capacity):
     print("\nDiscretizacion")
     print(f"  b x h                     = {section['b_m']:.2f} x {section['h_m']:.2f} m")
     print(f"  b x h                     = {section['b_mm']:.0f} x {section['h_mm']:.0f} mm")
-    print(f"  Fibras de hormigon        = {section['concrete_fibers']} (20 x 20)")
+    print(f"  Fibras de hormigon        = {section['concrete_fibers']} ({section['concrete_fibers_x']} x {section['concrete_fibers_y']})")
     print(f"  Barras de acero           = {section['steel_bars']}")
     print(f"  Recubrimiento             = {section['recubrimiento_m']:.3f} m")
     print(f"  Recubrimiento             = {section['recubrimiento_mm']:.0f} mm")
@@ -1276,6 +1315,7 @@ def print_capacity(capacity):
     print(f"  Area por barra            = {section['bar_area_m2']:.6f} m2")
     print(f"  Area por barra            = {section['bar_area_mm2']:.1f} mm2")
     print(f"  Diametro equivalente barra = {section['bar_diameter_mm']:.1f} mm")
+    print(f"  Distribucion barras       = {section['steel_bars_inferior']} inferior, {section['steel_bars_centro']} centro, {section['steel_bars_superior']} superior")
     print(f"  Ast total                 = {section['Ast_m2']:.6f} m2")
     print(f"  Ast total                 = {section['Ast_mm2']:.1f} mm2")
     print(f"  Ag bruta                  = {section['Ag_mm2']:.1f} mm2")
