@@ -43,6 +43,32 @@ NU_CONCRETE = 0.20
 G_CONCRETE = E_CONCRETE / (2.0 * (1.0 + NU_CONCRETE))
 DEFAULT_LAMBDAS = {"G": 1.0, "Q": 0.5, "EX": 1.0, "EY": 0.3}
 
+OUT_DIR = BASE_DIR / "resultados"
+
+# Combinaciones sismicas NCh433 (Parte C): C1/C2/C3 con +-0.30 EX y +-0.20 EY.
+COMBINACIONES_NCH433 = {
+    "C1": {"G": 1.00, "Q": 0.50, "EX": 0.30, "EY": 0.20},
+    "C2": {"G": 1.00, "Q": 0.50, "EX": 0.30, "EY": -0.20},
+    "C3": {"G": 1.00, "Q": 0.50, "EX": -0.30, "EY": 0.20},
+}
+MALLAS_SENSIBILIDAD = [10, 20, 40]
+
+# Parametros del analisis de fibra H-30 (columna 70x70 y muro).
+# Corresponden a part_d_fiber / part_e_wall_pm de P1L2 (mismos numeros del informe).
+_FIB_FC = 30000.0          # f'c concreto [kN/m2] (30 MPa)
+_FIB_EPS_C0 = 0.0020
+_FIB_EPS_CU = 0.0035
+_FIB_FY = 420000.0         # fy acero [kN/m2] (420 MPa)
+_FIB_ES = 2.0e8            # Es acero [kN/m2] (200 GPa)
+_FIB_EH = 0.01             # endurecimiento (Steel01)
+_FIB_COVER = 0.0525        # centro de barra al borde (columna 70x70)
+_B = 0.70                  # lado de la columna [m]
+_WALL_T = 0.25             # espesor del muro [m]
+_WALL_L = 7.60             # longitud en el plano [m]
+_WALL_COVER = 0.030        # recubrimiento al centro de la barra [m]
+_WALL_DBAR = 0.012         # diametro de barra vertical [m]
+_WALL_S = 0.20             # espaciamiento @200 mm por capa
+
 # Configuracion simple de la armadura de la columna COL70/70.
 # Cambia estas lineas para modificar diametro, barras y fibras de hormigon.
 BAR_DIAMETER_MM = 25.0
@@ -1341,6 +1367,828 @@ def print_capacity(capacity):
     print(f"  {OUTPUT_PATH.parent / 'P_M_COL70_70.png'}")
 
 
+# ==================================================================
+# PARTE ADICIONAL 1 - CORRIDA EXPLICITA Y EXTRACCION COMPLETA
+# ==================================================================
+def run_and_extract(data, nodal_loads):
+    """Arma el modelo, aplica cargas nodales, analiza y extrae
+    desplazamientos de todos los nodos, reacciones y fuerzas internas."""
+    if ops is None:
+        raise RuntimeError("Falta instalar openseespy para este analisis.")
+    nodes = build_model(data)
+    apply_nodal_loads(nodal_loads)
+    ops.system("BandGeneral")
+    ops.numberer("RCM")
+    ops.constraints("Plain")
+    ops.integrator("LoadControl", 1.0)
+    ops.algorithm("Linear")
+    ops.analysis("Static")
+    ok = ops.analyze(1)
+    ops.reactions()
+
+    displacements = {}
+    for node_id in nodes:
+        try:
+            vals = list(ops.nodeDisp(node_id))
+        except Exception:
+            continue
+        if not vals:
+            continue
+        displacements[node_id] = {
+            "ux": vals[0] if len(vals) > 0 else 0.0,
+            "uy": vals[1] if len(vals) > 1 else 0.0,
+            "uz": vals[2] if len(vals) > 2 else 0.0,
+            "rx": vals[3] if len(vals) > 3 else 0.0,
+            "ry": vals[4] if len(vals) > 4 else 0.0,
+            "rz": vals[5] if len(vals) > 5 else 0.0,
+        }
+
+    reactions = [0.0, 0.0, 0.0]
+    per_node = {}
+    for support in data.get("supports", []):
+        node = support.get("node")
+        if node not in nodes:
+            continue
+        try:
+            r = list(ops.nodeReaction(node))
+        except Exception:
+            continue
+        per_node[node] = r
+        reactions[0] += r[0] if len(r) > 0 else 0.0
+        reactions[1] += r[1] if len(r) > 1 else 0.0
+        reactions[2] += r[2] if len(r) > 2 else 0.0
+
+    element_forces = {}
+    for element in data.get("elements", []):
+        try:
+            force = list(ops.eleForce(element["id"]))
+        except Exception:
+            continue
+        element_forces[element["id"]] = force
+
+    return {
+        "ok": ok == 0,
+        "ok_code": ok,
+        "displacements": displacements,
+        "reactions": {"sum_Fx": reactions[0], "sum_Fy": reactions[1], "sum_Fz": reactions[2]},
+        "per_node_reactions": {str(k): v for k, v in per_node.items()},
+        "element_forces": element_forces,
+    }
+
+
+def save_result_section(section_key, section_value):
+    with open(OUTPUT_PATH, encoding="utf-8") as file:
+        result = json.load(file)
+    result[section_key] = section_value
+    write_json(OUTPUT_PATH, result)
+    print(f"Seccion '{section_key}' agregada a {OUTPUT_PATH}")
+
+
+# ==================================================================
+# PARTE G - CASO DE CARGA PERMANENTE G (numerico)
+# ==================================================================
+def gravity_case_report(data):
+    """Corre el caso G (peso propio + terminaciones) y reporta cargas
+    aplicadas por piso, reacciones, conservacion (G = sum Rz) y extremos.
+    Solo se consideran las vigas/columnas de componentes apoyados: los
+    elementos flotantes (sin apoyo) del JSON completo se excluyen porque
+    producen artefactos no fisicos (desplazamientos de decenas de metros)."""
+    if ops is None:
+        raise RuntimeError("Falta instalar openseespy para el caso G.")
+    nodes = node_map(data)
+    adjacency = {node_id: set() for node_id in nodes}
+    for element in data.get("elements", []):
+        ni = element.get("nodeI")
+        nj = element.get("nodeJ")
+        if ni in nodes and nj in nodes:
+            adjacency[ni].add(nj)
+            adjacency[nj].add(ni)
+    support_nodes = {support.get("node") for support in data.get("supports", []) if support.get("node") in nodes}
+    visited = set()
+    components = []
+    for seed in adjacency:
+        if seed in visited:
+            continue
+        visited.add(seed)
+        stack = [seed]
+        comp = []
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for nxt in adjacency.get(cur, ()):
+                if nxt not in visited:
+                    visited.add(nxt)
+                    stack.append(nxt)
+        if any(n in support_nodes for n in comp):
+            components.append(set(comp))
+    supported = set().union(*components) if components else set()
+    main = max(components, key=len) if components else set()
+    n_supports_main = len([n for n in support_nodes if n in main])
+    src_of_main = None
+    for element in data.get("elements", []):
+        if element.get("nodeI") in main and element.get("nodeJ") in main and element.get("sourceBuilding"):
+            src_of_main = element.get("sourceBuilding")
+            break
+
+    aplicado_total = 0.0
+    by_floor = {}
+    aplicado_main = 0.0
+    n_floating = 0
+    for element in data.get("elements", []):
+        if element.get("type") != "viga":
+            continue
+        ni = element.get("nodeI")
+        nj = element.get("nodeJ")
+        if ni not in nodes or nj not in nodes:
+            continue
+        total = float(element.get("deadLoad") or 0.0)
+        if ni not in supported or nj not in supported:
+            if total > 1e-9:
+                n_floating += 1
+            continue
+        if total <= 1e-9:
+            continue
+        aplicado_total += total
+        if ni in main and nj in main:
+            aplicado_main += total
+        nivel = str(element_mid_z(element, nodes))
+        by_floor[nivel] = by_floor.get(nivel, 0.0) + total
+
+    g_loads = dead_nodal_loads(data)
+    res = run_and_extract(data, g_loads)
+
+    sum_rx = res["reactions"]["sum_Fx"]
+    sum_ry = res["reactions"]["sum_Fy"]
+    sum_rz = res["reactions"]["sum_Fz"]
+    n_supports = len(data.get("supports", []))
+    err = abs(aplicado_total - sum_rz)
+
+
+    def _gather(nid_set):
+        """Extremos de desplazamiento restringidos a un conjunto de nodos."""
+        uzm = 0.0
+        uzmn = None
+        hm = 0.0
+        hmn = None
+        for nid, d in res["displacements"].items():
+            if nid not in nid_set:
+                continue
+            az = abs(d["uz"])
+            if az > uzm:
+                uzm, uzmn = az, nid
+            h = (d["ux"] ** 2 + d["uy"] ** 2) ** 0.5
+            if h > hm:
+                hm, hmn = h, nid
+        return uzm, uzmn, hm, hmn
+
+
+    def _gather_cols(nid_set):
+        """Extremos de fuerzas de columnas restringidos a un conjunto de nodos."""
+        nmax = 0.0
+        nmaxe = None
+        mmax = 0.0
+        mmaxe = None
+        ncols = 0
+        for element in data.get("elements", []):
+            if element.get("type") != "columna":
+                continue
+            if element.get("nodeI") not in nid_set or element.get("nodeJ") not in nid_set:
+                continue
+            force = res["element_forces"].get(element["id"])
+            if not force or len(force) < 12:
+                continue
+            ncols += 1
+            for extremo in (force[:6], force[6:]):
+                N = abs(extremo[0])
+                M = (extremo[4] ** 2 + extremo[5] ** 2) ** 0.5
+                if N > nmax:
+                    nmax, nmaxe = N, element["id"]
+                if M > mmax:
+                    mmax, mmaxe = M, element["id"]
+        return nmax, nmaxe, mmax, mmaxe, ncols
+
+
+    max_uz, max_uz_node, max_h, max_h_node = _gather(supported)
+    max_N, max_N_elem, max_M, max_M_elem, n_columns = _gather_cols(supported)
+    max_uz_m1, max_uz_node_m1, max_h_m1, max_h_node_m1 = _gather(main)
+    max_N_m1, max_N_elem_m1, max_M_m1, max_M_elem_m1, n_cols_m1 = _gather_cols(main)
+
+    report = {
+        "unidades": "kN, m",
+        "caso": "G",
+        "aplicado_por_piso": {lv: round(v, 3) for lv, v in sorted(by_floor.items())},
+        "G_total_aplicado_kN": round(aplicado_total, 3),
+        "G_aplicado_componente_principal_kN": round(aplicado_main, 3),
+        "componente_principal": src_of_main,
+        "n_apoyos_componente_principal": n_supports_main,
+        "reacciones": {"sum_Rx_kN": sum_rx, "sum_Ry_kN": sum_ry, "sum_Rz_kN": sum_rz},
+        "conservacion_error_kN": err,
+        "n_apoyos": n_supports,
+        "columnas_evaluadas": n_columns,
+        "columnas_evaluadas_componente_principal": n_cols_m1,
+        "vigas_flotantes_con_carga_excluidas": n_floating,
+        "nota": ("Se excluyen las vigas/columnas flotantes (componentes sin apoyo) y sus cargas. "
+                 "Los extremos del componente principal (edificio_1) van aparte; el resto de componentes "
+                 "apoyados de edificio_2 quedan en los extremos globales."),
+        "max_uz_m": max_uz,
+        "max_uz_node": max_uz_node,
+        "max_h_m": max_h,
+        "max_h_node": max_h_node,
+        "max_axial_columna_kN": max_N,
+        "max_axial_elem": max_N_elem,
+        "max_momento_columna_kNm": max_M,
+        "max_momento_elem": max_M_elem,
+        "componente_principal_extremos": {
+            "max_uz_m": max_uz_m1,
+            "max_uz_node": max_uz_node_m1,
+            "max_h_m": max_h_m1,
+            "max_h_node": max_h_node_m1,
+            "max_axial_columna_kN": max_N_m1,
+            "max_axial_elem": max_N_elem_m1,
+            "max_momento_columna_kNm": max_M_m1,
+            "max_momento_elem": max_M_elem_m1,
+        },
+        "convergio": res["ok"],
+    }
+    write_json(OUT_DIR / "part_g_gravity.json", report)
+    return report
+
+
+def print_gravity(report):
+    print("\n" + "=" * 70)
+    print("PARTE G - CASO DE CARGA PERMANENTE (carga muerta)")
+    print("=" * 70)
+    print("Carga muerta aplicada por piso (D*A sobre vigas):")
+    for nivel, valor in report["aplicado_por_piso"].items():
+        print(f"  {nivel}: G = {valor:.3f} kN")
+    print(f"  TOTAL G aplicado = {report['G_total_aplicado_kN']:.3f} kN")
+    print("-" * 70)
+    print(f"  Reaccion Rx (suma) = {report['reacciones']['sum_Rx_kN']:.3f} kN")
+    print(f"  Reaccion Ry (suma) = {report['reacciones']['sum_Ry_kN']:.3f} kN")
+    print(f"  Reaccion Rz (suma) = {report['reacciones']['sum_Rz_kN']:.3f} kN")
+    print(f"  Conservacion |G - Rz| = {report['conservacion_error_kN']:.3e} kN")
+    print(f"  Apoyos = {report['n_apoyos']}")
+    print("-" * 70)
+    print(f"  Desplazamiento vertical max = {report['max_uz_m']:.6f} m (nodo {report['max_uz_node']})")
+    print(f"  Desplazamiento horiz max    = {report['max_h_m']:.6f} m (nodo {report['max_h_node']})")
+    print(f"  Axial compresion max columna = {report['max_axial_columna_kN']:.3f} kN (elem {report['max_axial_elem']})")
+    print(f"  Momento max columna          = {report['max_momento_columna_kNm']:.3f} kN*m (elem {report['max_momento_elem']})")
+    ce = report.get("componente_principal_extremos", {})
+    nm = report.get("componente_principal")
+    print("-" * 70)
+    print(f"  Componente principal ({nm or 'estructura principal'}):")
+    print(f"    G aplicado = {report.get('G_aplicado_componente_principal_kN', 0.0):.3f} kN, "
+          f"apoyos = {report.get('n_apoyos_componente_principal', 0)}")
+    for k, v in (("uz", ce.get("max_uz_m")), ("h", ce.get("max_h_m"))):
+        pass
+    print(f"    Desplazamiento vertical max = {ce.get('max_uz_m', 0.0):.6f} m (nodo {ce.get('max_uz_node')})")
+    print(f"    Desplazamiento horiz max    = {ce.get('max_h_m', 0.0):.6f} m (nodo {ce.get('max_h_node')})")
+    print(f"    Axial compresion max columna = {ce.get('max_axial_columna_kN', 0.0):.3f} kN (elem {ce.get('max_axial_elem')})")
+    print(f"    Momento max columna          = {ce.get('max_momento_columna_kNm', 0.0):.3f} kN*m (elem {ce.get('max_momento_elem')})")
+
+
+# ==================================================================
+# PARTE ADICIONAL 2 - TABLAS SISMICAS POR PISO (EX/EY explicito)
+# ==================================================================
+def seismic_floor_tables(data, live_transfer, seismic):
+    """Corre EX y EY explicitos y arma la tabla por piso con desplazamiento
+    promedio, maximo/minimo nodal en la direccion del sismo y torsion rz.
+    Solo se usan nodos de componentes apoyados (ver Parte G)."""
+    nodes = node_map(data)
+    adjacency = {node_id: set() for node_id in nodes}
+    for element in data.get("elements", []):
+        ni = element.get("nodeI")
+        nj = element.get("nodeJ")
+        if ni in nodes and nj in nodes:
+            adjacency[ni].add(nj)
+            adjacency[nj].add(ni)
+    support_nodes = {support.get("node") for support in data.get("supports", []) if support.get("node") in nodes}
+    supported = set(supported_components(adjacency, support_nodes))
+
+    cargas_ex = {int(nid): v for nid, v in seismic["cargas_nodales_EX"].items() if int(nid) in supported}
+    cargas_ey = {int(nid): v for nid, v in seismic["cargas_nodales_EY"].items() if int(nid) in supported}
+    fx = sum(v.get("Fx", 0.0) for v in cargas_ex.values())
+    fy = sum(v.get("Fy", 0.0) for v in cargas_ey.values())
+
+    res = {
+        "EX": run_and_extract(data, vector_loads_from_dict(cargas_ex)),
+        "EY": run_and_extract(data, vector_loads_from_dict(cargas_ey)),
+    }
+    config = {"EX": ("X", "ux", "sum_Fx", "carga_lateral_total_EX_kN"),
+              "EY": ("Y", "uy", "sum_Fy", "carga_lateral_total_EY_kN")}
+    tables = {}
+    for case, (label, dof, react_comp, total_key) in config.items():
+        rows = {}
+        for row in seismic["pisos"]:
+            levels = [float(level) for level in row["niveles_agrupados_z_m"]]
+            app = row["nodo_aplicacion"]
+            chosen = [
+                (nid, d) for nid, d in res[case]["displacements"].items()
+                if nid in supported
+                and any(abs(round(nodes[nid]["z"], 3) - level) < 1e-6 for level in levels)
+            ]
+            vals = [d[dof] for nid, d in chosen]
+            rzs = [d["rz"] for nid, d in chosen]
+            rows[row["piso"]] = {
+                "floor_z_m": row["floor_z_m"],
+                "niveles_agrupados_z_m": row["niveles_agrupados_z_m"],
+                "u_prom_en_dir_m": (sum(vals) / len(vals)) if vals else 0.0,
+                "u_max_nodal_m": max(vals) if vals else 0.0,
+                "u_min_nodal_m": min(vals) if vals else 0.0,
+                "n_nodos": len(vals),
+                "rz_nodo_aplicacion_rad": res[case]["displacements"].get(app, {}).get("rz", 0.0),
+                "rz_promedio_rad": (sum(rzs) / len(rzs)) if rzs else 0.0,
+            }
+        total = fx if case == "EX" else fy
+        corte = abs(res[case]["reactions"][react_comp])
+        tables[case] = {
+            "direccion": label,
+            "c_total_kN": total,
+            "corte_basal_kN": corte,
+            "error_corte_kN": abs(corte - total),
+            "c_total_incluyendo_flotantes_kN": seismic[total_key],
+            "max_desplazamiento_m": max((r["u_prom_en_dir_m"] for r in rows.values()), default=0.0),
+            "max_u_nodal_m": max((r["u_max_nodal_m"] for r in rows.values()), default=0.0),
+            "convergio": res[case]["ok"],
+            "pisos": rows,
+        }
+    report = {"hipotesis_masa": "W_sismico = D + 0.5Q", "EX": tables["EX"], "EY": tables["EY"]}
+    write_json(OUT_DIR / "part_b_sismo_tablas.json", report)
+    return report
+
+
+def print_seismic_tables(report):
+    print("\n" + "=" * 70)
+    print("PARTE B - TABLAS SISMICAS POR PISO (corrida explicita EX/EY)")
+    print("=" * 70)
+    for case in ("EX", "EY"):
+        c = report[case]
+        print(f"\n[{case}] direccion {c['direccion']}")
+        print(f"  Carga lateral total F      = {c['c_total_kN']:.3f} kN")
+        print(f"  Corte basal (reacciones)   = {c['corte_basal_kN']:.3f} kN")
+        print(f"  Error |F - corte basal|    = {c['error_corte_kN']:.3e} kN")
+        print(f"  Max desplazamiento promedio= {c['max_desplazamiento_m']:.6f} m")
+        print(f"  Tabla por piso (u_prom, u_max, u_min, rz):")
+        for nivel, r in c["pisos"].items():
+            print(f"    {nivel}: u_prom={r['u_prom_en_dir_m']:.6f} m | "
+                  f"u_max={r['u_max_nodal_m']:.6f} m | "
+                  f"u_min={r['u_min_nodal_m']:.6f} m | "
+                  f"nodos={r['n_nodos']} | "
+                  f"rz={r['rz_nodo_aplicacion_rad']:.6e} rad")
+
+
+# ==================================================================
+# PARTE ADICIONAL 3 - SUPERPOSICION CON 3 COMBINACIONES C1/C2/C3
+# ==================================================================
+def superposition_check_multi(data, live_transfer, seismic, combinations):
+    """Corre los casos base G/Q/EX/EY una sola vez y verifica superposicion
+    contra la corrida explicita para cada combinacion de la lista."""
+    nodes = node_map(data)
+    connected = {element["nodeI"] for element in data.get("elements", [])} | {element["nodeJ"] for element in data.get("elements", [])}
+    control_node = max((node for node in nodes.values() if node["id"] in connected), key=lambda n: (n["z"], n["x"] ** 2 + n["y"] ** 2))["id"]
+    element_id = next(element["id"] for element in data["elements"] if element.get("type") == "viga")
+    load_sets = {
+        "G": dead_nodal_loads(data),
+        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
+        "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
+    }
+    cases = {name: analyze_case(data, loads, control_node, element_id) for name, loads in load_sets.items()}
+
+    report = {
+        "control_node": control_node,
+        "element_id": element_id,
+        "combinaciones": {},
+        "max_err_global": 0.0,
+        "superposicion_valida": True,
+    }
+
+    for nombre, lambdas in combinations.items():
+        explicit = analyze_case(data, combine_nodal_loads(load_sets, lambdas), control_node, element_id)
+
+        predicted_disp = [0.0, 0.0, 0.0]
+        predicted_react = [0.0, 0.0, 0.0]
+        predicted_force = [0.0] * len(cases["G"].get("element_force_sample", []))
+        for case, result in cases.items():
+            factor = lambdas.get(case, 0.0)
+            for i in range(3):
+                predicted_disp[i] += factor * result["control_displacement_ux_uy_uz_m"][i]
+                predicted_react[i] += factor * result["sum_reactions_Fx_Fy_Fz_kN"][i]
+            for i, value in enumerate(result.get("element_force_sample", [])):
+                predicted_force[i] += factor * value
+
+        disp_error = [explicit["control_displacement_ux_uy_uz_m"][i] - predicted_disp[i] for i in range(3)]
+        reaction_error = [explicit["sum_reactions_Fx_Fy_Fz_kN"][i] - predicted_react[i] for i in range(3)]
+        force_error = [
+            explicit.get("element_force_sample", [])[i] - predicted_force[i]
+            for i in range(min(len(explicit.get("element_force_sample", [])), len(predicted_force)))
+        ]
+        scale = max(max_abs(disp_error), max_abs(reaction_error), max_abs(force_error))
+        super_ok = scale < 1e-6
+        report["max_err_global"] = max(report["max_err_global"], scale)
+        report["superposicion_valida"] = report["superposicion_valida"] and super_ok
+
+        report["combinaciones"][nombre] = {
+            "lambdas": lambdas,
+            "combinacion": "R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY",
+            "errors": {
+                "disp_abs_m": disp_error,
+                "reaction_abs_kN": reaction_error,
+                "element_force_abs": force_error,
+                "max_disp_abs_m": max_abs(disp_error),
+                "max_reaction_abs_kN": max_abs(reaction_error),
+                "max_element_force_abs": max_abs(force_error),
+            },
+            "max_err_global": scale,
+            "superposicion_valida": super_ok,
+            "convergio_explicito": explicit["ok"],
+        }
+    write_json(OUT_DIR / "part_c_superposicion_3.json", report)
+    return report
+
+
+def print_superposition_multi(report):
+    print("\n" + "=" * 70)
+    print("PARTE C - SUPERPOSICION 3 COMBINACIONES (C1/C2/C3 NCh433)")
+    print("=" * 70)
+    print(f"Nodo de control = {report['control_node']} | Elemento de control = {report['element_id']}")
+    for nombre, c in report["combinaciones"].items():
+        e = c["errors"]
+        print("-" * 70)
+        print(f"  Combinacion {nombre}: {c['lambdas']}")
+        print(f"  Max error desplazamiento = {e['max_disp_abs_m']:.3e} m")
+        print(f"  Max error reaccion       = {e['max_reaction_abs_kN']:.3e} kN")
+        print(f"  Max error fuerzas        = {e['max_element_force_abs']:.3e}")
+        print(f"  Valida (err < 1e-6)      = {c['superposicion_valida']}")
+    print("-" * 70)
+    print(f"  Max error global (todas las combinaciones) = {report['max_err_global']:.3e}")
+    print(f"  SUPERPOSICION LINEAL VALIDA = {report['superposicion_valida']}")
+
+
+# ==================================================================
+# PARTE ADICIONAL 4 - SENSIBILIDAD M-PHI (mallas 10x10/20x20/40x40)
+# ==================================================================
+def _fiber_stress_concrete(eps):
+    if eps < 0.0:
+        return 0.0
+    if eps <= _FIB_EPS_C0:
+        return _FIB_FC * (2.0 * eps / _FIB_EPS_C0 - (eps / _FIB_EPS_C0) ** 2)
+    if eps <= _FIB_EPS_CU:
+        t = (eps - _FIB_EPS_C0) / (_FIB_EPS_CU - _FIB_EPS_C0)
+        return _FIB_FC * (1.0 - 0.15 * t)
+    return 0.85 * _FIB_FC
+
+
+def _fiber_stress_steel(eps):
+    ey = _FIB_FY / _FIB_ES
+    if eps >= ey:
+        return _FIB_FY + _FIB_ES * _FIB_EH * (eps - ey)
+    if eps <= -ey:
+        return -_FIB_FY + _FIB_ES * _FIB_EH * (eps + ey)
+    return _FIB_ES * eps
+
+
+def _fiber_axial(curv, eps0, fibers):
+    P = 0.0
+    for (x, d, area, mat) in fibers:
+        eps = eps0 + curv * d
+        sig = _fiber_stress_concrete(eps) if mat == "concrete" else _fiber_stress_steel(eps)
+        P += sig * area
+    return P
+
+
+def _fiber_solve_PM(curv, P_target, fibers):
+    lo, hi = -0.20, 0.05
+    f_lo = _fiber_axial(curv, lo, fibers) - P_target
+    f_hi = _fiber_axial(curv, hi, fibers) - P_target
+    if f_lo * f_hi > 0.0:
+        return None, None
+    for _ in range(400):
+        mid = 0.5 * (lo + hi)
+        f_mid = _fiber_axial(curv, mid, fibers) - P_target
+        if abs(f_mid) < 1e-7:
+            lo = hi = mid
+            break
+        if f_lo * f_mid < 0.0:
+            hi = mid
+        else:
+            lo = mid
+        if hi - lo < 1e-10:
+            break
+    eps0 = 0.5 * (lo + hi)
+    M = 0.0
+    for (x, d, area, mat) in fibers:
+        eps = eps0 + curv * d
+        sig = _fiber_stress_concrete(eps) if mat == "concrete" else _fiber_stress_steel(eps)
+        M += sig * area * d
+    return eps0, M
+
+
+def _col_build_fibers(n):
+    fibers = []
+    dy = _B / n
+    dz = _B / n
+    for i in range(n):
+        x = (i + 0.5) * dy
+        d = _B / 2.0 - x
+        for _ in range(n):
+            fibers.append((x, d, dy * dz, "concrete"))
+    half_bar = _B / 2.0 - _FIB_COVER
+    abar = math.pi * (0.025 ** 2) / 4.0
+    coords = [
+        (half_bar, half_bar), (-half_bar, half_bar),
+        (half_bar, -half_bar), (-half_bar, -half_bar),
+        (0.0, half_bar), (0.0, -half_bar),
+        (half_bar, 0.0), (-half_bar, 0.0),
+    ]
+    for (y, z) in coords:
+        x = _B / 2.0 - y
+        fibers.append((x, y, abar, "steel"))
+    return fibers
+
+
+def _fiber_moment_curvature(P_target, n, max_curv, num):
+    fibers = _col_build_fibers(n)
+    curv = []
+    M = []
+    for i in range(num + 1):
+        k = max_curv * i / num
+        _, m = _fiber_solve_PM(k, P_target, fibers)
+        if m is None:
+            break
+        curv.append(k)
+        M.append(m)
+    return curv, M
+
+
+def _fiber_rigidez_inicial(curv, M):
+    if len(curv) < 2 or curv[1] == curv[0]:
+        return 0.0
+    return (M[1] - M[0]) / (curv[1] - curv[0])
+
+
+def sensitivity_mphi():
+    """Sensibilidad de la discretizacion M-phi de la columna 70x70 (H-30):
+    mallas 10x10, 20x20 y 40x40. Mismo integrador de parte D."""
+    Pn0 = 0.85 * _FIB_FC * _B * _B
+    P_serv = 0.20 * Pn0
+
+    print("\n" + "=" * 70)
+    print("PARTE D2 - SENSIBILIDAD DE DISCRETIZACION M-PHI (columna 70x70 H-30)")
+    print("=" * 70)
+    print(f"P = 0 (flexion pura) y P = {P_serv:.0f} kN (0.2*Pn0)")
+
+    report = {
+        "unidades": "kN, m",
+        "seccion_m": {"b": _B, "h": _B},
+        "concreto_MPa": _FIB_FC / 1000.0,
+        "Pn0_kN": Pn0,
+        "mallas": {},
+        "referencia": "malla 40x40",
+    }
+
+    series = {}
+    for n in MALLAS_SENSIBILIDAD:
+        curv0, M0 = _fiber_moment_curvature(0.0, n, 0.12, 500)
+        curvS, MS = _fiber_moment_curvature(P_serv, n, 0.12, 500)
+        peak0 = max(M0) if M0 else 0.0
+        peakS = max(MS) if MS else 0.0
+        k0 = curv0[M0.index(max(M0))] if M0 else 0.0
+        kS = curvS[MS.index(max(MS))] if MS else 0.0
+        r0 = _fiber_rigidez_inicial(curv0, M0)
+        rS = _fiber_rigidez_inicial(curvS, MS)
+        n_fib = n * n + 8
+
+        series[n] = {"curv_P0": list(curv0), "M_P0": list(M0)}
+        report["mallas"][str(n)] = {
+            "n_fibras_total": n_fib,
+            "Mmax_P0_kNm": peak0,
+            "phi_Mmax_P0_1m": k0,
+            "Mmax_Pserv_kNm": peakS,
+            "phi_Mmax_Pserv_1m": kS,
+            "rigidez_inicial_P0_kNm2": r0,
+            "rigidez_inicial_Pserv_kNm2": rS,
+        }
+        print("-" * 70)
+        print(f"Malla {n}x{n}  ({n_fib} fibras):")
+        print(f"  P=0        : Mmax={peak0:.2f} kN-m @ phi={k0:.6f} 1/m | EI0={r0:.3e} kN-m2")
+        print(f"  P={P_serv:.0f}: Mmax={peakS:.2f} kN-m @ phi={kS:.6f} 1/m | EI0={rS:.3e} kN-m2")
+
+    ref = report["mallas"]["40"]
+    diff = {}
+    for n in MALLAS_SENSIBILIDAD:
+        if n == 40:
+            continue
+        m = report["mallas"][str(n)]
+        diff[str(n)] = {
+            "Mmax_P0_dif_pct": (m["Mmax_P0_kNm"] - ref["Mmax_P0_kNm"]) / ref["Mmax_P0_kNm"] * 100.0,
+            "Mmax_Pserv_dif_pct": (m["Mmax_Pserv_kNm"] - ref["Mmax_Pserv_kNm"]) / ref["Mmax_Pserv_kNm"] * 100.0,
+            "EI0_P0_dif_pct": (m["rigidez_inicial_P0_kNm2"] - ref["rigidez_inicial_P0_kNm2"]) / ref["rigidez_inicial_P0_kNm2"] * 100.0,
+        }
+        print("-" * 70)
+        print(f"Diferencia malla {n}x{n} vs 40x40:")
+        print(f"  Mmax_P0={diff[str(n)]['Mmax_P0_dif_pct']:+.3f}% | "
+              f"Mmax_Pserv={diff[str(n)]['Mmax_Pserv_dif_pct']:+.3f}% | "
+              f"EI0_P0={diff[str(n)]['EI0_P0_dif_pct']:+.3f}%")
+    report["diferencia_vs_40x40_pct"] = diff
+    report["series"] = {str(n): series[n] for n in series}
+
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(8, 5))
+        for n in MALLAS_SENSIBILIDAD:
+            s = series[n]
+            ax.plot(s["curv_P0"], s["M_P0"], label=f"{n}x{n}")
+        ax.set_xlabel("Curvatura phi [1/m]")
+        ax.set_ylabel("Momento M [kN.m]")
+        ax.set_title("Sensibilidad de discretizacion M-phi (P = 0)")
+        ax.legend(title="Malla de fibras")
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        png = OUT_DIR / "M_phi_sensibilidad.png"
+        fig.savefig(png, dpi=150)
+        plt.close(fig)
+        print(f"\nGrafico guardado en {png}")
+        report["grafico"] = str(png)
+    except Exception as exc:
+        print(f"\n[aviso] no se pudo generar grafico: {exc}")
+
+    write_json(OUT_DIR / "part_d_sensibilidad.json", report)
+    print(f"Resultados guardados en {OUT_DIR / 'part_d_sensibilidad.json'}")
+    return report
+
+
+# ==================================================================
+# PARTE ADICIONAL 5 - CURVA P-M DEL MURO (W_DPRIME_OPENING_TO_3)
+# ==================================================================
+def _wall_n_barras_por_capa():
+    n = 0
+    pos = _WALL_COVER
+    while pos <= _WALL_L - _WALL_COVER + 1e-9:
+        n += 1
+        pos += _WALL_S
+    return n
+
+
+def _wall_build_fibers():
+    fibers = []
+    dx = _WALL_L / 40
+    dy = _WALL_T / 10
+    for i in range(40):
+        x = (i + 0.5) * dx
+        d = _WALL_L / 2.0 - x
+        for _ in range(10):
+            fibers.append((x, d, dx * dy, "concrete"))
+    n_layer = _wall_n_barras_por_capa()
+    abar = math.pi * (_WALL_DBAR ** 2) / 4.0
+    for capa_y in (-(_WALL_T / 2.0 - _WALL_COVER), (_WALL_T / 2.0 - _WALL_COVER)):
+        for j in range(n_layer):
+            x = _WALL_COVER + j * _WALL_S
+            d = _WALL_L / 2.0 - x
+            fibers.append((x, d, abar, "steel"))
+    return fibers, n_layer * 2
+
+
+def _wall_solve_PM(curv, P_target, fibers):
+    lo, hi = -0.20, 0.05
+    f_lo = _fiber_axial(curv, lo, fibers) - P_target
+    f_hi = _fiber_axial(curv, hi, fibers) - P_target
+    if f_lo * f_hi > 0.0:
+        return None, None, None
+    for _ in range(400):
+        mid = 0.5 * (lo + hi)
+        f_mid = _fiber_axial(curv, mid, fibers) - P_target
+        if abs(f_mid) < 1e-7:
+            lo = hi = mid
+            break
+        if f_lo * f_mid < 0.0:
+            hi = mid
+        else:
+            lo = mid
+        if hi - lo < 1e-10:
+            break
+    eps0 = 0.5 * (lo + hi)
+    M = 0.0
+    eps_max_c = 0.0
+    for (x, d, area, mat) in fibers:
+        eps = eps0 + curv * d
+        sig = _fiber_stress_concrete(eps) if mat == "concrete" else _fiber_stress_steel(eps)
+        M += sig * area * d
+        if mat == "concrete" and eps > eps_max_c:
+            eps_max_c = eps
+    return eps0, M, eps_max_c
+
+
+def _wall_moment_curvature(P_target):
+    fibers, n_steel = _wall_build_fibers()
+    curv = []
+    M = []
+    for i in range(800 + 1):
+        k = 0.05 * i / 800
+        _, m, ec = _wall_solve_PM(k, P_target, fibers)
+        if m is None:
+            break
+        curv.append(k)
+        M.append(m)
+        if ec >= _FIB_EPS_CU - 1e-9:
+            break
+    return curv, M, n_steel
+
+
+def _wall_interaccion(Pn0, fracs):
+    points = []
+    for frac in fracs:
+        Px = frac * Pn0
+        curv, M, _ = _wall_moment_curvature(Px)
+        peak = max(M) if M else 0.0
+        k_peak = curv[M.index(peak)] if M else 0.0
+        points.append({"P_frac": frac, "P_kN": Px, "Mmax_kNm": peak, "phi_Mmax_1m": k_peak})
+    return points
+
+
+def wall_pm_curve():
+    """Curva P-M y M-phi del muro W_DPRIME_OPENING_TO_3 (t=0.25, L=7.60, H-30)."""
+    Ag = _WALL_T * _WALL_L
+    Pn0 = 0.85 * _FIB_FC * Ag
+    n_steel_tot = _wall_n_barras_por_capa() * 2
+    abar = math.pi * (_WALL_DBAR ** 2) / 4.0
+    As_tot = n_steel_tot * abar
+    cuantia = As_tot / Ag
+
+    print("\n" + "=" * 70)
+    print("PARTE E2 - CURVA P-M DEL MURO (seccion de fibra)")
+    print("=" * 70)
+    print(f"Muro: t = {_WALL_T} m, L = {_WALL_L} m | Ag = {Ag:.3f} m2")
+    print(f"Concreto H-30: f'c = {_FIB_FC / 1000.0:.0f} MPa | acero fy = {_FIB_FY / 1000.0:.0f} MPa")
+    print(f"Armadura: {n_steel_tot} barras phi 12 mm (2 capas @200mm) | As = {As_tot * 1e4:.2f} cm2 | cuantia = {cuantia * 100:.2f}%")
+    print(f"Pn0 = 0.85 f'c Ag = {Pn0:.0f} kN")
+
+    curv0, M0, _ = _wall_moment_curvature(0.0)
+    peak0 = max(M0) if M0 else 0.0
+    k_peak0 = curv0[M0.index(peak0)] if M0 else 0.0
+    print("-" * 70)
+    print("CURVA M-PHI del muro (P = 0, flexion pura):")
+    print(f"  n_puntos = {len(curv0)} | M_peak = {peak0:.1f} kN-m @ phi = {k_peak0:.5f} 1/m")
+
+    fracs = [0.0, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60]
+    points = _wall_interaccion(Pn0, fracs)
+    print("-" * 70)
+    print("ENVOLVENTE P-M del muro (P vs Mmax):")
+    print(f"  {'P/Pn0':>6s} {'P [kN]':>10s} {'Mmax [kN-m]':>12s} {'phi@Mmax':>10s}")
+    for p in points:
+        print(f"  {p['P_frac']:6.2f} {p['P_kN']:10.0f} {p['Mmax_kNm']:12.1f} {p['phi_Mmax_1m']:10.5f}")
+
+    p_peak = max(points, key=lambda x: x["Mmax_kNm"])
+    print("-" * 70)
+    print(f"INTERPRETACION: M_max(P=0) = {peak0:.0f} kN-m (flexion pura).")
+    print(f"  El maximo de la envolvente ocurre en P = {p_peak['P_kN']:.0f} kN "
+          f"(P/Pn0 = {p_peak['P_frac']:.2f}), M = {p_peak['Mmax_kNm']:.0f} kN-m.")
+
+    report = {
+        "unidades": "kN, m",
+        "muro": "W_DPRIME_OPENING_TO_3",
+        "seccion_m": {"t": _WALL_T, "L": _WALL_L},
+        "concreto_MPa": _FIB_FC / 1000.0,
+        "acero_MPa": _FIB_FY / 1000.0,
+        "armadura": {"diametro_mm": int(_WALL_DBAR * 1000), "espaciado_mm": int(_WALL_S * 1000),
+                     "n_barras_total": n_steel_tot, "As_total_m2": As_tot, "cuantia_vertical": cuantia},
+        "Pn0_kN": Pn0,
+        "Mphi_P0": {"curv": [round(c, 6) for c in curv0], "M": [round(m, 1) for m in M0]},
+        "interaccion_PM": points,
+    }
+    write_json(OUT_DIR / "part_e_wall.json", report)
+    print(f"Resultados guardados en {OUT_DIR / 'part_e_wall.json'}")
+
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+        ax[0].plot(curv0, M0)
+        ax[0].set_xlabel("Curvatura phi [1/m]")
+        ax[0].set_ylabel("Momento M [kN.m]")
+        ax[0].set_title("Muro 0.25 x 7.60 m - M-phi (P = 0)")
+        ax[0].grid(True, alpha=0.3)
+        Ps = [p["P_kN"] for p in points]
+        Ms = [p["Mmax_kNm"] for p in points]
+        ax[1].plot(Ps, Ms, "o-")
+        ax[1].axvline(0, color="k", lw=0.5)
+        ax[1].set_xlabel("Axial P [kN]")
+        ax[1].set_ylabel("Mmax [kN.m]")
+        ax[1].set_title("Muro 0.25 x 7.60 m - Envolvente P-M")
+        ax[1].grid(True, alpha=0.3)
+        fig.tight_layout()
+        png = OUT_DIR / "P_M_wall.png"
+        fig.savefig(png, dpi=150)
+        plt.close(fig)
+        print(f"Graficos guardados en {png}")
+    except Exception as exc:
+        print(f"[aviso] no se pudo generar grafico: {exc}")
+    return report
+
+
 def ask_float(prompt, default):
     value = input(f"{prompt} [{default}]: ").strip()
     if not value:
@@ -1376,6 +2224,11 @@ def interactive_menu():
         print("7. Ejemplos de IDs disponibles           (sin ID)")
         print("8. Ruta del JSON completo de resultados  (sin ID)")
         print("9. Verificacion: aguanta? (demanda P-M)  (sin ID, pide lambdas)")
+        print("10. Caso G numerico (carga permanente)     (sin ID)")
+        print("11. Tablas sismo por piso EX/EY explicito  (sin ID)")
+        print("12. Superposicion 3 combinaciones C1/C2/C3 (sin ID)")
+        print("13. Sensibilidad M-phi 10x10/20x20/40x40   (sin ID)")
+        print("14. Capacidad P-M del muro                 (sin ID)")
         print("0. Salir")
         option = input("Elige una opcion: ").strip()
 
@@ -1416,6 +2269,24 @@ def interactive_menu():
             lambdas = ask_lambdas()
             verdict = verify_building(data, live_transfer, seismic, lambdas)
             print_verification(verdict, q_q, seismic_coeff)
+        elif option == "10":
+            report = gravity_case_report(data)
+            save_result_section("parte_G_caso_gravedad", report)
+            print_gravity(report)
+        elif option == "11":
+            report = seismic_floor_tables(data, live_transfer, seismic)
+            save_result_section("parte_B_tablas_sismo_por_piso", report)
+            print_seismic_tables(report)
+        elif option == "12":
+            report = superposition_check_multi(data, live_transfer, seismic, COMBINACIONES_NCH433)
+            save_result_section("parte_C_superposicion_3_combinaciones", report)
+            print_superposition_multi(report)
+        elif option == "13":
+            report = sensitivity_mphi()
+            save_result_section("parte_D2_sensibilidad_M_phi", report)
+        elif option == "14":
+            report = wall_pm_curve()
+            save_result_section("parte_E2_muro_PM", report)
         else:
             print("Opcion no valida.")
 
@@ -1434,6 +2305,11 @@ def main():
     parser.add_argument("--lambdaEY", type=float, default=DEFAULT_LAMBDAS["EY"], help="Factor lambda_EY")
     parser.add_argument("--capacidad-ha", action="store_true", help="Corre Parte D: Fiber Section HA, M-phi y puntos P-M")
     parser.add_argument("--verifica", action="store_true", help="Corre Parte E: demanda vs capacidad P-M (aguanta?)")
+    parser.add_argument("--caso-g", action="store_true", help="Corre Parte G: caso de carga permanente G numerico")
+    parser.add_argument("--sismo-tablas", action="store_true", help="Genera tablas sismicas por piso EX/EY (corrida explicita)")
+    parser.add_argument("--superposicion-3", action="store_true", help="Corre Parte C con las 3 combinaciones C1/C2/C3")
+    parser.add_argument("--sensibilidad", action="store_true", help="Corre Parte D2: sensibilidad M-phi 10x10/20x20/40x40")
+    parser.add_argument("--muro-pm", action="store_true", help="Corre Parte E2: curva P-M del muro W_DPRIME_OPENING_TO_3")
     args = parser.parse_args()
 
     if args.menu or len(sys.argv) == 1:
@@ -1471,6 +2347,39 @@ def main():
         lambdas = {"G": args.lambdaG, "Q": args.lambdaQ, "EX": args.lambdaEX, "EY": args.lambdaEY}
         verdict = verify_building(data, live_transfer, seismic, lambdas)
         print_verification(verdict, q_q, args.coef_sismo)
+        return
+
+    if args.caso_g:
+        report = gravity_case_report(data)
+        save_result_section("parte_G_caso_gravedad", report)
+        print_gravity(report)
+        print(f"salida = {OUTPUT_PATH}")
+        return
+
+    if args.sismo_tablas:
+        report = seismic_floor_tables(data, live_transfer, seismic)
+        save_result_section("parte_B_tablas_sismo_por_piso", report)
+        print_seismic_tables(report)
+        print(f"salida = {OUTPUT_PATH}")
+        return
+
+    if args.superposicion_3:
+        report = superposition_check_multi(data, live_transfer, seismic, COMBINACIONES_NCH433)
+        save_result_section("parte_C_superposicion_3_combinaciones", report)
+        print_superposition_multi(report)
+        print(f"salida = {OUTPUT_PATH}")
+        return
+
+    if args.sensibilidad:
+        report = sensitivity_mphi()
+        save_result_section("parte_D2_sensibilidad_M_phi", report)
+        print(f"salida = {OUTPUT_PATH}")
+        return
+
+    if args.muro_pm:
+        report = wall_pm_curve()
+        save_result_section("parte_E2_muro_PM", report)
+        print(f"salida = {OUTPUT_PATH}")
         return
 
     if args.id:

@@ -119,7 +119,15 @@ El criterio de término de la curva vigente es `φ = 0.12 1/m` en el script de l
 M_y ≈ 425.9 kN·m
 ```
 
-La discretización actual es 20×20. La sensibilidad debe compararse corriendo 10×10, 20×20 y 40×40 con los mismos materiales y tolerancias; el resultado versionado contiene la corrida 20×20, por lo que esa comparación aún queda como control numérico pendiente.
+La discretización actual es 20×20. La sensibilidad se controló corriendo 10×10, 20×20 y 40×40 con los mismos materiales y tolerancias (`carga_viva_sismo.py`, opción 13; `resultados/part_d_sensibilidad.json`, `M_phi_sensibilidad.png`):
+
+| Malla | Fibras | `Mmax` P=0 [kN·m] | `Mmax` P=2499 [kN·m] | `EI0` P=0 [kN·m²] |
+|---|---:|---:|---:|---:|
+| 10×10 | 108 | 657.78 | 1226.31 | 1.043·10⁵ |
+| 20×20 | 408 | 651.85 | 1238.47 | 1.051·10⁵ |
+| 40×40 | 1608 | 654.36 | 1238.08 | 1.054·10⁵ |
+
+La malla vigente 20×20 difiere de la convergida 40×40 en −0.38 % en `Mmax` (P=0), +0.03 % en `Mmax` (P=2499) y −0.21 % en `EI0`; incluso la gruesa 10×10 queda dentro de ±1 %. Los máximos reportados arriba (654.4 y 1238.1 kN·m) son consistentes con la corrida convergida 40×40 (654.36 y 1238.08 kN·m), por lo que la discretización 20×20 se considera suficiente.
 
 ## 6. Curva P-M de columna
 
@@ -140,17 +148,26 @@ La capacidad aumenta con compresión moderada por el mayor bloque comprimido y l
 
 ## 7. Curva P-M de muro
 
-Los muros están implementados actualmente como **elementos equivalentes elásticos** (`wall_section_props`), con propiedades `A`, `Iy`, `Iz` y `J`. El modelo no contiene todavía armadura longitudinal/transversal ni una sección `Fiber` de muro, por lo que no es válido presentar una envolvente RC P-M numérica como si estuviera calculada.
+Los muros están implementados actualmente como **elementos equivalentes elásticos** (`wall_section_props`). La envolvente P-M de capacidad del muro se calculó con una **sección de fibra** independiente (`carga_viva_sismo.py`, opción 14; `resultados/part_e_wall.json`, `P_M_wall.png`), tomando el muro de mayor desarrollo del modelo:
 
-La envolvente que corresponde implementar en la dirección principal del muro es:
+- Sección `t × L` = 0.25 × 7.60 m, `A_g = 1.900 m²`.
+- Hormigón `Concrete01` H-30, `f'c = 30 MPa`; acero `fy = 420 MPa`.
+- Armadura: 76 barras φ12 (2 capas @ 200 mm), `A_s = 85.95 cm²`, cuantía 0.45 %.
+- `P_n0 = 0.85 f'c A_g = 48450 kN`.
 
-1. Seleccionar el muro de mayor longitud, `t = 0.20 m`, `L = 3.40 m`.
-2. Discretizar la sección `t × L` en fibras.
-3. Definir `Concrete01` y las armaduras reales del muro.
-4. Fijar sucesivamente `P` y resolver el equilibrio axial.
-5. Integrar el momento en la dirección principal y obtener `Mmax(P)`.
+Con `P = 0` (flexión pura) la curva M-φ alcanza `M = 14452.5 kN·m` en `φ = 0.00756 1/m`. La envolvente para compresión creciente:
 
-Por tanto, esta sección queda identificada como **pendiente del avance actual**; los valores existentes del muro corresponden a rigidez elástica equivalente, no a capacidad última de hormigón armado.
+| `P/Pn0` | `P` [kN] | `Mmax` [kN·m] |
+|---:|---:|---:|
+| 0.00 | 0 | 14452.5 |
+| 0.10 | 4845 | 27699.4 |
+| 0.20 | 9690 | 38973.2 |
+| 0.30 | 14535 | 47365.7 |
+| 0.40 | 19380 | 52744.9 |
+| 0.50 | 24225 | 55086.1 |
+| 0.60 | 29070 | 54497.4 |
+
+El máximo de la envolvente es `M = 55086 kN·m` en `P/Pn0 = 0.50`; para compresiones mayores la resistencia comienza a caer al acercarse a compresión pura. Se trata de la capacidad de la sección de fibra del muro; en el modelo OpenSees el muro se mantiene como elemento elástico equivalente, ya que la sección de fibra no participa todavía en el ensamblaje global.
 
 ## 8. Verificación de hormigón armado
 
@@ -191,7 +208,47 @@ La capacidad de momento disponible reportada es `φM_n = 536.86 kN·m`. Por tant
 
 El punto `(P_d,M_d)` queda por encima de la capacidad disponible en flexión. La verificación completa evaluó 89 columnas y encontró 17 que no cumplen; `E1_284` es la columna crítica reportada.
 
-## 10. Uso de IA
+## 10. Edificio completo (P1L2 + edificio_2)
+
+Los controles anteriores corresponden al modelo de `P1L2/Edificio 1 y 2`. Sobre el JSON del edificio completo (`estructura_completo_unity.json`) se corrió el mismo flujo con `carga_viva_sismo.py` (opciones 10–14). El modelo completo tiene 373 nodos, 417 elementos (129 columnas 70×70), 30 muros y 30 apoyos; la estructura se descompone en 113 componentes conectados, de los que solo el principal (169 nodos, 18 apoyos) pertenece a `edificio_1`.
+
+### Caso G numérico
+
+La carga permanente se aplicó solo sobre vigas de componentes apoyados (las vigas flotantes se excluyen porque no trasladan carga a los apoyos):
+
+| Magnitud | Resultado |
+|---|---:|
+| G total aplicado | 23193.079 kN |
+| ΣRz | 23193.079 kN |
+| Error de conservación | 1.38·10⁻¹⁰ kN |
+| Apoyos | 30 |
+
+Los aportes por piso más grandes son de `edificio_1` (z=0.0→384, 4.0→3987.8, 12.0→3916.2, 16.0→5211.8 kN). En el componente principal la respuesta es pequeña (uz máx 3.3 mm, momento máx 151.5 kN·m). El resto de componentes de `edificio_2` son torres "una columna + pasillos en voladizo" de 31.5 m; sus extremos (uz 45.9 m, M 56083 kN·m) son un artefacto del modelo exportado y no representan la estructura real.
+
+### Tablas sísmicas EX/EY por piso
+
+Aplicando las fuerzas pseudoestáticas solo sobre la estructura soportada:
+
+| Dirección | F total [kN] | Corte basal [kN] | Error [kN] | Desp. promedio máx [m] |
+|---|---|---:|---:|---:|
+| EX | 3668.660 | 3668.660 | 4.59·10⁻¹⁰ | 0.013076 |
+| EY | 3668.660 | 3668.660 | 3.21·10⁻¹⁰ | 0.014008 |
+
+Los desplazamientos promedio crecen monótonamente con la altura (EX: 0.0005 → 0.0131 m de CIELO_1S a CIELO_4). Las `u_max` nodales de la tabla EY (hasta 0.057 m) vuelven a reflejar los voladizos de `edificio_2`.
+
+### Superposición con 3 combinaciones (NCh433)
+
+La superposición lineal se verificó con `C1 = G + 0.5Q + 0.3EX + 0.2EY`, `C2 = G + 0.5Q + 0.3EX − 0.2EY` y `C3 = G + 0.5Q − 0.3EX + 0.2EY`:
+
+| Margen | C1 | C2 | C3 |
+|---|---:|---:|---:|
+| Desplazamientos [m] | 1.40·10⁻¹¹ | 1.40·10⁻¹¹ | 1.40·10⁻¹¹ |
+| Reacciones [kN] | 3.64·10⁻¹⁰ | 3.65·10⁻¹⁰ | 3.63·10⁻¹⁰ |
+| Fuerzas internas | 5.9·10⁻¹³ | 1.2·10⁻¹² | 9.0·10⁻¹³ |
+
+La superposición es válida en las tres combinaciones (error global 3.65·10⁻¹⁰, tolerancia 1e-6).
+
+## 11. Uso de IA
 
 Durante el desarrollo, el agente propuso inicialmente representar los huecos de losa como un recorte rectangular fijo. El grupo revisó la propuesta contra la geometría real de los muros y detectó que el recorte no coincidía con sus huellas en planta.
 
@@ -208,5 +265,13 @@ La convención corregida fue generar los huecos a partir del rectángulo envolve
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_b_sismo.json`
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_c_superposicion.json`
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_d_fiber.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py` (edificio completo, opciones 10–14)
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/carga_viva_sismo.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_g_gravity.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_b_sismo_tablas.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_d_sensibilidad.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_e_wall.json`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_sensibilidad.png`
+- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_wall.png`
 - `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_COL70_70.png`
 - `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_COL70_70.png`
