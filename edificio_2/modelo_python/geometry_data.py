@@ -674,19 +674,70 @@ def create_geometry():
             for level in VERTICAL_LEVEL_SEQUENCE:
                 get_or_create_node(gx, gy, level)
 
+    def split_beam_spec(gx1, gy1, gx2, gy2):
+        """Return sub-specs (gx1, gy1, gx2, gy2) contiguous between columns.
+
+        A beam that runs over an intermediate column grid position is split so
+        that every segment starts and ends at a structural position, matching
+        the column grid line, producing one beam per span between columns.
+        """
+        if gx1 == gx2:
+            axis_grid = gx1
+            intermediates = []
+            for pos_id, pgx, pgy in STRUCTURAL_POSITIONS:
+                if pgx != axis_grid:
+                    continue
+                if pgy in (gy1, gy2):
+                    continue
+                intermediates.append(pgy)
+            axis_1, axis_2 = gy1, gy2
+            def key_of(pgy):
+                return grid_y[pgy]
+        elif gy1 == gy2:
+            axis_grid = gy1
+            intermediates = []
+            for pos_id, pgx, pgy in STRUCTURAL_POSITIONS:
+                if pgy != axis_grid:
+                    continue
+                if pgx in (gx1, gx2):
+                    continue
+                intermediates.append(pgx)
+            axis_1, axis_2 = gx1, gx2
+            def key_of(pgx):
+                return grid_x[pgx]
+        else:
+            return [(gx1, gy1, gx2, gy2)]
+
+        v1, v2 = key_of(axis_1), key_of(axis_2)
+        lo, hi = min(v1, v2), max(v1, v2)
+
+        def strictly_between(name):
+            value = key_of(name)
+            return lo < value < hi
+
+        intermediates = [g for g in intermediates if strictly_between(g)]
+        if not intermediates:
+            return [(gx1, gy1, gx2, gy2)]
+
+        anchors = [axis_1] + sorted(intermediates, key=key_of) + [axis_2]
+        if gx1 == gx2:
+            return [(axis_grid, a, axis_grid, b) for a, b in zip(anchors, anchors[1:])]
+        return [(a, axis_grid, b, axis_grid) for a, b in zip(anchors, anchors[1:])]
+
     beam_id = 3001
     for level in FLOOR_BEAM_LEVELS:
         for gx1, gy1, gx2, gy2, width, height, section_name in SUPERSTRUCTURE_BEAM_SPECS:
-            beams.append(Beam(
-                id=f"B{beam_id}_{section_name}",
-                node_i=get_or_create_node(gx1, gy1, level),
-                node_j=get_or_create_node(gx2, gy2, level),
-                width=width,
-                height=height,
-                level=level,
-                status="ACTIVE",
-            ))
-            beam_id += 1
+            for sgx1, sgy1, sgx2, sgy2 in split_beam_spec(gx1, gy1, gx2, gy2):
+                beams.append(Beam(
+                    id=f"B{beam_id}_{section_name}",
+                    node_i=get_or_create_node(sgx1, sgy1, level),
+                    node_j=get_or_create_node(sgx2, sgy2, level),
+                    width=width,
+                    height=height,
+                    level=level,
+                    status="ACTIVE",
+                ))
+                beam_id += 1
 
     for level in DIAPHRAGM_LEVELS:
         diaphragm_index = 1
