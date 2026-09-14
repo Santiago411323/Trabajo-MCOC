@@ -2139,10 +2139,15 @@ def wall_pm_curve():
 
     # Punto de compresion pura (M -> 0): hormigon en 0.85 f'c a eps_cu + acero en fy.
     po_sq = 0.85 * _FIB_FC * Ag + _FIB_FY * As_tot
+    # Punto de traccion pura (P negativo, M = 0): el hormigon no resiste traccion
+    # (fisura), la capacidad axial es solo el acero fluyendo en tension.
+    pt_sq = -_FIB_FY * As_tot
     fracs = [0.00, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.55, 0.60,
              0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.98, 1.00, 1.02, 1.04, 1.06]
     points = _wall_interaccion(Pn0, fracs)
     points.append({"P_frac": po_sq / Pn0, "P_kN": po_sq, "Mmax_kNm": 0.0, "phi_Mmax_1m": 0.0})
+    points.append({"P_frac": pt_sq / Pn0, "P_kN": pt_sq, "Mmax_kNm": 0.0, "phi_Mmax_1m": 0.0})
+    points = sorted(points, key=lambda x: x["P_kN"])
     print("-" * 70)
     print("ENVOLVENTE P-M del muro (P vs Mmax, domo completo):")
     print(f"  {'P/Pn0':>6s} {'P [kN]':>9s} {'Mmax [kN-m]':>11s} {'phi@Mmax':>10s}")
@@ -2159,6 +2164,8 @@ def wall_pm_curve():
           f"(P/Pn0 = {p_peak['P_frac']:.2f}), M = {p_peak['Mmax_kNm']:.0f} kN-m.")
     print(f"  En compresion pura el momento se anula en P = {po_sq:.0f} kN "
           f"(P/Pn0 = {po_sq / Pn0:.3f}), cerrando el domo.")
+    print(f"  En traccion pura (M = 0) la capacidad es el acero en tension: P = {pt_sq:.0f} kN "
+          f"(P/Pn0 = {pt_sq / Pn0:.3f}), cerrando el domo por el lado negativo.")
 
     report = {
         "unidades": "kN, m",
@@ -2170,6 +2177,7 @@ def wall_pm_curve():
                      "n_barras_total": n_steel_tot, "As_total_m2": As_tot, "cuantia_vertical": cuantia},
         "Pn0_kN": Pn0,
         "P_compresion_pura_kN": po_sq,
+        "P_traccion_pura_kN": pt_sq,
         "Mphi_P0": {"curv": [round(c, 6) for c in curv0], "M": [round(m, 1) for m in M0]},
         "interaccion_PM": points,
     }

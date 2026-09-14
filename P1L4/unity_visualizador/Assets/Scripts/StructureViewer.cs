@@ -760,8 +760,8 @@ public class StructureViewer : MonoBehaviour
     private void OnGUI()
     {
         int y0 = 20;
-        GUI.Box(new Rect(20, y0, 330, 70), "UANDES - P1L4 Visualizador estructural");
-        y0 += 74;
+        GUI.Box(new Rect(20, y0, 330, 64), "UANDES - P1L4 Visualizador estructural");
+        y0 += 68;
 
         if (comboOptions.Length > 0)
         {
@@ -772,40 +772,39 @@ public class StructureViewer : MonoBehaviour
                 comboIndex = index;
                 ApplyCombo(comboIndex);
             }
-            y0 += 26;
+            y0 += 24;
         }
 
-        showColumns = GUI.Toggle(new Rect(20, y0, 150, 24), showColumns, "Columnas");
-        showBeams = GUI.Toggle(new Rect(180, y0, 150, 24), showBeams, "Vigas");
-        y0 += 26;
-        showWalls = GUI.Toggle(new Rect(20, y0, 150, 24), showWalls, "Muros equiv.");
-        showSupports = GUI.Toggle(new Rect(180, y0, 150, 24), showSupports, "Apoyos");
-        y0 += 26;
-        showDiaphragms = GUI.Toggle(new Rect(20, y0, 150, 24), showDiaphragms, "Diafragmas");
-        showNodeMarkers = GUI.Toggle(new Rect(180, y0, 150, 24), showNodeMarkers, "Nodos");
-        y0 += 26;
-        showIds = GUI.Toggle(new Rect(20, y0, 150, 24), showIds, "IDs");
-        showLocalAxes = GUI.Toggle(new Rect(180, y0, 150, 24), showLocalAxes, "Ejes locales");
-        y0 += 40;
+        showColumns = GUI.Toggle(new Rect(20, y0, 150, 22), showColumns, "Columnas");
+        showBeams = GUI.Toggle(new Rect(180, y0, 150, 22), showBeams, "Vigas");
+        y0 += 22;
+        showWalls = GUI.Toggle(new Rect(20, y0, 150, 22), showWalls, "Muros equiv.");
+        showSupports = GUI.Toggle(new Rect(180, y0, 150, 22), showSupports, "Apoyos");
+        y0 += 22;
+        showDiaphragms = GUI.Toggle(new Rect(20, y0, 150, 22), showDiaphragms, "Diafragmas");
+        showNodeMarkers = GUI.Toggle(new Rect(180, y0, 150, 22), showNodeMarkers, "Nodos");
+        y0 += 22;
+        showIds = GUI.Toggle(new Rect(20, y0, 150, 22), showIds, "IDs");
+        showLocalAxes = GUI.Toggle(new Rect(180, y0, 150, 22), showLocalAxes, "Ejes locales");
+        y0 += 32;
 
-        if (GUI.Button(new Rect(20, y0, 310, 26), "Mostrar nodos"))
+        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar nodos"))
         {
             SetNodeMarkersVisible(true);
             showNodeMarkers = true;
         }
-        y0 += 30;
-        if (GUI.Button(new Rect(20, y0, 310, 26), "Mostrar IDs"))
+        y0 += 28;
+        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar IDs"))
         {
             SetIdsVisible(true);
             showIds = true;
         }
-        y0 += 30;
-        if (GUI.Button(new Rect(20, y0, 310, 26), "Mostrar ejes locales"))
+        y0 += 28;
+        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar ejes locales"))
         {
             SetLocalAxesVisible(true);
             showLocalAxes = true;
         }
-        y0 += 40;
 
         RefreshVisibility();
 
@@ -815,7 +814,9 @@ public class StructureViewer : MonoBehaviour
             TributaryFloorData td = kv.Value;
             tribText += $"\n  {kv.Key}: A={td.area_total:0.##} m2  carga={td.carga_total:0.##} kN";
         }
-        GUI.Box(new Rect(20, y0, 330, 40 + tributaryFloors.Count * 18), tribText);
+        float tribW = Mathf.Min(340f, Screen.width - 40f);
+        float tribH = 34f + tributaryFloors.Count * 17f;
+        GUI.Box(new Rect(Screen.width - tribW - 20f, 156f, tribW, tribH), tribText);
     }
 
     private Vector3 ToUnity(NodeData node)

@@ -59,6 +59,8 @@ public class ElementPicker : MonoBehaviour
                     selectedElement = selectable;
                     selectable.OnSelected();
 
+                    SetInfoSelection(null);
+
                     if (!string.IsNullOrEmpty(selectedElement.pmSectionId))
                     {
                         var pmPanel = FindObjectOfType<PMPanel>();
@@ -69,33 +71,66 @@ public class ElementPicker : MonoBehaviour
                     }
                     return;
                 }
-            }
-            if (selectedElement != null)
-            {
-                selectedElement.OnDeselected();
-                selectedElement = null;
-                Selected = null;
 
-                var pmPanel = FindObjectOfType<PMPanel>();
-                if (pmPanel != null)
+                var info = hit.collider.GetComponent<InfoSelectable>();
+                if (info != null)
                 {
-                    pmPanel.Hide();
+                    SetElementSelection(null);
+                    selectedInfo = info;
+                    scroll = Vector2.zero;
+                    return;
                 }
             }
+
+            SetElementSelection(null);
+            SetInfoSelection(null);
         }
     }
 
     private ElementSelectable selectedElement;
+    private InfoSelectable selectedInfo;
+
+    private void SetElementSelection(ElementSelectable sel)
+    {
+        if (selectedElement != null)
+        {
+            selectedElement.OnDeselected();
+        }
+        selectedElement = sel;
+        Selected = sel;
+
+        if (sel == null)
+        {
+            var pmPanel = FindObjectOfType<PMPanel>();
+            if (pmPanel != null)
+            {
+                pmPanel.Hide();
+            }
+        }
+    }
+
+    private void SetInfoSelection(InfoSelectable info)
+    {
+        selectedInfo = info;
+        if (info != null)
+        {
+            scroll = Vector2.zero;
+        }
+    }
 
     void OnGUI()
     {
-        if (Selected == null) return;
+        if (Selected == null && selectedInfo == null) return;
 
         EnsureStyles();
 
-        string info = Selected.GetValuesAt(lastHitPoint);
-        float panelW = Mathf.Max(panelMinSize.x, Screen.width * panelMaxWidthRatio);
-        float panelH = panelFontSize * 20 + panelSectionSpacing * 4 + 80f;
+        string info = Selected != null
+            ? Selected.GetValuesAt(lastHitPoint)
+            : $"==={selectedInfo.name}===\n{selectedInfo.GetInfo()}";
+        float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
+        float maxW = Screen.width - panelOffset.x * 2f - pmZone;
+        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * panelMaxWidthRatio, maxW));
+        float panelH = Mathf.Min(panelFontSize * 20 + panelSectionSpacing * 4 + 80f, Screen.height * 0.5f);
 
         float px = Screen.width - panelOffset.x - panelW;
         float py = Screen.height - panelOffset.y - panelH;

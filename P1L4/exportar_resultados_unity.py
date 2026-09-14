@@ -308,7 +308,7 @@ def main():
             "Ast_mm2": 8595.4,
             "rho_percent": 0.45,
             "Po_kN": 48450.0,
-            "interpretation": "Envolvente P-M W_DPRIME_OPENING_TO_3 (t=0.25m, L=7.60m, 2 capas phi12@200). 23 puntos de la envolvente.",
+            "interpretation": f"Envolvente P-M W_DPRIME_OPENING_TO_3 (t=0.25m, L=7.60m, 2 capas phi12@200). {len(wall_points)} puntos de la envolvente.",
             "points": wall_points
         })
 
@@ -378,6 +378,7 @@ def main():
         })
 
     # ── JSON de salida ───────────────────────────────────────────────
+    curva_muro_n = len(wall_pm_data) if wall_pm_data else 0
     output = {
         "p1l4": {
             "version": "1.0",
@@ -396,7 +397,7 @@ def main():
             "JSON enriquecido para Unity P1L4",
             "Desplazamientos y fuerzas internas de analisis estatico lineal OpenSees",
             "Fuerzas internas en coordenadas locales del elemento (12 componentes: N, Vy, Vz, T, My, Mz x2 extremos)",
-            "Curvas P-M: COL70/70_FIBER (5 puntos, semana3) y W_DPRIME_OPENING_TO_3 (23 puntos, P1L3)",
+            "Curvas P-M: COL70/70_FIBER (5 puntos, semana3) y W_DPRIME_OPENING_TO_3 ({} puntos, P1L3)".format(curva_muro_n),
             "Demandas muro: estimadas por tributaria + sismo (hipotesis documentadas)"
         ],
         "nodes": data.get("nodes", []),

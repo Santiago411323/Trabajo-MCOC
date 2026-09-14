@@ -22,7 +22,7 @@ public class DiagramController : MonoBehaviour
     public float momentMultiplier = 1.2f;
     public float diagramBaseOffset = 0.06f;
     public float deformedMultiplier = 120f;
-    public float deformedTargetPct = 0.04f;
+    public float deformedTargetPct = 0.06f;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<ElementSelectable> structuralElements = new List<ElementSelectable>();
@@ -141,6 +141,8 @@ public class DiagramController : MonoBehaviour
             return;
         }
 
+        int created = 0;
+        var scales = new List<string>();
         foreach (ElementSelectable element in structuralElements)
         {
             string building = string.IsNullOrEmpty(element.data.sourceBuilding) ? "?" : element.data.sourceBuilding;
@@ -156,21 +158,36 @@ public class DiagramController : MonoBehaviour
             Vector3 p0 = element.startPoint + dI * scale;
             Vector3 p1 = element.endPoint + dJ * scale;
 
-            GameObject lineObject = new GameObject($"Deformada_E{element.data.id}");
-            lineObject.transform.SetParent(transform);
-            lineObject.hideFlags = HideFlags.DontSave;
-            LineRenderer line = lineObject.AddComponent<LineRenderer>();
-            line.positionCount = 2;
-            line.SetPosition(0, p0);
-            line.SetPosition(1, p1);
-            line.startWidth = 0.08f;
-            line.endWidth = 0.08f;
-            line.useWorldSpace = true;
-            line.material = CreateMaterial(new Color(0.3f, 1f, 0.4f));
-            diagramObjects.Add(lineObject);
+            CreateLine(element.startPoint, element.endPoint, new Color(0.5f, 0.5f, 0.55f, 0.6f), 0.04f,
+                $"Deformada_Ref_E{element.data.id}");
+
+            CreateLine(p0, p1, new Color(0.35f, 1f, 0.4f), 0.16f,
+                $"Deformada_E{element.data.id}");
+
+            created++;
         }
 
-        Debug.Log($"[DiagramController] Deformada combo={combo} ({deformedTargetPct*100:0.#}% de la altura por edificio)");
+        foreach (var kv in deformedScaleByBuilding)
+        {
+            scales.Add($"{kv.Key}={kv.Value:0.#}");
+        }
+        Debug.Log($"[DiagramController] Deformada combo={combo}: {created} elementos, escala por edificio {string.Join(", ", scales)} ({deformedTargetPct * 100:0.#}% de la altura por edificio)");
+    }
+
+    private void CreateLine(Vector3 a, Vector3 b, Color color, float width, string name)
+    {
+        GameObject lineObject = new GameObject(name);
+        lineObject.transform.SetParent(transform);
+        lineObject.hideFlags = HideFlags.DontSave;
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        line.positionCount = 2;
+        line.SetPosition(0, a);
+        line.SetPosition(1, b);
+        line.startWidth = width;
+        line.endWidth = width;
+        line.useWorldSpace = true;
+        line.material = CreateMaterial(color);
+        diagramObjects.Add(lineObject);
     }
 
     private float GetDeformedScale(string building, string combo)
@@ -422,7 +439,10 @@ public class DiagramController : MonoBehaviour
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(20, Screen.height - 150f, 440, 130), GUI.skin.box);
+        float boxW = Mathf.Min(440f, Screen.width - 40f);
+        float boxY = 20f;
+
+        GUILayout.BeginArea(new Rect(Screen.width - boxW - 20f, boxY, boxW, 130f), GUI.skin.box);
         GUILayout.Label("Diagramas OpenSees");
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("0 Ocultar")) ShowDiagram(DiagramMode.None);
@@ -439,11 +459,11 @@ public class DiagramController : MonoBehaviour
         string useHint = Application.isPlaying
             ? "Teclas 1-5 o botones para cambiar de diagrama."
             : "Modo edicion: usa los botones (las teclas requieren Play).";
-        GUI.Label(new Rect(20, Screen.height - 40f, 420, 24), useHint);
+        GUI.Label(new Rect(Screen.width - boxW - 20f, boxY + 134f, boxW, 24f), useHint);
 
         if (currentMode == DiagramMode.Moment)
         {
-            GUI.Label(new Rect(20, Screen.height - 20f, 500, 24), "Momento My: valores OpenSees + qL2/8 en vigas");
+            GUI.Label(new Rect(Screen.width - boxW - 20f, boxY + 158f, boxW, 24f), "Momento My: valores OpenSees + qL2/8 en vigas");
         }
     }
 }
