@@ -6,9 +6,9 @@ Usa la geometria tributaria ya generada para el edificio completo, pero guarda
 los resultados dentro de la carpeta Semana 3 para mantener trazabilidad semanal.
 
 Ejemplos:
-  python "Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py" --sc-kg-m2 500
-  python "Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py" --sc-kg-m2 500 --id B3002_V60/80
-  python "Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py" --sc-kg-m2 500 --id L1
+  python "P1L3/carga_viva_sismo.py" --sc-kg-m2 500
+  python "P1L3/carga_viva_sismo.py" --sc-kg-m2 500 --id B3002_V60/80
+  python "P1L3/carga_viva_sismo.py" --sc-kg-m2 500 --id L1
 """
 
 import argparse
@@ -2098,12 +2098,17 @@ def _wall_moment_curvature(P_target):
 
 
 def _wall_interaccion(Pn0, fracs):
+    """Envolvente P-M: para cada nivel de axial P se corre la M-phi y se toma
+    el momento en la falla por aplastamiento del concreto (malla de curvaturas).
+    Los puntos cuya M-phi no alcanza la falla se omiten."""
     points = []
     for frac in fracs:
         Px = frac * Pn0
         curv, M, _ = _wall_moment_curvature(Px)
-        peak = max(M) if M else 0.0
-        k_peak = curv[M.index(peak)] if M else 0.0
+        if not M:
+            continue
+        peak = max(M)
+        k_peak = curv[M.index(peak)]
         points.append({"P_frac": frac, "P_kN": Px, "Mmax_kNm": peak, "phi_Mmax_1m": k_peak})
     return points
 
@@ -2132,19 +2137,28 @@ def wall_pm_curve():
     print("CURVA M-PHI del muro (P = 0, flexion pura):")
     print(f"  n_puntos = {len(curv0)} | M_peak = {peak0:.1f} kN-m @ phi = {k_peak0:.5f} 1/m")
 
-    fracs = [0.0, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60]
+    # Punto de compresion pura (M -> 0): hormigon en 0.85 f'c a eps_cu + acero en fy.
+    po_sq = 0.85 * _FIB_FC * Ag + _FIB_FY * As_tot
+    fracs = [0.00, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.55, 0.60,
+             0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.98, 1.00, 1.02, 1.04, 1.06]
     points = _wall_interaccion(Pn0, fracs)
+    points.append({"P_frac": po_sq / Pn0, "P_kN": po_sq, "Mmax_kNm": 0.0, "phi_Mmax_1m": 0.0})
     print("-" * 70)
-    print("ENVOLVENTE P-M del muro (P vs Mmax):")
-    print(f"  {'P/Pn0':>6s} {'P [kN]':>10s} {'Mmax [kN-m]':>12s} {'phi@Mmax':>10s}")
+    print("ENVOLVENTE P-M del muro (P vs Mmax, domo completo):")
+    print(f"  {'P/Pn0':>6s} {'P [kN]':>9s} {'Mmax [kN-m]':>11s} {'phi@Mmax':>10s}")
     for p in points:
-        print(f"  {p['P_frac']:6.2f} {p['P_kN']:10.0f} {p['Mmax_kNm']:12.1f} {p['phi_Mmax_1m']:10.5f}")
+        if p["Mmax_kNm"] <= 0.0:
+            print(f"  {p['P_frac']:6.3f} {p['P_kN']:9.0f} {p['Mmax_kNm']:11.1f} {'-':>10s}")
+        else:
+            print(f"  {p['P_frac']:6.3f} {p['P_kN']:9.0f} {p['Mmax_kNm']:11.1f} {p['phi_Mmax_1m']:10.5f}")
 
     p_peak = max(points, key=lambda x: x["Mmax_kNm"])
     print("-" * 70)
     print(f"INTERPRETACION: M_max(P=0) = {peak0:.0f} kN-m (flexion pura).")
     print(f"  El maximo de la envolvente ocurre en P = {p_peak['P_kN']:.0f} kN "
           f"(P/Pn0 = {p_peak['P_frac']:.2f}), M = {p_peak['Mmax_kNm']:.0f} kN-m.")
+    print(f"  En compresion pura el momento se anula en P = {po_sq:.0f} kN "
+          f"(P/Pn0 = {po_sq / Pn0:.3f}), cerrando el domo.")
 
     report = {
         "unidades": "kN, m",
@@ -2155,6 +2169,7 @@ def wall_pm_curve():
         "armadura": {"diametro_mm": int(_WALL_DBAR * 1000), "espaciado_mm": int(_WALL_S * 1000),
                      "n_barras_total": n_steel_tot, "As_total_m2": As_tot, "cuantia_vertical": cuantia},
         "Pn0_kN": Pn0,
+        "P_compresion_pura_kN": po_sq,
         "Mphi_P0": {"curv": [round(c, 6) for c in curv0], "M": [round(m, 1) for m in M0]},
         "interaccion_PM": points,
     }
@@ -2171,13 +2186,17 @@ def wall_pm_curve():
         ax[0].set_ylabel("Momento M [kN.m]")
         ax[0].set_title("Muro 0.25 x 7.60 m - M-phi (P = 0)")
         ax[0].grid(True, alpha=0.3)
-        Ps = [p["P_kN"] for p in points]
-        Ms = [p["Mmax_kNm"] for p in points]
-        ax[1].plot(Ps, Ms, "o-")
+        sorted_points = sorted(points, key=lambda p: p["P_kN"])
+        Ms = [p["Mmax_kNm"] for p in sorted_points]
+        Ps = [p["P_kN"] for p in sorted_points]
+        ax[1].plot(Ms, Ps, "o-")
+        ax[1].axhline(0, color="k", lw=0.5)
         ax[1].axvline(0, color="k", lw=0.5)
-        ax[1].set_xlabel("Axial P [kN]")
-        ax[1].set_ylabel("Mmax [kN.m]")
-        ax[1].set_title("Muro 0.25 x 7.60 m - Envolvente P-M")
+        ax[1].plot(p_peak["Mmax_kNm"], p_peak["P_kN"], "rs", label="Punto de balance (max M)")
+        ax[1].set_xlabel("Mmax [kN.m]")
+        ax[1].set_ylabel("Axial P [kN]")
+        ax[1].set_title("Muro 0.25 x 7.60 m - Diagrama de interaccion P-M")
+        ax[1].legend()
         ax[1].grid(True, alpha=0.3)
         fig.tight_layout()
         png = OUT_DIR / "P_M_wall.png"

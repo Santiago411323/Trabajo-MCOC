@@ -7,13 +7,13 @@ Este documento explica como esta organizado el codigo de la Semana 3 y donde mir
 El archivo principal es:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py
+P1L3/carga_viva_sismo.py
 ```
 
 Se corre desde la raiz del repositorio con:
 
 ```powershell
-.\.venv\Scripts\python.exe "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py"
+.\.venv\Scripts\python.exe "P1L3\carga_viva_sismo.py"
 ```
 
 Ese comando abre un menu interactivo con las partes A, B, C y D.
@@ -29,7 +29,7 @@ P1L2/unity_visualizador/Assets/Resources/estructura_completo_unity.json
 Luego genera resultados en:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/carga_viva_sismo.json
+P1L3/resultados/carga_viva_sismo.json
 ```
 
 El flujo principal esta al final del archivo, en la funcion:
@@ -348,7 +348,7 @@ plot_capacity(capacity)
 Archivo generado:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_COL70_70.png
+P1L3/resultados/M_phi_COL70_70.png
 ```
 
 ## Diagrama de interaccion P-M
@@ -382,7 +382,7 @@ E) Traccion pura:        Pn = -1649.336 kN, Mn =    0.000 kN*m, phi = 0.90
 El grafico se genera en:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_COL70_70.png
+P1L3/resultados/P_M_COL70_70.png
 ```
 
 ## Unity
@@ -443,7 +443,7 @@ En Unity:
 Los resultados principales quedan en:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados
+P1L3/resultados
 ```
 
 Archivos relevantes:

@@ -3,7 +3,7 @@
 **Proyecto:** modelo estructural UANDES, Edificio 1.  
 **Unidades:** kN, m, kN·m, rad.
 
-Los resultados numéricos de este informe provienen de `P1L2/Edificio 1 y 2/semana3/resultados/`. El visualizador y los resultados del edificio completo se mantienen en la carpeta `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/`.
+Los resultados numéricos de este informe provienen de `P1L2/Edificio 1 y 2/semana3/resultados/`. El visualizador y los resultados del edificio completo se mantienen en la carpeta `P1L3/`.
 
 ## 1. Casos base
 
@@ -166,8 +166,10 @@ Con `P = 0` (flexión pura) la curva M-φ alcanza `M = 14452.5 kN·m` en `φ = 0
 | 0.40 | 19380 | 52744.9 |
 | 0.50 | 24225 | 55086.1 |
 | 0.60 | 29070 | 54497.4 |
+| 0.80 | 38760 | 45756.9 |
+| 1.00 | 48450 | 26121.7 |
 
-El máximo de la envolvente es `M = 55086 kN·m` en `P/Pn0 = 0.50`; para compresiones mayores la resistencia comienza a caer al acercarse a compresión pura. Se trata de la capacidad de la sección de fibra del muro; en el modelo OpenSees el muro se mantiene como elemento elástico equivalente, ya que la sección de fibra no participa todavía en el ensamblaje global.
+El máximo de la envolvente es `M = 55117 kN·m` en `P/Pn0 = 0.55`; para compresiones mayores la resistencia cae y el domo se cierra en compresión pura con `M = 0` en `P = 52060 kN` (`P/Pn0 = 1.075`). Se trata de la capacidad de la sección de fibra del muro; en el modelo OpenSees el muro se mantiene como elemento elástico equivalente, ya que la sección de fibra no participa todavía en el ensamblaje global.
 
 ## 8. Verificación de hormigón armado
 
@@ -265,13 +267,13 @@ La convención corregida fue generar los huecos a partir del rectángulo envolve
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_b_sismo.json`
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_c_superposicion.json`
 - `P1L2/Edificio 1 y 2/semana3/resultados/part_d_fiber.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/carga_viva_sismo.py` (edificio completo, opciones 10–14)
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/carga_viva_sismo.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_g_gravity.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_b_sismo_tablas.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_d_sensibilidad.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/part_e_wall.json`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_sensibilidad.png`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_wall.png`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_COL70_70.png`
-- `Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_COL70_70.png`
+- `P1L3/carga_viva_sismo.py` (edificio completo, opciones 10–14)
+- `P1L3/resultados/carga_viva_sismo.json`
+- `P1L3/resultados/part_g_gravity.json`
+- `P1L3/resultados/part_b_sismo_tablas.json`
+- `P1L3/resultados/part_d_sensibilidad.json`
+- `P1L3/resultados/part_e_wall.json`
+- `P1L3/resultados/M_phi_sensibilidad.png`
+- `P1L3/resultados/P_M_wall.png`
+- `P1L3/resultados/M_phi_COL70_70.png`
+- `P1L3/resultados/P_M_COL70_70.png`

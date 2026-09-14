@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$semana3Script = "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py"
+$semana3Script = "P1L3\carga_viva_sismo.py"
 $repoCandidates = @(
     $scriptDir,
     (Join-Path $scriptDir "Trabajo-MCOC-main"),
@@ -49,4 +49,4 @@ Write-Host "Abriendo menu interactivo Semana 3..."
 Write-Host ""
 Write-Host "Programa terminado. Esta ventana queda abierta."
 Write-Host "Si quieres correrlo otra vez, escribe:"
-Write-Host ".\.venv\Scripts\python.exe 'Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py'"
+Write-Host ".\.venv\Scripts\python.exe 'P1L3\carga_viva_sismo.py'"

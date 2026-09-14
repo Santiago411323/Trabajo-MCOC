@@ -3,7 +3,7 @@
 """Semana 3: carga viva, sismo, superposicion y capacidad HA.
 
 Ejecutar desde la raiz del repo:
-  python "Semana 3 - Carga viva, sismo, superposicion y capacidad HA/semana3.py"
+  python "P1L3/semana3.py"
 
 El script usa el JSON del edificio completo generado en Semana 2 y arma:
   A. carga viva Q y verificacion de conservacion;

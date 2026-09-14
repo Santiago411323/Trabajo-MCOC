@@ -1,4 +1,4 @@
-# Semana 3 - Carga viva, sismo, superposicion y capacidad HA
+# P1L3 — Carga viva, sismo, superposicion y capacidad HA
 
 ## Objetivo
 
@@ -46,25 +46,25 @@ Importante: `%USERPROFILE%` es para pegarlo en `Windows + R`. Si se escribe dent
 Tambien se puede ejecutar manualmente con PowerShell:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\semana3.py"
+& ".venv\Scripts\python.exe" "P1L3\semana3.py"
 ```
 
 Para trabajar paso a paso solo la carga viva `Q` y el sismo pseudoestatico `EX/EY`:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --sc-kg-m2 500
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --sc-kg-m2 500
 ```
 
 La forma mas simple es abrir el menu interactivo:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py"
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py"
 ```
 
 Tambien se puede abrir con doble click en:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/abrir_menu.bat
+P1L3/abrir_menu.bat
 ```
 
 El menu enumera que resultados se pueden pedir y avisa si necesita ID o no:
@@ -83,19 +83,19 @@ El menu enumera que resultados se pueden pedir y avisa si necesita ID o no:
 La Parte C tambien se puede correr directamente con la combinacion por defecto:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --sc-kg-m2 500 --superposicion
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --sc-kg-m2 500 --superposicion
 ```
 
 O cambiando los coeficientes de la combinacion:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --sc-kg-m2 500 --superposicion --lambdaG 1.0 --lambdaQ 0.5 --lambdaEX 1.0 --lambdaEY 0.3
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --sc-kg-m2 500 --superposicion --lambdaG 1.0 --lambdaQ 0.5 --lambdaEX 1.0 --lambdaEY 0.3
 ```
 
 La Parte D se puede correr directamente con:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --capacidad-ha
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --capacidad-ha
 ```
 
 Al correr la Parte D tambien se exporta para Unity:
@@ -126,23 +126,23 @@ No abrir la carpeta vieja `edificio completo/unity_visualizador`, porque despues
 Consulta puntual de una viga:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --sc-kg-m2 500 --id B3002_V60/80
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --sc-kg-m2 500 --id B3002_V60/80
 ```
 
 Consulta puntual de una losa:
 
 ```powershell
-& ".venv\Scripts\python.exe" "Semana 3 - Carga viva, sismo, superposicion y capacidad HA\carga_viva_sismo.py" --sc-kg-m2 500 --id L1
+& ".venv\Scripts\python.exe" "P1L3\carga_viva_sismo.py" --sc-kg-m2 500 --id L1
 ```
 
 Salidas:
 
 ```text
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/resultados_semana3.json
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/carga_viva_sismo.json
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/fiber_COL70_70.png
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/M_phi_COL70_70.png
-Semana 3 - Carga viva, sismo, superposicion y capacidad HA/resultados/P_M_COL70_70.png
+P1L3/resultados/resultados_semana3.json
+P1L3/resultados/carga_viva_sismo.json
+P1L3/resultados/fiber_COL70_70.png
+P1L3/resultados/M_phi_COL70_70.png
+P1L3/resultados/P_M_COL70_70.png
 ```
 
 ## Parte A - Carga Viva
