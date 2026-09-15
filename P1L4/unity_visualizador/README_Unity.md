@@ -4,7 +4,7 @@ Visualizador Unity de la estructura 3D con resultados de análisis estático lin
 
 ## Funcionalidades principales
 
-- **Estructura 3D**: 373 nodos, 129 columnas, 288 vigas, 30 muros equivalentes, diafragmas, apoyos empotrados.
+- **Estructura 3D**: 553 nodos, 129 columnas, 333 vigas, 75 muros equivalentes, diafragmas/losas, apoyos empotrados.
 - **Selector de combinaciones de carga**: C1 = G+0.5Q+0.3EX+0.2EY, C2 = G+0.5Q+0.3EX-0.2EY, C3 = G+0.5Q-0.3EX+0.2EY (NCh433).
 - **Diagrams OpenSees** (tecla 0–3): Axial, Corte, Momento — con fuerzas internas reales del combo activo.
 - **Deformada** (tecla 5): desplazamientos escalados ×120 del combo activo.
@@ -53,9 +53,9 @@ Opciones:
 El exportador:
 1. Carga `estructura_completo_unity.json` (P1L2).
 2. Corre análisis estático lineal con OpenSeesPy para 3 combinaciones (C1, C2, C3).
-3. Extrae desplazamientos (373 nodos × 3 combos) y fuerzas internas (417 elementos × 3 combos, 12 componentes × 2 extremos).
-4. Genera curvas P-M: COL70/70_FIBER (5 puntos semana 3) y W_DPRIME_OPENING_TO_3 (23 puntos envolvente).
-5. Genera demandas P-M del muro por tributaria + sismo.
+3. Extrae desplazamientos (553 nodos x 3 combos) y fuerzas internas (462 elementos x 3 combos, 12 componentes x 2 extremos).
+4. Genera curvas P-M: COL70/70_FIBER (5 puntos) y W_DPRIME_OPENING_TO_3 (24 puntos envolvente).
+5. Genera demandas P-M por muro y por combinacion activa.
 6. Guarda `estructura_p1l4_unity.json` (~1.3 MB) en `P1L4/unity_visualizador/Assets/Resources/`.
 
 ## 2. Abrir en Unity
@@ -86,25 +86,26 @@ Las fuerzas provienen de los 12 componentes de `eleForce` de OpenSees (coordenad
 
 ### Panel de información (click)
 
-Al hacer click en cualquier barra:
+Al hacer click en cualquier columna, viga o muro:
 - ID Unity y OpenSees (elementTag)
 - Nodos extremos, piso, edificio
 - Sección y material (fc', fy, barras, As, rho)
 - Restricciones en cada extremo (empotrado/pasador/etc.)
 - Ejes locales X' Y' Z'
-- Fuerzas interpoladas en el punto de clic
+- Fuerzas/demanda: N, Vy, Vz, T, My, Mz segun corresponda
 - Trazabilidad: OpenSees tag → Unity obj → combo activo → sección/capacidad
 
 ### Diagrama P-M interactivo
 
 Al hacer click en una **columna** o **muro** (con curva disponible):
 - Se abre un panel con la curva P-M de capacidad.
-- Puntos de demanda estimados para el muro por combo.
+- Punto de demanda del combo activo, rotulado con C1/C2/C3 y expresion completa.
+- Demandas estimadas por muro; al seleccionar otro muro cambia el punto de demanda.
 - Para columnas, el punto de demanda (N, M) proviene de las fuerzas internas reales del combo activo.
 - Se muestra información de material, barras y porcentaje de acero.
 
 Columnas disponibles con P-M: todas las 129 columnas (COL70/70 → curva COL70/70_FIBER).
-Muros disponibles con P-M: 20 muros de grosor 0.25 m (curva W_DPRIME_OPENING_TO_3 representativa).
+Muros disponibles con P-M: los 75 muros equivalentes (curva W_DPRIME_OPENING_TO_3 representativa).
 
 ### Controles de cámara
 
@@ -118,4 +119,4 @@ Muros disponibles con P-M: 20 muros de grosor 0.25 m (curva W_DPRIME_OPENING_TO_
 - Las fuerzas internas están en **coordenadas locales** del elemento: [N, Vy, Vz, T, My, Mz] × 2 extremos.
 - El mapping de ejes globales → Unity es: X→x, Y→z, Z→y (el eje vertical del edificio es Z global, Y de Unity).
 - Los muros equivalentes son visualizaciones de las paredes de la estructura real (grosor 0.2–0.25 m). La curva P-M es representativa.
-- El análisis se corre solo para `edificio_1` (nodos 1–169); `edificio_2` produce artefactos visuales.
+- El edificio completo integra edificio 1 + edificio 2, incluyendo los muros equivalentes del edificio 2.

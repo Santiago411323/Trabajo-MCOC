@@ -439,11 +439,12 @@ public class DiagramController : MonoBehaviour
 
     private void OnGUI()
     {
-        float boxW = Mathf.Min(440f, Screen.width - 40f);
-        float boxY = 20f;
+        float boxW = Mathf.Min(430f, Screen.width * 0.40f);
+        float boxY = 16f;
+        float boxX = Mathf.Max(390f, (Screen.width - boxW) * 0.5f);
 
-        GUILayout.BeginArea(new Rect(Screen.width - boxW - 20f, boxY, boxW, 130f), GUI.skin.box);
-        GUILayout.Label("Diagramas OpenSees");
+        GUILayout.BeginArea(new Rect(boxX, boxY, boxW, 92f), GUI.skin.box);
+        GUILayout.Label("Diagramas OpenSees (teclas 0,1,2,3,5)");
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("0 Ocultar")) ShowDiagram(DiagramMode.None);
         if (GUILayout.Button("1 Axial")) ShowDiagram(DiagramMode.Axial);
@@ -453,17 +454,11 @@ public class DiagramController : MonoBehaviour
         GUILayout.EndHorizontal();
         string comboText = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "sin combo" : UnityData.ActiveCombo;
         GUILayout.Label($"Actual: {currentMode} | Combo: {comboText}");
-        GUILayout.Label("P-M: selecciona una columna o muro en la escena.");
         GUILayout.EndArea();
-
-        string useHint = Application.isPlaying
-            ? "Teclas 1-5 o botones para cambiar de diagrama."
-            : "Modo edicion: usa los botones (las teclas requieren Play).";
-        GUI.Label(new Rect(Screen.width - boxW - 20f, boxY + 134f, boxW, 24f), useHint);
 
         if (currentMode == DiagramMode.Moment)
         {
-            GUI.Label(new Rect(Screen.width - boxW - 20f, boxY + 158f, boxW, 24f), "Momento My: valores OpenSees + qL2/8 en vigas");
+            GUI.Label(new Rect(boxX, boxY + 96f, boxW, 22f), "Momento My: OpenSees + qL2/8 en vigas");
         }
     }
 }

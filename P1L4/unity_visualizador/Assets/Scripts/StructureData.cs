@@ -143,6 +143,7 @@ public class WallRegistryEntry
     public string top;
     public string pmSectionId;
     public bool hasCurve;
+    public DemandRecord[] demands;
 }
 
 [Serializable]
@@ -208,6 +209,9 @@ public class WallData
     public float longitud;
     public string bottom;
     public string top;
+    public string sourceBuilding;
+    public string sourceId;
+    public DemandRecord[] demands;
 }
 
 [Serializable]

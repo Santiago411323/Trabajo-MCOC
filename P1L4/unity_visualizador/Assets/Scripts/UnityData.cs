@@ -11,6 +11,7 @@ public static class UnityData
 
     private static Dictionary<string, PMCurveData> pmCurveLookup;
     private static Dictionary<string, SectionMaterialData> materialLookup;
+    private static Dictionary<string, ComboInfo> comboLookup;
 
     public static void LoadData(StructureData data)
     {
@@ -23,7 +24,20 @@ public static class UnityData
             ElementForcesByCombo = new Dictionary<string, List<ElementForceRecord>>();
             pmCurveLookup = new Dictionary<string, PMCurveData>();
             materialLookup = new Dictionary<string, SectionMaterialData>();
+            comboLookup = new Dictionary<string, ComboInfo>();
             return;
+        }
+
+        comboLookup = new Dictionary<string, ComboInfo>();
+        if (data.p1l4.combinations != null)
+        {
+            foreach (ComboInfo c in data.p1l4.combinations)
+            {
+                if (c != null && !string.IsNullOrEmpty(c.name) && !comboLookup.ContainsKey(c.name))
+                {
+                    comboLookup[c.name] = c;
+                }
+            }
         }
 
         DisplacementsByCombo = new Dictionary<string, List<DisplacementRecord>>();
@@ -125,5 +139,16 @@ public static class UnityData
     {
         if (string.IsNullOrEmpty(sectionId) || materialLookup == null) return null;
         return materialLookup.TryGetValue(sectionId, out var mat) ? mat : null;
+    }
+
+    public static string GetComboLabel(string combo)
+    {
+        if (string.IsNullOrEmpty(combo)) return "sin combinacion activa";
+        if (comboLookup != null && comboLookup.TryGetValue(combo, out var info) && info != null && !string.IsNullOrEmpty(info.label))
+        {
+            if (info.label.StartsWith(combo + ":")) return info.label;
+            return $"{combo}: {info.label}";
+        }
+        return combo;
     }
 }

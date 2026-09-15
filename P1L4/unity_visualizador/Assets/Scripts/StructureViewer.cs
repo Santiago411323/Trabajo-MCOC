@@ -47,6 +47,7 @@ public class StructureViewer : MonoBehaviour
     private bool showNodeMarkers = false;
     private bool showIds = false;
     private bool showLocalAxes = false;
+    private bool showTributarySummary = false;
 
     // Combinaciones de carga
     private string[] comboOptions = new string[0];
@@ -336,34 +337,93 @@ public class StructureViewer : MonoBehaviour
 
             Vector3 start = nodes[wall.nodeI];
             Vector3 end = nodes[wall.nodeJ];
-            Vector3 midpoint = (start + end) * 0.5f;
+            Vector3 baseMidpoint = (start + end) * 0.5f;
             Vector3 direction = end - start;
+            float wallLength = Mathf.Max(direction.magnitude, wall.longitud, 0.01f);
+            float wallHeight = EstimateWallHeight(start, end);
+            Vector3 lengthAxis = direction.sqrMagnitude > 1e-8f ? direction.normalized : Vector3.forward;
+            Vector3 midpoint = baseMidpoint + Vector3.up * (wallHeight * 0.5f);
 
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
             box.name = $"Muro_{wall.id}";
             box.transform.SetParent(transform);
             box.transform.position = midpoint;
-            box.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
+            box.transform.rotation = Quaternion.LookRotation(lengthAxis, Vector3.up);
             float thick = Mathf.Max(wall.grosor, 0.01f);
-            box.transform.localScale = new Vector3(thick * wallScale, direction.magnitude / 2f, wall.longitud);
+            box.transform.localScale = new Vector3(thick * wallScale, wallHeight, wallLength);
             box.GetComponent<Renderer>().material = WallMaterial();
             wallObjects.Add(box);
 
             ElementSelectable selectable = box.AddComponent<ElementSelectable>();
+            selectable.isWall = true;
+            selectable.wallId = wall.id;
+            selectable.wallThickness = wall.grosor;
+            selectable.wallLength = wall.longitud;
+            selectable.wallBottom = wall.bottom;
+            selectable.wallTop = wall.top;
+            selectable.wallSourceBuilding = wall.sourceBuilding;
+            selectable.wallSourceId = wall.sourceId;
             selectable.startPoint = start;
-            selectable.endPoint = end;
+            selectable.endPoint = end + Vector3.up * wallHeight;
             selectable.data = null;
-            selectable.customLabel = $"Muro {wall.id} (equivalente)\n" +
-                                     $"Grosor: {wall.grosor:0.##} m | Largo: {wall.longitud:0.##} m\n" +
-                                     $"Tramo: {wall.bottom} -> {wall.top}";
             selectable.nodeIId = wall.nodeI;
             selectable.nodeJId = wall.nodeJ;
+            selectable.nodeISupport = FindSupportForNode(data, wall.nodeI);
+            selectable.nodeJSupport = FindSupportForNode(data, wall.nodeJ);
 
             string pmSec = ResolveWallPMSection(data, wall.id, wall.nodeI, wall.nodeJ);
             selectable.pmSectionId = pmSec;
+            selectable.pmDemands = wall.demands;
 
             selectables.Add(selectable);
         }
+    }
+
+    private float EstimateWallHeight(Vector3 start, Vector3 end)
+    {
+        float baseY = Mathf.Min(start.y, end.y);
+        float best = float.PositiveInfinity;
+        foreach (Vector3 node in nodes.Values)
+        {
+            if (node.y <= baseY + 0.05f)
+            {
+                continue;
+            }
+
+            bool sameStartPlan = Mathf.Abs(node.x - start.x) < 0.05f && Mathf.Abs(node.z - start.z) < 0.05f;
+            bool sameEndPlan = Mathf.Abs(node.x - end.x) < 0.05f && Mathf.Abs(node.z - end.z) < 0.05f;
+            if (!sameStartPlan && !sameEndPlan)
+            {
+                continue;
+            }
+
+            best = Mathf.Min(best, node.y - baseY);
+        }
+
+        if (!float.IsInfinity(best))
+        {
+            return Mathf.Max(best, 0.5f);
+        }
+
+        return EstimateTypicalStoryHeight();
+    }
+
+    private float EstimateTypicalStoryHeight()
+    {
+        float best = float.PositiveInfinity;
+        foreach (Vector3 a in nodes.Values)
+        {
+            foreach (Vector3 b in nodes.Values)
+            {
+                float diff = b.y - a.y;
+                if (diff > 0.5f && diff < best)
+                {
+                    best = diff;
+                }
+            }
+        }
+
+        return float.IsInfinity(best) ? 4.0f : best;
     }
 
     private string ResolvePMSection(string sectionId)
@@ -759,64 +819,54 @@ public class StructureViewer : MonoBehaviour
 
     private void OnGUI()
     {
-        int y0 = 20;
-        GUI.Box(new Rect(20, y0, 330, 64), "UANDES - P1L4 Visualizador estructural");
-        y0 += 68;
+        float panelX = 16f;
+        float panelY = 16f;
+        float panelW = Mathf.Min(360f, Screen.width * 0.36f);
+        float y0 = panelY + 8f;
+
+        GUI.Box(new Rect(panelX, panelY, panelW, 162f), "P1L4 Visualizador");
+        y0 += 20f;
 
         if (comboOptions.Length > 0)
         {
-            GUI.Label(new Rect(20, y0, 110, 22), "Combinacion:");
-            int index = GUI.Toolbar(new Rect(130, y0, 240, 22), comboIndex, comboOptions);
+            GUI.Label(new Rect(panelX + 10f, y0, 90f, 22f), "Combo:");
+            int index = GUI.Toolbar(new Rect(panelX + 80f, y0, panelW - 92f, 22f), comboIndex, comboOptions);
             if (index != comboIndex)
             {
                 comboIndex = index;
                 ApplyCombo(comboIndex);
             }
-            y0 += 24;
+            y0 += 26f;
         }
 
-        showColumns = GUI.Toggle(new Rect(20, y0, 150, 22), showColumns, "Columnas");
-        showBeams = GUI.Toggle(new Rect(180, y0, 150, 22), showBeams, "Vigas");
-        y0 += 22;
-        showWalls = GUI.Toggle(new Rect(20, y0, 150, 22), showWalls, "Muros equiv.");
-        showSupports = GUI.Toggle(new Rect(180, y0, 150, 22), showSupports, "Apoyos");
-        y0 += 22;
-        showDiaphragms = GUI.Toggle(new Rect(20, y0, 150, 22), showDiaphragms, "Diafragmas");
-        showNodeMarkers = GUI.Toggle(new Rect(180, y0, 150, 22), showNodeMarkers, "Nodos");
-        y0 += 22;
-        showIds = GUI.Toggle(new Rect(20, y0, 150, 22), showIds, "IDs");
-        showLocalAxes = GUI.Toggle(new Rect(180, y0, 150, 22), showLocalAxes, "Ejes locales");
-        y0 += 32;
+        showColumns = GUI.Toggle(new Rect(panelX + 10f, y0, 92f, 20f), showColumns, "Columnas");
+        showBeams = GUI.Toggle(new Rect(panelX + 104f, y0, 70f, 20f), showBeams, "Vigas");
+        showWalls = GUI.Toggle(new Rect(panelX + 178f, y0, 70f, 20f), showWalls, "Muros");
+        showSupports = GUI.Toggle(new Rect(panelX + 252f, y0, 78f, 20f), showSupports, "Apoyos");
+        y0 += 22f;
+        showDiaphragms = GUI.Toggle(new Rect(panelX + 10f, y0, 100f, 20f), showDiaphragms, "Losas");
+        showNodeMarkers = GUI.Toggle(new Rect(panelX + 104f, y0, 72f, 20f), showNodeMarkers, "Nodos");
+        showIds = GUI.Toggle(new Rect(panelX + 178f, y0, 56f, 20f), showIds, "IDs");
+        showLocalAxes = GUI.Toggle(new Rect(panelX + 252f, y0, 88f, 20f), showLocalAxes, "Ejes");
+        y0 += 24f;
 
-        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar nodos"))
-        {
-            SetNodeMarkersVisible(true);
-            showNodeMarkers = true;
-        }
-        y0 += 28;
-        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar IDs"))
-        {
-            SetIdsVisible(true);
-            showIds = true;
-        }
-        y0 += 28;
-        if (GUI.Button(new Rect(20, y0, 310, 24), "Mostrar ejes locales"))
-        {
-            SetLocalAxesVisible(true);
-            showLocalAxes = true;
-        }
+        showTributarySummary = GUI.Toggle(new Rect(panelX + 10f, y0, 180f, 20f), showTributarySummary, "Resumen tributario");
+        GUI.Label(new Rect(panelX + 190f, y0, panelW - 200f, 20f), "Click: info/P-M");
 
         RefreshVisibility();
 
-        string tribText = "Areas tributarias (q_G = 5.1 kN/m2):";
-        foreach (KeyValuePair<string, TributaryFloorData> kv in tributaryFloors)
+        if (showTributarySummary)
         {
-            TributaryFloorData td = kv.Value;
-            tribText += $"\n  {kv.Key}: A={td.area_total:0.##} m2  carga={td.carga_total:0.##} kN";
+            string tribText = "Areas tributarias (q_G = 5.1 kN/m2):";
+            foreach (KeyValuePair<string, TributaryFloorData> kv in tributaryFloors)
+            {
+                TributaryFloorData td = kv.Value;
+                tribText += $"\n  {kv.Key}: A={td.area_total:0.##} m2  carga={td.carga_total:0.##} kN";
+            }
+            float tribW = Mathf.Min(360f, Screen.width - 40f);
+            float tribH = 34f + tributaryFloors.Count * 17f;
+            GUI.Box(new Rect(panelX, panelY + 168f, tribW, tribH), tribText);
         }
-        float tribW = Mathf.Min(340f, Screen.width - 40f);
-        float tribH = 34f + tributaryFloors.Count * 17f;
-        GUI.Box(new Rect(Screen.width - tribW - 20f, 156f, tribW, tribH), tribText);
     }
 
     private Vector3 ToUnity(NodeData node)

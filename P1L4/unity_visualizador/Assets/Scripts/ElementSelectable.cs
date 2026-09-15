@@ -6,8 +6,17 @@ public class ElementSelectable : MonoBehaviour
     public Vector3 startPoint;
     public Vector3 endPoint;
     public string customLabel;
+    public bool isWall;
+    public int wallId;
+    public float wallThickness;
+    public float wallLength;
+    public string wallBottom;
+    public string wallTop;
+    public string wallSourceBuilding;
+    public string wallSourceId;
 
     public string pmSectionId;
+    public DemandRecord[] pmDemands;
 
     public SupportData nodeISupport;
     public SupportData nodeJSupport;
@@ -42,9 +51,24 @@ public class ElementSelectable : MonoBehaviour
 
     public string GetValuesAt(Vector3 hitPoint)
     {
+        if (isWall)
+        {
+            return GetWallValuesAt(hitPoint);
+        }
+
         if (!string.IsNullOrEmpty(customLabel))
         {
-            return customLabel;
+            string customResult = customLabel;
+            if (!string.IsNullOrEmpty(pmSectionId))
+            {
+                customResult += $"\nCurva P-M: {pmSectionId}";
+            }
+            DemandRecord demand = GetActiveWallDemand();
+            if (demand != null)
+            {
+                customResult += $"\nDemanda {demand.combo}: P={demand.P_kN:0.##} kN | M={demand.M_kN_m:0.##} kN*m";
+            }
+            return customResult;
         }
 
         if (data == null)
@@ -94,7 +118,15 @@ public class ElementSelectable : MonoBehaviour
 
         result += $"\n--- Ejes Locales ---\n";
         Vector3 localX = axis.normalized;
-        result += $"X' (axial): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n";
+        Vector3 localZ = Vector3.Cross(localX, Vector3.up).normalized;
+        if (localZ.sqrMagnitude < 0.0001f)
+        {
+            localZ = Vector3.forward;
+        }
+        Vector3 localY = Vector3.Cross(localZ, localX).normalized;
+        result += $"X' (axial): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n" +
+                  $"Y': {localY.x:0.000}, {localY.z:0.000}, {localY.y:0.000} (global)\n" +
+                  $"Z': {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
 
         result += $"\n--- Fuerzas en {t * 100f:0.0}% ({localS:0.00} m de {length:0.00} m) ---\n" +
                   $"N  = {n:0.###} kN\n" +
@@ -115,7 +147,7 @@ public class ElementSelectable : MonoBehaviour
 
         if (UnityData.ActiveCombo != null)
         {
-            result += $"\n--- Demanda (caso {UnityData.ActiveCombo}) ---\n";
+            result += $"\n--- Demanda-capacidad ({UnityData.GetComboLabel(UnityData.ActiveCombo)}) ---\n";
             float pComp = -n;
             float mTotal = Mathf.Sqrt(my * my + mz * mz);
             result += $"P = {pComp:0.###} kN (compresion+)\n" +
@@ -130,9 +162,86 @@ public class ElementSelectable : MonoBehaviour
         result += $"\n--- Trazabilidad ---\n" +
                   $"OpenSees tag: {tag}\n" +
                   $"Unity obj: {gameObject.name}\n" +
-                  "Resultado: " + (string.IsNullOrEmpty(UnityData.ActiveCombo) ? "G (sin combo)" : UnityData.ActiveCombo) + "\n" +
+                  "Resultado: " + UnityData.GetComboLabel(UnityData.ActiveCombo) + "\n" +
                   $"Seccion/Capacidad: {secId} -> {pmSectionId ?? "sin curva"}\n";
 
+        return result;
+    }
+
+    private string GetWallValuesAt(Vector3 hitPoint)
+    {
+        Vector3 axis = endPoint - startPoint;
+        Vector3 localX = axis.sqrMagnitude > 0.0001f ? axis.normalized : Vector3.right;
+        Vector3 localY = Vector3.up;
+        Vector3 localZ = Vector3.Cross(localX, localY).normalized;
+        if (localZ.sqrMagnitude < 0.0001f)
+        {
+            localZ = Vector3.forward;
+        }
+
+        DemandRecord demand = GetActiveWallDemand();
+        float n = demand != null ? demand.P_kN : 0f;
+        float vy = 0f;
+        float vz = 0f;
+        float torsion = 0f;
+        float my = demand != null ? demand.M_kN_m : 0f;
+        float mz = 0f;
+
+        string source = !string.IsNullOrEmpty(wallSourceBuilding) ? wallSourceBuilding : "?";
+        string sourceId = !string.IsNullOrEmpty(wallSourceId) ? wallSourceId : wallId.ToString();
+        string secId = !string.IsNullOrEmpty(pmSectionId) ? pmSectionId : "MURO_EQ";
+        string result =
+            $"=== Muro {wallId} ===\n" +
+            $"ID Unity: {gameObject.name}\n" +
+            $"ID origen: {sourceId}\n" +
+            $"Nodo I: {nodeIId}  Nodo J: {nodeJId}\n" +
+            $"Tramo: {wallBottom} -> {wallTop}\n" +
+            $"Edificio: {source}\n" +
+            $"\n--- Seccion y Material ---\n" +
+            $"Seccion: {secId}\n" +
+            $"Geometria: t={wallThickness:0.###} m | L={wallLength:0.###} m\n" +
+            $"Material: H-30 / Acero A630-420 (muro equivalente)\n" +
+            $"fc' = 30.0 MPa | fy = 420.0 MPa\n";
+
+        PMCurveData curve = UnityData.GetPMCurve(pmSectionId);
+        if (curve != null)
+        {
+            result += $"Acero ref.: {curve.steelBars} barras phi {curve.barDiameter_mm:0.0} mm\n" +
+                      $"Ast = {curve.Ast_mm2:0.0} mm2 | rho = {curve.rho_percent:0.###}%\n";
+        }
+
+        result += $"\n--- Restricciones ---\n";
+        result += FormatSupport("Nodo I", nodeISupport);
+        result += FormatSupport("Nodo J", nodeJSupport);
+
+        result += $"\n--- Ejes Locales ---\n" +
+                  $"X' (largo/base): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n" +
+                  $"Y' (vertical): {localY.x:0.000}, {localY.z:0.000}, {localY.y:0.000} (global)\n" +
+                  $"Z' (espesor): {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
+
+        string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
+        result += $"\n--- Demanda-capacidad ({UnityData.GetComboLabel(combo)}) ---\n" +
+                  $"N  = {n:0.###} kN (compresion+)\n" +
+                  $"Vy = {vy:0.###} kN\n" +
+                  $"Vz = {vz:0.###} kN\n" +
+                  $"T  = {torsion:0.###} kN*m\n" +
+                  $"My = {my:0.###} kN*m\n" +
+                  $"Mz = {mz:0.###} kN*m\n";
+
+        if (!string.IsNullOrEmpty(pmSectionId))
+        {
+            result += $"\nCurva P-M: {pmSectionId}\n";
+        }
+        if (demand != null && !string.IsNullOrEmpty(demand.note))
+        {
+            result += $"Nota demanda: {demand.note}\n";
+        }
+
+        result += $"\n--- Trazabilidad ---\n" +
+                  $"OpenSees/JSON origen: {sourceId}\n" +
+                  $"Unity obj: {gameObject.name}\n" +
+                  $"Resultado: {UnityData.GetComboLabel(combo)}\n" +
+                  $"Seccion/Capacidad: {secId}\n";
         return result;
     }
 
@@ -178,6 +287,12 @@ public class ElementSelectable : MonoBehaviour
 
     public Vector3 GetDemandPoint()
     {
+        if (data == null)
+        {
+            DemandRecord wallDemand = GetActiveWallDemand();
+            return wallDemand == null ? Vector3.zero : new Vector2(wallDemand.P_kN, wallDemand.M_kN_m);
+        }
+
         if (data == null || string.IsNullOrEmpty(UnityData.ActiveCombo) || UnityData.ElementForcesByCombo == null)
         {
             return Vector3.zero;
@@ -192,6 +307,23 @@ public class ElementSelectable : MonoBehaviour
         float pComp = -forces[0];
         float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
         return new Vector2(pComp, mTotal);
+    }
+
+    public DemandRecord GetActiveWallDemand()
+    {
+        if (pmDemands == null || pmDemands.Length == 0)
+        {
+            return null;
+        }
+        string active = string.IsNullOrEmpty(UnityData.ActiveCombo) ? pmDemands[0].combo : UnityData.ActiveCombo;
+        foreach (DemandRecord demand in pmDemands)
+        {
+            if (demand != null && demand.combo == active)
+            {
+                return demand;
+            }
+        }
+        return pmDemands[0];
     }
 
     private string FormatSupport(string label, SupportData support)

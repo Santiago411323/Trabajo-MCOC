@@ -32,6 +32,8 @@ EDIFICIO1_JSON = os.path.join(
 EDIFICIO2_JSON = os.path.join(
     REPO_DIR, "edificio_2", "unity_visualizador", "Assets", "Resources",
     "estructura_edificio_ingenieria_unity.json")
+EDIFICIO2_GEOMETRY_JSON = os.path.join(
+    REPO_DIR, "edificio_2", "modelo_python", "structural_geometry.json")
 EDIFICIO1_BEAM_LOADS_JSON = os.path.join(
     COMPLETO_DIR, "Edificio 1 y 2", "edificio 1",
     "resultados", "beam_tributary_loads.json")
@@ -163,6 +165,57 @@ def convertir_slabs(e2):
     return slabs
 
 
+def transformar_coord_e2(x, y, z):
+    return {
+        "x": round(x + OFFSET_X, 6),
+        "y": round(y + OFFSET_Y, 6),
+        "z": round(z + OFFSET_Z, 6),
+    }
+
+
+def agregar_nodo_muro(nodos, prox_id, x, y, z):
+    coord = transformar_coord_e2(x, y, z)
+    nodos.append({"id": prox_id, **coord})
+    return prox_id, prox_id + 1
+
+
+def convertir_muros_edificio2(e2_geometry, nodos, prox_id, start_wall_id):
+    walls = []
+    wall_id = start_wall_id
+    for wall in e2_geometry.get("walls", []):
+        if wall.get("status") != "ACTIVE":
+            continue
+        x1 = float(wall["x1"])
+        y1 = float(wall["y1"])
+        x2 = float(wall["x2"])
+        y2 = float(wall["y2"])
+        z_bottom = float(wall["z_bottom"])
+        z_top = float(wall["z_top"])
+        thickness = float(wall.get("thickness", 0.2))
+        length = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+        node_i, prox_id = agregar_nodo_muro(nodos, prox_id, x1, y1, z_bottom)
+        node_j, prox_id = agregar_nodo_muro(nodos, prox_id, x2, y2, z_bottom)
+        # Nodos superiores auxiliares: permiten que Unity estime la altura real del panel.
+        _, prox_id = agregar_nodo_muro(nodos, prox_id, x1, y1, z_top)
+        _, prox_id = agregar_nodo_muro(nodos, prox_id, x2, y2, z_top)
+
+        walls.append({
+            "id": wall_id,
+            "type": "muro",
+            "nodeI": node_i,
+            "nodeJ": node_j,
+            "grosor": round(thickness, 4),
+            "longitud": round(length, 4),
+            "bottom": f"E2_Z{z_bottom:.2f}",
+            "top": f"E2_Z{z_top:.2f}",
+            "sourceBuilding": "edificio_2",
+            "sourceId": wall.get("id", f"E2_W{wall_id}"),
+        })
+        wall_id += 1
+    return walls, prox_id
+
+
 def transformar_elementos(e2_elements, id_map):
     out = []
     for i, el in enumerate(e2_elements):
@@ -190,6 +243,7 @@ def transformar_elementos(e2_elements, id_map):
 def build_estructura_completa():
     e1 = cargar_json(EDIFICIO1_JSON)
     e2 = cargar_json(EDIFICIO2_JSON)
+    e2_geometry = cargar_json(EDIFICIO2_GEOMETRY_JSON) if os.path.exists(EDIFICIO2_GEOMETRY_JSON) else {"walls": []}
     cargas_e1 = cargar_cargas_vigas_edificio1()
 
     # --- Nodos: edificio 1 (desplazado en Y para centrado) + edificio 2 (transformado) ---
@@ -283,13 +337,16 @@ def build_estructura_completa():
         slabs.append(ss)
     slabs.extend(convertir_slabs(e2))
 
-    # --- Walls: solo del edificio 1 (el edificio 2 no tiene field walls) ---
-    walls = list(e1.get("walls", []))
+    # --- Walls: edificio 1 + muros estructurales del edificio 2 ---
+    walls = [dict(w) for w in e1.get("walls", [])]
     for w in walls:
         if w.get("nodeI") in id_map:
             w["nodeI"] = id_map[w["nodeI"]]
         if w.get("nodeJ") in id_map:
             w["nodeJ"] = id_map[w["nodeJ"]]
+    next_wall_id = max((int(w.get("id", 0)) for w in walls if str(w.get("id", "")).isdigit()), default=0) + 1
+    e2_walls, prox_id = convertir_muros_edificio2(e2_geometry, nodos, prox_id, next_wall_id)
+    walls.extend(e2_walls)
 
     # --- Supports ---
     supports = list(e1.get("supports", []))

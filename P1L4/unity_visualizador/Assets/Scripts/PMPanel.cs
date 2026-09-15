@@ -68,7 +68,7 @@ public class PMPanel : MonoBehaviour
         float lineH = fontSize + 3f;
         float diagSize = Mathf.Min(innerW, ph - 120f);
 
-        string header = $"DIAGRAMA P-M â€” {currentCurve.sectionId}";
+        string header = $"DIAGRAMA P-M - {currentCurve.sectionId}";
         GUI.Label(new Rect(px + padding, y, innerW, lineH + 4), header, titleStyle);
         y += lineH + 10f;
 
@@ -91,16 +91,22 @@ public class PMPanel : MonoBehaviour
         DrawDiagram(px + padding, y, diagSize, diagSize);
         y += diagSize + 10f;
 
-        string loadLabel = UnityData.ActiveCombo != null ? $"Carga: {UnityData.ActiveCombo}" : "Carga: N/A";
+        string loadLabel = "Demanda mostrada desde: " + UnityData.GetComboLabel(UnityData.ActiveCombo);
         GUI.Label(new Rect(px + padding, y, innerW, lineH), loadLabel, labelStyle);
         y += lineH;
 
-        int sameSectionColumns = CountColumnsWithSection(currentCurve.sectionId);
+        bool isWallCurve = currentCurve.elementType == "muro" || currentElement.data == null;
+        int sameSectionElements = isWallCurve ? CountWallsWithSection(currentCurve.sectionId) : CountColumnsWithSection(currentCurve.sectionId);
         string colLabel;
-        if (sameSectionColumns > 0)
+        if (isWallCurve)
         {
-            colLabel = sameSectionColumns + (sameSectionColumns == 1 ? " columna de esta seccion. Puntos naranjas = demanda por columna." :
-                                                                    " columnas de esta seccion. Puntos naranjas = demanda por columna.");
+            colLabel = sameSectionElements + (sameSectionElements == 1 ? " muro con esta curva. Puntos rojos = demanda por combo." :
+                                                                         " muros con esta curva. Puntos rojos = demanda por combo.");
+        }
+        else if (sameSectionElements > 0)
+        {
+            colLabel = sameSectionElements + (sameSectionElements == 1 ? " columna de esta seccion. Puntos naranjas = demanda por columna." :
+                                                                       " columnas de esta seccion. Puntos naranjas = demanda por columna.");
         }
         else
         {
@@ -109,13 +115,14 @@ public class PMPanel : MonoBehaviour
         GUI.Label(new Rect(px + padding, y, innerW, lineH), colLabel, labelStyle);
         y += lineH;
 
-        if (currentCurve.demands != null && currentCurve.demands.Length > 0)
+        DemandRecord[] visibleDemands = GetVisibleDemands();
+        if (visibleDemands != null && visibleDemands.Length > 0)
         {
-            foreach (var d in currentCurve.demands)
+            foreach (var d in visibleDemands)
             {
                 if (d == null) continue;
                 float phi = Mathf.Atan2(d.M_kN_m, Mathf.Max(d.P_kN, 0.01f)) * Mathf.Rad2Deg;
-                string dInfo = $"  {d.combo}: P={d.P_kN:0.0} kN | M={d.M_kN_m:0.0} kN*m | phi={phi:0.0}Â°";
+                string dInfo = $"  {UnityData.GetComboLabel(d.combo)} -> P={d.P_kN:0.0} kN | M={d.M_kN_m:0.0} kN*m | phi={phi:0.0} deg";
                 GUI.Label(new Rect(px + padding, y, innerW, lineH), dInfo, demandStyle);
                 y += lineH;
             }
@@ -173,12 +180,55 @@ public class PMPanel : MonoBehaviour
                 GUI.color = demandColor;
                 float r = 6f;
                 GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2, r * 2), whiteTex);
+                GUI.color = Color.white;
+                GUI.Label(new Rect(dx + 8f, dy - 10f, 120f, 20f), string.IsNullOrEmpty(UnityData.ActiveCombo) ? "demanda" : UnityData.ActiveCombo, labelStyle);
             }
+        }
+        else
+        {
+            DrawCurveDemandPoints(x, y, w, h, pMin, pMax, mMin, mMax, rangeP, rangeM);
         }
 
         DrawOtherColumnPoints(x, y, w, h, pMin, pMax, mMin, mMax, rangeP, rangeM);
 
         GUI.color = Color.white;
+    }
+
+    private void DrawCurveDemandPoints(float x, float y, float w, float h,
+        float pMin, float pMax, float mMin, float mMax,
+        float rangeP, float rangeM)
+    {
+        DemandRecord[] demands = GetVisibleDemands();
+        if (demands == null || demands.Length == 0) return;
+
+        foreach (DemandRecord demand in demands)
+        {
+            if (demand == null) continue;
+            if (!string.IsNullOrEmpty(UnityData.ActiveCombo) && demand.combo != UnityData.ActiveCombo) continue;
+            float p = demand.P_kN;
+            float m = demand.M_kN_m;
+            if (p <= pMin || p >= pMax || m <= mMin || m >= mMax) continue;
+
+            float dx = x + ((m - mMin) / rangeM) * w;
+            float dy = y + h - ((p - pMin) / rangeP) * h;
+
+            GUI.color = demandColor;
+            float r = 5.5f;
+            GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
+            GUI.color = Color.white;
+            GUI.Label(new Rect(dx + 8f, dy - 10f, 120f, 20f), demand.combo, labelStyle);
+        }
+
+        GUI.color = Color.white;
+    }
+
+    private DemandRecord[] GetVisibleDemands()
+    {
+        if (currentElement != null && currentElement.data == null && currentElement.pmDemands != null && currentElement.pmDemands.Length > 0)
+        {
+            return currentElement.pmDemands;
+        }
+        return currentCurve.demands;
     }
 
     private void DrawOtherColumnPoints(float x, float y, float w, float h,
@@ -220,6 +270,22 @@ public class PMPanel : MonoBehaviour
         {
             if (sel != null && sel.data != null && sel.data.type == "columna" &&
                 !string.IsNullOrEmpty(sel.pmSectionId) && sel.pmSectionId == sectionId)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int CountWallsWithSection(string sectionId)
+    {
+        ElementSelectable[] all = allElements;
+        if (all == null || string.IsNullOrEmpty(sectionId)) return 0;
+
+        int count = 0;
+        foreach (ElementSelectable sel in all)
+        {
+            if (sel != null && sel.data == null && !string.IsNullOrEmpty(sel.pmSectionId) && sel.pmSectionId == sectionId)
             {
                 count++;
             }

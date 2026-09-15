@@ -312,36 +312,58 @@ def main():
             "points": wall_points
         })
 
-    # ── Calcular demandas muro ───────────────────────────────────────
-    wall_demands = []
-    if wall_pm_data and data.get("elements"):
-        nodes_map = {}
-        for n in data.get("nodes", []):
-            nodes_map[n["id"]] = (n["x"], n["y"], n["z"])
+    # ── Calcular demandas por muro ───────────────────────────────────
+    nodes_map = {n["id"]: (n["x"], n["y"], n["z"]) for n in data.get("nodes", [])}
 
-        # Estimacion de tributaria del muro
-        wall_trib_area = 7.60 * 3.0
-        n_levels = 5
-        q_q_val = q_Q
+    def wall_mid_and_z(wall):
+        ni = nodes_map.get(wall.get("nodeI"))
+        nj = nodes_map.get(wall.get("nodeJ"))
+        if not ni or not nj:
+            return 0.0, 0.0, 0.0
+        return 0.5 * (ni[0] + nj[0]), 0.5 * (ni[1] + nj[1]), 0.5 * (ni[2] + nj[2])
 
+    wall_base_info = []
+    for wall in data.get("walls", []):
+        x, y, z = wall_mid_and_z(wall)
+        grosor = float(wall.get("grosor", 0.0))
+        longitud = float(wall.get("longitud", 0.0))
+        wall_base_info.append({"wall": wall, "x": x, "y": y, "z": z, "weight": max(grosor * longitud, 0.01)})
+
+    total_wall_weight = sum(item["weight"] for item in wall_base_info) or 1.0
+
+    def levels_above_for_wall(item):
+        count = 0
+        for other in wall_base_info:
+            same_stack = abs(other["x"] - item["x"]) < 0.08 and abs(other["y"] - item["y"]) < 0.08
+            if same_stack and other["z"] >= item["z"] - 0.05:
+                count += 1
+        return max(count, 1)
+
+    def demands_for_wall(wall):
+        if not wall_pm_data:
+            return []
+        x, y, z = wall_mid_and_z(wall)
+        grosor = float(wall.get("grosor", 0.0))
+        longitud = float(wall.get("longitud", 0.0))
+        item = {"wall": wall, "x": x, "y": y, "z": z, "weight": max(grosor * longitud, 0.01)}
+        tributary_width = 3.0
+        tributary_area = max(longitud, 0.1) * tributary_width
+        n_levels = levels_above_for_wall(item)
+        h_eff = max(3.0, n_levels * 3.2)
+        lateral_share = item["weight"] / total_wall_weight
+        out = []
         for combo_name, lambdas in combos.items():
-            p_wall = wall_trib_area * (lambdas.get("G", 0) * q_g + lambdas.get("Q", 0) * q_q_val) * n_levels
-
-            # Momento estimado por sismo (heuristico: del corte basal proporcional)
+            p_wall = tributary_area * (lambdas.get("G", 0) * q_g + lambdas.get("Q", 0) * q_Q) * n_levels
             v_base_x = seismic.get("corte_basal_EX_kN", 0.0) * abs(lambdas.get("EX", 0))
             v_base_y = seismic.get("corte_basal_EY_kN", 0.0) * abs(lambdas.get("EY", 0))
-            h_eff = 15.0
-            m_wall = (v_base_x + v_base_y) * h_eff * 0.05
-
-            wall_demands.append({
+            m_wall = (v_base_x + v_base_y) * h_eff * lateral_share
+            out.append({
                 "combo": combo_name,
                 "P_kN": round(p_wall, 2),
                 "M_kN_m": round(m_wall, 2),
-                "note": f"Tributaria estimada: {wall_trib_area:.1f} m2 x {n_levels} niveles. V_sismo x Heff x 5%."
+                "note": f"Muro {wall.get('id')}: Atrib={tributary_area:.1f} m2, niveles sobre muro={n_levels}, reparto sismico por t*L={lateral_share:.3f}."
             })
-
-    if pm_curves and len(pm_curves) > 1 and wall_demands:
-        pm_curves[1]["demands"] = wall_demands
+        return out
 
     # ── Empaquetar combinaciones ─────────────────────────────────────
     combos_list = []
@@ -361,12 +383,13 @@ def main():
     for i, wall in enumerate(data.get("walls", [])):
         grosor = float(wall.get("grosor", 0.0))
         longitud = float(wall.get("longitud", 0.0))
-        has_curve = (grosor >= 0.25)
+        has_curve = bool(wall_pm_data)
         entry = dict(wall)
         entry["id"] = i + 1
+        entry["demands"] = demands_for_wall(entry)
         walls_enriched.append(entry)
         wall_registry.append({
-            "index": i,
+            "index": i + 1,
             "nodeI": wall.get("nodeI"),
             "nodeJ": wall.get("nodeJ"),
             "grosor": grosor,
@@ -374,7 +397,8 @@ def main():
             "bottom": wall.get("bottom", ""),
             "top": wall.get("top", ""),
             "pmSectionId": "W_DPRIME_OPENING_TO_3" if has_curve else "",
-            "hasCurve": has_curve
+            "hasCurve": has_curve,
+            "demands": entry["demands"]
         })
 
     # ── JSON de salida ───────────────────────────────────────────────
