@@ -13,7 +13,7 @@ public class ElementPicker : MonoBehaviour
     public Vector2 panelOffset = new Vector2(24f, 18f);
     public Vector2 panelMinSize = new Vector2(380f, 0f);
     public float panelMaxWidthRatio = 0.42f;
-    public int panelFontSize = 15;
+    public int panelFontSize = 11;
     public float panelPaddingX = 18f;
     public float panelLineSpacing = 2f;
     public float panelSectionSpacing = 12f;
@@ -163,7 +163,7 @@ public class ElementPicker : MonoBehaviour
             : $"==={selectedInfo.name}===\n{selectedInfo.GetInfo()}";
         float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
         float maxW = Screen.width - panelOffset.x * 2f - pmZone;
-        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.50f, maxW));
+        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.54f, maxW));
         float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 82f);
         float panelH = Mathf.Min(Mathf.Max(480f, Screen.height * 0.86f), maxPanelH);
 
@@ -173,13 +173,12 @@ public class ElementPicker : MonoBehaviour
         GUI.Box(new Rect(px, py, panelW, panelH), GUIContent.none, boxStyle);
 
         float innerW = panelW - panelPaddingX * 2f;
-        var content = new GUIContent(info);
-        float contentH = labelStyle.CalcHeight(content, innerW);
+        float contentH = CalculateContentHeight(info, innerW);
         if (contentH < panelH - 60f) contentH = panelH - 60f;
 
         var rect = new Rect(panelPaddingX, 0f, innerW, contentH);
         scroll = GUI.BeginScrollView(new Rect(px, py + 8f, panelW, panelH - 16f), scroll,
-            new Rect(0f, 0f, panelW - 20f, contentH + 24f));
+            new Rect(0f, 0f, panelW - 20f, contentH + 80f));
 
         int prevSize = labelStyle.fontSize;
         labelStyle.fontSize = panelFontSize;
@@ -222,6 +221,37 @@ public class ElementPicker : MonoBehaviour
         }
 
         yOffset = y - area.y;
+    }
+
+    private float CalculateContentHeight(string text, float width)
+    {
+        EnsureStyles();
+        string[] sections = text.Split('\n');
+        float y = 0f;
+        float lineH = panelFontSize + panelLineSpacing;
+
+        int prevLabelSize = labelStyle.fontSize;
+        int prevTitleSize = titleStyle.fontSize;
+        labelStyle.fontSize = panelFontSize;
+        titleStyle.fontSize = panelFontSize + 2;
+        headerStyle.fontSize = panelFontSize;
+
+        foreach (string raw in sections)
+        {
+            string line = raw.TrimEnd('\r');
+            bool isTitle = line.StartsWith("===");
+            bool isHeader = line.StartsWith("---") && line.EndsWith("---");
+            GUIStyle style = isTitle ? titleStyle : isHeader ? headerStyle : labelStyle;
+            float styleLineH = isTitle || isHeader ? lineH + 2f : lineH;
+            float h = style.CalcHeight(new GUIContent(line), width);
+            if (h < styleLineH) h = styleLineH;
+            y += h + ((line == "" || line.Contains("---")) ? panelSectionSpacing : panelLineSpacing);
+        }
+
+        labelStyle.fontSize = prevLabelSize;
+        titleStyle.fontSize = prevTitleSize;
+        headerStyle.fontSize = prevLabelSize;
+        return y + 60f;
     }
 
     private void EnsureStyles()

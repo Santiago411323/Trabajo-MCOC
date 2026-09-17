@@ -309,18 +309,18 @@ public class PMPanel : MonoBehaviour
         foreach (DemandRecord demand in currentDemands)
         {
             if (demand == null) continue;
+            if (demand.combo != active) continue;
             float p = demand.P_kN;
             float m = demand.M_kN_m;
             if (p <= pMin || p >= pMax || m <= mMin || m >= mMax) continue;
 
             float dx = x + ((m - mMin) / rangeM) * w;
             float dy = y + h - ((p - pMin) / rangeP) * h;
-            bool isActive = demand.combo == active;
 
-            GUI.color = isActive ? demandColor : new Color(1f, 0.7f, 0.15f);
-            float r = isActive ? 6f : 4.5f;
+            GUI.color = demandColor;
+            float r = 6f;
             GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
-            DrawDemandLabel(dx, dy, demand.combo, p, m, isActive);
+            DrawDemandLabel(dx, dy, demand.combo, p, m, true);
         }
 
         GUI.color = Color.white;
