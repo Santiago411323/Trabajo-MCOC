@@ -163,9 +163,9 @@ public class ElementPicker : MonoBehaviour
             : $"==={selectedInfo.name}===\n{selectedInfo.GetInfo()}";
         float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
         float maxW = Screen.width - panelOffset.x * 2f - pmZone;
-        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * panelMaxWidthRatio, maxW));
-        float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 92f);
-        float panelH = Mathf.Min(Mathf.Max(420f, Screen.height * 0.72f), maxPanelH);
+        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.50f, maxW));
+        float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 82f);
+        float panelH = Mathf.Min(Mathf.Max(480f, Screen.height * 0.86f), maxPanelH);
 
         float px = Screen.width - panelOffset.x - panelW;
         float py = Screen.height - panelOffset.y - panelH;

@@ -150,8 +150,10 @@ public class ElementSelectable : MonoBehaviour
             result += $"\n--- Demanda-capacidad ({UnityData.GetComboLabel(UnityData.ActiveCombo)}) ---\n";
             float pComp = -n;
             float mTotal = Mathf.Sqrt(my * my + mz * mz);
+            float cRatio = GetCapacityRatio(new Vector2(pComp, mTotal));
             result += $"P = {pComp:0.###} kN (compresion+)\n" +
-                      $"M = {mTotal:0.###} kN*m (resultante)\n";
+                      $"M = {mTotal:0.###} kN*m (resultante)\n" +
+                      $"C = {cRatio:0.###} (M/Mcap)\n";
 
             if (!string.IsNullOrEmpty(pmSectionId))
             {
@@ -189,17 +191,60 @@ public class ElementSelectable : MonoBehaviour
             Vector2 ex = GetPMDemandForCase("EX");
             Vector2 ey = GetPMDemandForCase("EY");
             Vector2 total = GetPMDemandForCase(combo);
+            float cRatio = GetCapacityRatio(total);
             ComboInfo info = UnityData.GetComboInfo(combo);
             float fg = info != null ? info.G : 0f;
             float fq = info != null ? info.Q : 0f;
             float fex = info != null ? info.EX : 0f;
             float fey = info != null ? info.EY : 0f;
 
-            text += $"{combo}: P={total.x:0.##} kN | M={total.y:0.##} kN*m\n" +
-                    $"  G({fg:0.##}) P={g.x:0.##}, M={g.y:0.##} | Q({fq:0.##}) P={q.x:0.##}, M={q.y:0.##}\n" +
-                    $"  EX({fex:0.##}) P={ex.x:0.##}, M={ex.y:0.##} | EY({fey:0.##}) P={ey.x:0.##}, M={ey.y:0.##}\n";
+            text += $"{combo}: P={total.x:0.##} kN | M={total.y:0.##} kN*m | C={cRatio:0.###}\n" +
+                    $"  G({fg:0.##}): P={g.x:0.##}, M={g.y:0.##}\n" +
+                    $"  Q({fq:0.##}): P={q.x:0.##}, M={q.y:0.##}\n" +
+                    $"  EX({fex:0.##}): P={ex.x:0.##}, M={ex.y:0.##}\n" +
+                    $"  EY({fey:0.##}): P={ey.x:0.##}, M={ey.y:0.##}\n";
         }
         return text;
+    }
+
+    private float GetCapacityRatio(Vector2 demand)
+    {
+        if (string.IsNullOrEmpty(pmSectionId)) return 0f;
+        PMCurveData curve = UnityData.GetPMCurve(pmSectionId);
+        if (curve == null || curve.points == null || curve.points.Length < 2) return 0f;
+
+        float p = demand.x;
+        float mCap = 0f;
+        for (int i = 0; i < curve.points.Length - 1; i++)
+        {
+            PMPoint a = curve.points[i];
+            PMPoint b = curve.points[i + 1];
+            float minP = Mathf.Min(a.P_kN, b.P_kN);
+            float maxP = Mathf.Max(a.P_kN, b.P_kN);
+            if (p < minP || p > maxP) continue;
+
+            float t = Mathf.Abs(b.P_kN - a.P_kN) > 0.001f
+                ? Mathf.InverseLerp(a.P_kN, b.P_kN, p)
+                : 0f;
+            mCap = Mathf.Lerp(a.M_kN_m, b.M_kN_m, t);
+            break;
+        }
+
+        if (mCap <= 0.001f)
+        {
+            float best = float.MaxValue;
+            foreach (PMPoint pt in curve.points)
+            {
+                float dist = Mathf.Abs(pt.P_kN - p);
+                if (dist < best)
+                {
+                    best = dist;
+                    mCap = pt.M_kN_m;
+                }
+            }
+        }
+
+        return mCap > 0.001f ? demand.y / mCap : 0f;
     }
 
     private Vector2 GetPMDemandForCase(string caseName)
