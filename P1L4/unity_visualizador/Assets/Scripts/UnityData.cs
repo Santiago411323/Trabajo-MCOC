@@ -151,4 +151,10 @@ public static class UnityData
         }
         return combo;
     }
+
+    public static ComboInfo GetComboInfo(string combo)
+    {
+        if (string.IsNullOrEmpty(combo) || comboLookup == null) return null;
+        return comboLookup.TryGetValue(combo, out var info) ? info : null;
+    }
 }

@@ -13,6 +13,7 @@ public class PMPanel : MonoBehaviour
     private PMCurveData currentCurve;
     private bool visible;
     private ElementSelectable[] allElements;
+    private DemandRecord[] currentDemands;
 
     private GUIStyle boxStyle;
     private GUIStyle labelStyle;
@@ -39,6 +40,7 @@ public class PMPanel : MonoBehaviour
         currentCurve = UnityData.GetPMCurve(sectionId);
         currentElement = element;
         allElements = FindObjectsOfType<ElementSelectable>();
+        currentDemands = BuildDemandsForElement(element);
         visible = (currentCurve != null && currentCurve.points != null && currentCurve.points.Length > 0);
     }
 
@@ -47,6 +49,53 @@ public class PMPanel : MonoBehaviour
         visible = false;
         currentElement = null;
         currentCurve = null;
+        currentDemands = null;
+    }
+
+    private DemandRecord[] BuildDemandsForElement(ElementSelectable element)
+    {
+        if (element == null)
+        {
+            return null;
+        }
+
+        if (element.data == null)
+        {
+            return element.pmDemands;
+        }
+
+        string[] combos = GetComboNames();
+        DemandRecord[] demands = new DemandRecord[combos.Length];
+        for (int i = 0; i < combos.Length; i++)
+        {
+            float[] forces = UnityData.GetElementForces(combos[i], element.data.id);
+            if (forces == null || forces.Length < 6)
+            {
+                demands[i] = new DemandRecord { combo = combos[i], P_kN = 0f, M_kN_m = 0f, note = "sin fuerzas" };
+                continue;
+            }
+
+            float pComp = -forces[0];
+            float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
+            demands[i] = new DemandRecord { combo = combos[i], P_kN = pComp, M_kN_m = mTotal, note = "fuerzas OpenSees por combinacion" };
+        }
+        return demands;
+    }
+
+    private string[] GetComboNames()
+    {
+        if (UnityData.Structure != null && UnityData.Structure.p1l4 != null && UnityData.Structure.p1l4.combinations != null)
+        {
+            string[] names = UnityData.Structure.p1l4.combinations
+                .Where(c => c != null && !string.IsNullOrEmpty(c.name))
+                .Select(c => c.name)
+                .ToArray();
+            if (names.Length > 0)
+            {
+                return names;
+            }
+        }
+        return new string[] { "C1", "C2", "C3" };
     }
 
     void OnGUI()
@@ -58,7 +107,7 @@ public class PMPanel : MonoBehaviour
 
         float pw = Mathf.Min(panelSize.x, Screen.width * 0.42f);
         float ph = Mathf.Min(panelSize.y, Mathf.Max(300f, Screen.height * 0.48f));
-        float px = panelOffset.x;
+        float px = Screen.width > 840f ? 370f : panelOffset.x;
         float py = Screen.height - panelOffset.y - ph;
 
         GUI.Box(new Rect(px - 2, py - 2, pw + 4, ph + 4), GUIContent.none, boxStyle);
@@ -115,18 +164,42 @@ public class PMPanel : MonoBehaviour
         GUI.Label(new Rect(px + padding, y, innerW, lineH), colLabel, labelStyle);
         y += lineH;
 
-        DemandRecord[] visibleDemands = GetVisibleDemands();
-        if (visibleDemands != null && visibleDemands.Length > 0)
+        string activeDemand = GetActiveDemandInfo();
+        if (!string.IsNullOrEmpty(activeDemand))
         {
-            foreach (var d in visibleDemands)
-            {
-                if (d == null) continue;
-                float phi = Mathf.Atan2(d.M_kN_m, Mathf.Max(d.P_kN, 0.01f)) * Mathf.Rad2Deg;
-                string dInfo = $"  {UnityData.GetComboLabel(d.combo)} -> P={d.P_kN:0.0} kN | M={d.M_kN_m:0.0} kN*m | phi={phi:0.0} deg";
-                GUI.Label(new Rect(px + padding, y, innerW, lineH), dInfo, demandStyle);
-                y += lineH;
-            }
+            GUI.Label(new Rect(px + padding, y, innerW, lineH), activeDemand, demandStyle);
+            y += lineH;
         }
+    }
+
+    private string GetActiveDemandInfo()
+    {
+        string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
+        string comboLabel = UnityData.GetComboLabel(combo);
+
+        if (currentElement != null && currentElement.data == null)
+        {
+            DemandRecord demand = GetActiveDemandRecord();
+            if (demand == null)
+            {
+                return comboLabel + " -> sin demanda P-M para este muro";
+            }
+            float phiWall = Mathf.Atan2(demand.M_kN_m, Mathf.Max(demand.P_kN, 0.01f)) * Mathf.Rad2Deg;
+            return $"{comboLabel} -> P={demand.P_kN:0.0} kN | M={demand.M_kN_m:0.0} kN*m | phi={phiWall:0.0} deg";
+        }
+
+        if (currentElement != null && currentElement.data != null)
+        {
+            DemandRecord demand = GetActiveDemandRecord();
+            if (demand == null)
+            {
+                return comboLabel + " -> sin fuerzas para esta columna";
+            }
+            float phi = Mathf.Atan2(demand.M_kN_m, Mathf.Max(demand.P_kN, 0.01f)) * Mathf.Rad2Deg;
+            return $"{comboLabel} -> P={demand.P_kN:0.0} kN | M={demand.M_kN_m:0.0} kN*m | phi={phi:0.0} deg";
+        }
+
+        return "";
     }
 
     private void DrawDiagram(float x, float y, float w, float h)
@@ -145,6 +218,24 @@ public class PMPanel : MonoBehaviour
         float pMin = Mathf.Min(pVals.Min() * 1.1f, -pMax * 0.3f);
         float mMax = Mathf.Max(mVals.Max() * 1.15f, 100f);
         float mMin = 0f;
+
+        Vector2 selectedDemand = GetSelectedDemandPoint();
+        if (selectedDemand != Vector2.zero)
+        {
+            pMax = Mathf.Max(pMax, selectedDemand.x * 1.15f);
+            pMin = Mathf.Min(pMin, selectedDemand.x * 1.15f);
+            mMax = Mathf.Max(mMax, selectedDemand.y * 1.15f);
+        }
+        if (currentElement.data != null && currentDemands != null)
+        {
+            foreach (DemandRecord demand in currentDemands)
+            {
+                if (demand == null) continue;
+                pMax = Mathf.Max(pMax, demand.P_kN * 1.15f);
+                pMin = Mathf.Min(pMin, demand.P_kN * 1.15f);
+                mMax = Mathf.Max(mMax, demand.M_kN_m * 1.15f);
+            }
+        }
 
         float rangeP = pMax - pMin;
         float rangeM = mMax - mMin;
@@ -169,20 +260,7 @@ public class PMPanel : MonoBehaviour
 
         if (currentElement.data != null)
         {
-            Vector2 demandPt = currentElement.GetDemandPoint();
-            float dP = demandPt.x;
-            float dM = demandPt.y;
-            if (dP > pMin && dP < pMax && dM > mMin && dM < mMax)
-            {
-                float dx = x + ((dM - mMin) / rangeM) * w;
-                float dy = y + h - ((dP - pMin) / rangeP) * h;
-
-                GUI.color = demandColor;
-                float r = 6f;
-                GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2, r * 2), whiteTex);
-                GUI.color = Color.white;
-                GUI.Label(new Rect(dx + 8f, dy - 10f, 120f, 20f), string.IsNullOrEmpty(UnityData.ActiveCombo) ? "demanda" : UnityData.ActiveCombo, labelStyle);
-            }
+            DrawColumnDemandPoints(x, y, w, h, pMin, pMax, mMin, mMax, rangeP, rangeM);
         }
         else
         {
@@ -215,18 +293,98 @@ public class PMPanel : MonoBehaviour
             GUI.color = demandColor;
             float r = 5.5f;
             GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
-            GUI.color = Color.white;
-            GUI.Label(new Rect(dx + 8f, dy - 10f, 120f, 20f), demand.combo, labelStyle);
+            DrawDemandLabel(dx, dy, demand.combo, p, m, true);
         }
 
         GUI.color = Color.white;
     }
 
+    private void DrawColumnDemandPoints(float x, float y, float w, float h,
+        float pMin, float pMax, float mMin, float mMax,
+        float rangeP, float rangeM)
+    {
+        if (currentDemands == null || currentDemands.Length == 0) return;
+        string active = string.IsNullOrEmpty(UnityData.ActiveCombo) ? currentDemands[0].combo : UnityData.ActiveCombo;
+
+        foreach (DemandRecord demand in currentDemands)
+        {
+            if (demand == null) continue;
+            float p = demand.P_kN;
+            float m = demand.M_kN_m;
+            if (p <= pMin || p >= pMax || m <= mMin || m >= mMax) continue;
+
+            float dx = x + ((m - mMin) / rangeM) * w;
+            float dy = y + h - ((p - pMin) / rangeP) * h;
+            bool isActive = demand.combo == active;
+
+            GUI.color = isActive ? demandColor : new Color(1f, 0.7f, 0.15f);
+            float r = isActive ? 6f : 4.5f;
+            GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
+            DrawDemandLabel(dx, dy, demand.combo, p, m, isActive);
+        }
+
+        GUI.color = Color.white;
+    }
+
+    private Vector2 GetSelectedDemandPoint()
+    {
+        if (currentElement == null)
+        {
+            return Vector2.zero;
+        }
+
+        if (currentElement.data == null)
+        {
+            DemandRecord demand = GetActiveDemandRecord();
+            return demand == null ? Vector2.zero : new Vector2(demand.P_kN, demand.M_kN_m);
+        }
+
+        DemandRecord columnDemand = GetActiveDemandRecord();
+        return columnDemand == null ? Vector2.zero : new Vector2(columnDemand.P_kN, columnDemand.M_kN_m);
+    }
+
+    private DemandRecord GetActiveDemandRecord()
+    {
+        if (currentDemands == null || currentDemands.Length == 0)
+        {
+            return null;
+        }
+
+        string active = string.IsNullOrEmpty(UnityData.ActiveCombo) ? currentDemands[0].combo : UnityData.ActiveCombo;
+        foreach (DemandRecord demand in currentDemands)
+        {
+            if (demand != null && demand.combo == active)
+            {
+                return demand;
+            }
+        }
+        return currentDemands[0];
+    }
+
+    private void DrawDemandLabel(float dx, float dy, string combo, float p, float m, bool prominent)
+    {
+        string shortCombo = string.IsNullOrEmpty(combo) ? "C1" : combo;
+        string label = $"{shortCombo}\nP = {p:0.0} kN\nM = {m:0.0} kN*m";
+        float labelW = prominent ? 170f : 112f;
+        float labelH = prominent ? 58f : 18f;
+        float lx = Mathf.Clamp(dx + 10f, 8f, Screen.width - labelW - 8f);
+        float ly = Mathf.Clamp(dy - 26f, 8f, Screen.height - labelH - 8f);
+
+        GUI.color = new Color(0.05f, 0.05f, 0.12f, 0.88f);
+        GUI.DrawTexture(new Rect(lx - 4f, ly - 3f, labelW, labelH), whiteTex);
+        GUI.color = Color.white;
+
+        GUIStyle pointStyle = new GUIStyle(demandStyle);
+        pointStyle.wordWrap = false;
+        pointStyle.clipping = TextClipping.Overflow;
+        GUI.Label(new Rect(lx, ly, labelW - 8f, labelH), prominent ? label : shortCombo, pointStyle);
+    }
+
     private DemandRecord[] GetVisibleDemands()
     {
-        if (currentElement != null && currentElement.data == null && currentElement.pmDemands != null && currentElement.pmDemands.Length > 0)
+        if (currentDemands != null && currentDemands.Length > 0)
         {
-            return currentElement.pmDemands;
+            return currentDemands;
         }
         return currentCurve.demands;
     }

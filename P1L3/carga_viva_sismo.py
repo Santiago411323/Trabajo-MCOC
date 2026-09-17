@@ -214,6 +214,10 @@ def closest_node_to_xy(nodes, x, y):
 
 def build_seismic_cases(data, live_transfer, seismic_coeff):
     nodes = node_map(data)
+    connected_nodes = set()
+    for element in data.get("elements", []):
+        connected_nodes.add(element.get("nodeI"))
+        connected_nodes.add(element.get("nodeJ"))
     dead = dead_load_by_floor(data)
     live = {floor: values["Q_kN"] for floor, values in live_transfer["por_piso"].items()}
     floor_names = floor_name_by_z(data)
@@ -226,6 +230,9 @@ def build_seismic_cases(data, live_transfer, seismic_coeff):
         floor_nodes = floor_nodes_for_group(nodes, floor_group)
         if not floor_nodes:
             continue
+        structural_floor_nodes = [node for node in floor_nodes if node["id"] in connected_nodes]
+        if structural_floor_nodes:
+            floor_nodes = structural_floor_nodes
         floor = weighted_floor_z(floor_group, dead, live)
         cm_x = sum(node["x"] for node in floor_nodes) / len(floor_nodes)
         cm_y = sum(node["y"] for node in floor_nodes) / len(floor_nodes)

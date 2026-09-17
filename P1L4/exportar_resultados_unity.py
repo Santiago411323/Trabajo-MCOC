@@ -224,7 +224,18 @@ def main():
         "C3": "C3: G+0.5Q-0.3EX+0.2EY",
     }
 
-    # ── Correr analisis por combinacion ──────────────────────────────
+    # ── Correr analisis base y por combinacion ───────────────────────
+    base_results = {}
+    for case_name, nodal_loads in load_sets.items():
+        print(f"\nAnalizando caso base {case_name}...")
+        try:
+            result = cvm.run_and_extract(data, nodal_loads)
+            base_results[case_name] = result
+            print(f"  OK={result.get('ok', False)} | fuerzas_elem={len(result.get('element_forces', {}))}")
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            base_results[case_name] = None
+
     all_results = {}
     for combo_name, lambdas in combos.items():
         print(f"\nAnalizando combinacion {combo_name}...")
@@ -263,7 +274,7 @@ def main():
 
     # ── Empaquetar fuerzas por elemento ──────────────────────────────
     element_forces_flat = []
-    for combo_name, result in all_results.items():
+    for combo_name, result in {**base_results, **all_results}.items():
         if result is None:
             continue
         forces_dict = result.get("element_forces", {})
@@ -447,7 +458,7 @@ def main():
     print(f"  Elementos: {n_elements}")
     print(f"  Combinaciones: {n_combos}")
     print(f"  Registros desplazamientos: {n_disp} ({n_disp // max(n_nodes, 1)} por nodo)")
-    print(f"  Registros fuerzas_elem: {n_forces} ({n_forces // max(n_combos, 1)} por combo)")
+    print(f"  Registros fuerzas_elem: {n_forces} (casos G/Q/EX/EY + C1/C2/C3)")
     print(f"  Curvas P-M: {n_pm}")
     print("Listo.")
 

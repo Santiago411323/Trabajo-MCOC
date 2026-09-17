@@ -35,6 +35,7 @@ public class StructureViewer : MonoBehaviour
     private readonly List<GameObject> nodeMarkerObjects = new List<GameObject>();
     private readonly List<GameObject> idLabelObjects = new List<GameObject>();
     private readonly List<GameObject> localAxisObjects = new List<GameObject>();
+    private readonly Dictionary<GameObject, string> objectFloor = new Dictionary<GameObject, string>();
     private readonly Dictionary<string, TributaryFloorData> tributaryFloors =
         new Dictionary<string, TributaryFloorData>();
 
@@ -52,6 +53,14 @@ public class StructureViewer : MonoBehaviour
     // Combinaciones de carga
     private string[] comboOptions = new string[0];
     private int comboIndex = 0;
+
+    // UI base FASE 1
+    private readonly string[] resultOptions = new string[] { "None", "Axial", "Corte", "Momento", "Deformada" };
+    private int resultIndex = 0;
+    private string[] floorOptions = new string[] { "Todos" };
+    private int floorIndex = 0;
+    private string statusMessage = "Click sobre un elemento para ver informacion y P-M.";
+    private Vector2 leftScroll;
 
     private void Start()
     {
@@ -103,6 +112,7 @@ public class StructureViewer : MonoBehaviour
         nodeMarkerObjects.Clear();
         idLabelObjects.Clear();
         localAxisObjects.Clear();
+        objectFloor.Clear();
 
         CreateNodes(loadedData);
         CreateColumnAndBeamElements(loadedData);
@@ -115,6 +125,7 @@ public class StructureViewer : MonoBehaviour
         CreatePMPanel();
 
         BuildComboOptions();
+        BuildFloorOptions();
 
         if (comboOptions.Length > 0)
         {
@@ -243,6 +254,7 @@ public class StructureViewer : MonoBehaviour
             Renderer renderer = member.GetComponent<Renderer>();
             renderer.material = isColumn ? ColumnMaterial() : BeamMaterial();
             (isColumn ? columnObjects : beamObjects).Add(member);
+            RegisterFloor(member, element.piso);
 
             ElementSelectable selectable = member.AddComponent<ElementSelectable>();
             selectable.data = element;
@@ -353,6 +365,7 @@ public class StructureViewer : MonoBehaviour
             box.transform.localScale = new Vector3(thick * wallScale, wallHeight, wallLength);
             box.GetComponent<Renderer>().material = WallMaterial();
             wallObjects.Add(box);
+            RegisterFloor(box, wall.bottom);
 
             ElementSelectable selectable = box.AddComponent<ElementSelectable>();
             selectable.isWall = true;
@@ -489,6 +502,7 @@ public class StructureViewer : MonoBehaviour
                         $"Esclavos: {(dia.slaves != null ? dia.slaves.Length : 0)}";
 
             diaphragmObjects.Add(plane);
+            RegisterFloor(plane, dia.level);
         }
     }
 
@@ -529,6 +543,7 @@ public class StructureViewer : MonoBehaviour
                         $"Nota: visualizada como panel; no es shell OpenSees.";
 
             diaphragmObjects.Add(plane);
+            RegisterFloor(plane, slab.nivel);
         }
     }
 
@@ -744,17 +759,19 @@ public class StructureViewer : MonoBehaviour
             {
                 continue;
             }
-            GameObject labelObject = new GameObject($"Label_Ele_{sel.data.id}");
+            string label = GetSelectableLabel(sel);
+            GameObject labelObject = new GameObject("Label_" + label.Replace(" ", "_"));
             labelObject.transform.SetParent(transform);
             Vector3 mid = (sel.startPoint + sel.endPoint) * 0.5f;
             labelObject.transform.position = mid + new Vector3(0, 0.3f, 0);
 
             TextMesh text = labelObject.AddComponent<TextMesh>();
-            text.text = sel.data.id.ToString();
+            text.text = label;
             text.characterSize = 0.12f;
             text.anchor = TextAnchor.MiddleCenter;
             text.color = Color.white;
             idLabelObjects.Add(labelObject);
+            RegisterFloor(labelObject, GetSelectableFloor(sel));
         }
     }
 
@@ -784,18 +801,32 @@ public class StructureViewer : MonoBehaviour
                 perp = Vector3.right;
             }
             GameObject localAxis = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            localAxis.name = $"EjeLocal_E{sel.data.id}";
+            localAxis.name = "EjeLocal_" + GetSelectableLabel(sel).Replace(" ", "_");
             localAxis.transform.SetParent(transform);
             localAxis.transform.position = mid + dir * 0.75f;
             localAxis.transform.rotation = Quaternion.FromToRotation(Vector3.up, dir);
             localAxis.transform.localScale = new Vector3(0.02f, 0.75f, 0.02f);
             localAxis.GetComponent<Renderer>().material = CreateMaterial(Color.magenta);
             localAxisObjects.Add(localAxis);
+            RegisterFloor(localAxis, GetSelectableFloor(sel));
         }
     }
 
     private void RefreshVisibility()
     {
+        if (showNodeMarkers && nodeMarkerObjects.Count == 0)
+        {
+            CreateNodeMarkers();
+        }
+        if (showIds && idLabelObjects.Count == 0)
+        {
+            CreateIdLabels();
+        }
+        if (showLocalAxes && localAxisObjects.Count == 0)
+        {
+            CreateLocalAxes();
+        }
+
         SetGroupVisible(columnObjects, showColumns);
         SetGroupVisible(beamObjects, showBeams);
         SetGroupVisible(wallObjects, showWalls);
@@ -812,61 +843,208 @@ public class StructureViewer : MonoBehaviour
         {
             if (go != null)
             {
-                go.SetActive(visible);
+                go.SetActive(visible && PassesFloorFilter(go));
             }
         }
     }
 
+    private void RegisterFloor(GameObject go, string floor)
+    {
+        if (go == null)
+        {
+            return;
+        }
+        objectFloor[go] = NormalizeFloor(floor);
+    }
+
+    private bool PassesFloorFilter(GameObject go)
+    {
+        if (floorOptions == null || floorOptions.Length == 0 || floorIndex <= 0)
+        {
+            return true;
+        }
+        string selectedFloor = floorOptions[Mathf.Clamp(floorIndex, 0, floorOptions.Length - 1)];
+        string goFloor;
+        if (!objectFloor.TryGetValue(go, out goFloor))
+        {
+            return true;
+        }
+        return goFloor == selectedFloor;
+    }
+
+    private string NormalizeFloor(string floor)
+    {
+        return string.IsNullOrEmpty(floor) ? "Sin piso" : floor;
+    }
+
+    private void BuildFloorOptions()
+    {
+        var floors = new List<string>();
+        floors.Add("Todos");
+
+        foreach (string floor in objectFloor.Values)
+        {
+            if (!floors.Contains(floor))
+            {
+                floors.Add(floor);
+            }
+        }
+
+        floorOptions = floors.ToArray();
+        floorIndex = Mathf.Clamp(floorIndex, 0, Mathf.Max(0, floorOptions.Length - 1));
+    }
+
     private void OnGUI()
     {
-        float panelX = 16f;
-        float panelY = 16f;
-        float panelW = Mathf.Min(360f, Screen.width * 0.36f);
-        float y0 = panelY + 8f;
+        DrawTopBar();
+        DrawLeftPanel();
+        DrawViewportHint();
+        RefreshVisibility();
+    }
 
-        GUI.Box(new Rect(panelX, panelY, panelW, 162f), "P1L4 Visualizador");
-        y0 += 20f;
+    private void DrawTopBar()
+    {
+        float x = 12f;
+        float y = 10f;
+        float w = Screen.width - 24f;
+        float h = 70f;
+        GUI.Box(new Rect(x, y, w, h), "P1L4 Visualizador | TopBar");
 
+        float cx = x + 12f;
+        float cy = y + 25f;
+        GUI.Label(new Rect(cx, cy, 54f, 22f), "Combo");
         if (comboOptions.Length > 0)
         {
-            GUI.Label(new Rect(panelX + 10f, y0, 90f, 22f), "Combo:");
-            int index = GUI.Toolbar(new Rect(panelX + 80f, y0, panelW - 92f, 22f), comboIndex, comboOptions);
+            int index = GUI.Toolbar(new Rect(cx + 54f, cy, 245f, 22f), comboIndex, comboOptions);
             if (index != comboIndex)
             {
                 comboIndex = index;
                 ApplyCombo(comboIndex);
+                statusMessage = "Combinacion activa: " + UnityData.GetComboLabel(UnityData.ActiveCombo);
             }
-            y0 += 26f;
         }
 
-        showColumns = GUI.Toggle(new Rect(panelX + 10f, y0, 92f, 20f), showColumns, "Columnas");
-        showBeams = GUI.Toggle(new Rect(panelX + 104f, y0, 70f, 20f), showBeams, "Vigas");
-        showWalls = GUI.Toggle(new Rect(panelX + 178f, y0, 70f, 20f), showWalls, "Muros");
-        showSupports = GUI.Toggle(new Rect(panelX + 252f, y0, 78f, 20f), showSupports, "Apoyos");
-        y0 += 22f;
-        showDiaphragms = GUI.Toggle(new Rect(panelX + 10f, y0, 100f, 20f), showDiaphragms, "Losas");
-        showNodeMarkers = GUI.Toggle(new Rect(panelX + 104f, y0, 72f, 20f), showNodeMarkers, "Nodos");
-        showIds = GUI.Toggle(new Rect(panelX + 178f, y0, 56f, 20f), showIds, "IDs");
-        showLocalAxes = GUI.Toggle(new Rect(panelX + 252f, y0, 88f, 20f), showLocalAxes, "Ejes");
-        y0 += 24f;
+        cx += 320f;
+        GUI.Label(new Rect(cx, cy, 72f, 22f), "Resultado");
+        int nextResult = GUI.Toolbar(new Rect(cx + 78f, cy, 380f, 22f), resultIndex, resultOptions);
+        if (nextResult != resultIndex)
+        {
+            resultIndex = nextResult;
+            if (diagramController != null)
+            {
+                diagramController.SetResultMode(resultOptions[resultIndex]);
+            }
+            statusMessage = "Resultado activo: " + resultOptions[resultIndex];
+        }
 
-        showTributarySummary = GUI.Toggle(new Rect(panelX + 10f, y0, 180f, 20f), showTributarySummary, "Resumen tributario");
-        GUI.Label(new Rect(panelX + 190f, y0, panelW - 200f, 20f), "Click: info/P-M");
+        float bx = x + w - 245f;
+        if (GUI.Button(new Rect(bx, cy, 55f, 22f), "ISO")) SetCameraPreset("ISO");
+        if (GUI.Button(new Rect(bx + 60f, cy, 55f, 22f), "TOP")) SetCameraPreset("TOP");
+        if (GUI.Button(new Rect(bx + 120f, cy, 55f, 22f), "FRONT")) SetCameraPreset("FRONT");
+        if (GUI.Button(new Rect(bx + 180f, cy, 55f, 22f), "RIGHT")) SetCameraPreset("RIGHT");
+    }
 
-        RefreshVisibility();
+    private void DrawLeftPanel()
+    {
+        float x = 12f;
+        float y = 90f;
+        float w = Mathf.Min(340f, Screen.width * 0.34f);
+        float h = Mathf.Min(Screen.height - 112f, 520f);
+        GUI.Box(new Rect(x, y, w, h), "LeftPanel | Capas y filtro");
 
+        float innerX = x + 12f;
+        float innerY = y + 26f;
+        float innerW = w - 24f;
+        leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, h - 34f), leftScroll,
+            new Rect(x + 4f, innerY, w - 24f, 520f));
+
+        GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Visibilidad");
+        innerY += 22f;
+        showColumns = GUI.Toggle(new Rect(innerX, innerY, 105f, 20f), showColumns, "Columnas");
+        showBeams = GUI.Toggle(new Rect(innerX + 110f, innerY, 85f, 20f), showBeams, "Vigas");
+        showWalls = GUI.Toggle(new Rect(innerX + 205f, innerY, 85f, 20f), showWalls, "Muros");
+        innerY += 22f;
+        showSupports = GUI.Toggle(new Rect(innerX, innerY, 105f, 20f), showSupports, "Apoyos");
+        showDiaphragms = GUI.Toggle(new Rect(innerX + 110f, innerY, 85f, 20f), showDiaphragms, "Losas");
+        showNodeMarkers = GUI.Toggle(new Rect(innerX + 205f, innerY, 85f, 20f), showNodeMarkers, "Nodos");
+        innerY += 22f;
+        showIds = GUI.Toggle(new Rect(innerX, innerY, 105f, 20f), showIds, "IDs");
+        showLocalAxes = GUI.Toggle(new Rect(innerX + 110f, innerY, 120f, 20f), showLocalAxes, "Ejes locales");
+        innerY += 34f;
+
+        GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Filtro por piso");
+        innerY += 22f;
+        int nextFloor = GUI.SelectionGrid(new Rect(innerX, innerY, innerW, Mathf.Ceil(floorOptions.Length / 2f) * 24f), floorIndex, floorOptions, 2);
+        if (nextFloor != floorIndex)
+        {
+            floorIndex = nextFloor;
+            statusMessage = "Filtro de piso: " + floorOptions[floorIndex];
+        }
+        innerY += Mathf.Ceil(floorOptions.Length / 2f) * 24f + 12f;
+
+        if (GUI.Button(new Rect(innerX, innerY, 102f, 24f), "Mostrar todo"))
+        {
+            showColumns = showBeams = showWalls = showSupports = showDiaphragms = true;
+            showNodeMarkers = showIds = showLocalAxes = false;
+            floorIndex = 0;
+            statusMessage = "Vista restablecida.";
+        }
+        if (GUI.Button(new Rect(innerX + 110f, innerY, 102f, 24f), "Solo estructura"))
+        {
+            showColumns = showBeams = showWalls = true;
+            showSupports = showDiaphragms = showNodeMarkers = showIds = showLocalAxes = false;
+            statusMessage = "Capas auxiliares ocultas.";
+        }
+        innerY += 34f;
+
+        showTributarySummary = GUI.Toggle(new Rect(innerX, innerY, 180f, 20f), showTributarySummary, "Resumen tributario");
+        innerY += 24f;
         if (showTributarySummary)
         {
-            string tribText = "Areas tributarias (q_G = 5.1 kN/m2):";
             foreach (KeyValuePair<string, TributaryFloorData> kv in tributaryFloors)
             {
                 TributaryFloorData td = kv.Value;
-                tribText += $"\n  {kv.Key}: A={td.area_total:0.##} m2  carga={td.carga_total:0.##} kN";
+                GUI.Label(new Rect(innerX, innerY, innerW, 18f), $"{kv.Key}: A={td.area_total:0.##} m2 | carga={td.carga_total:0.##} kN");
+                innerY += 18f;
             }
-            float tribW = Mathf.Min(360f, Screen.width - 40f);
-            float tribH = 34f + tributaryFloors.Count * 17f;
-            GUI.Box(new Rect(panelX, panelY + 168f, tribW, tribH), tribText);
         }
+
+        GUI.EndScrollView();
+    }
+
+    private void DrawViewportHint()
+    {
+        float w = Mathf.Min(520f, Screen.width - 380f);
+        if (w < 240f) return;
+        GUI.Box(new Rect(370f, Screen.height - 46f, w, 32f), "MainViewport | " + statusMessage + " | Click izquierdo: seleccionar | Click derecho: orbitar | rueda: zoom");
+    }
+
+    private void SetCameraPreset(string preset)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return;
+        OrbitCamera orbit = cam.GetComponent<OrbitCamera>();
+        if (orbit != null)
+        {
+            orbit.SetPreset(preset);
+            statusMessage = "Vista de camara: " + preset;
+        }
+    }
+
+    private string GetSelectableLabel(ElementSelectable sel)
+    {
+        if (sel == null) return "-";
+        if (sel.isWall) return "Muro " + sel.wallId;
+        if (sel.data == null) return sel.name;
+        return sel.data.type + " " + (!string.IsNullOrEmpty(sel.data.elementTag) ? sel.data.elementTag : sel.data.id.ToString());
+    }
+
+    private string GetSelectableFloor(ElementSelectable sel)
+    {
+        if (sel == null) return "Sin piso";
+        if (sel.isWall) return NormalizeFloor(sel.wallBottom);
+        if (sel.data != null) return NormalizeFloor(sel.data.piso);
+        return "Sin piso";
     }
 
     private Vector3 ToUnity(NodeData node)

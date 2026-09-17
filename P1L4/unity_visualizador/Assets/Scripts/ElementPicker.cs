@@ -90,6 +90,40 @@ public class ElementPicker : MonoBehaviour
     private ElementSelectable selectedElement;
     private InfoSelectable selectedInfo;
 
+    public void SelectElement(ElementSelectable sel, bool centerCamera)
+    {
+        if (sel == null)
+        {
+            SetElementSelection(null);
+            return;
+        }
+
+        lastHitPoint = (sel.startPoint + sel.endPoint) * 0.5f;
+        scroll = Vector2.zero;
+        SetInfoSelection(null);
+        SetElementSelection(sel);
+        sel.OnSelected();
+
+        var pmPanel = FindObjectOfType<PMPanel>();
+        if (!string.IsNullOrEmpty(sel.pmSectionId))
+        {
+            if (pmPanel != null)
+            {
+                pmPanel.ShowPMForElement(sel);
+            }
+        }
+
+        if (centerCamera && cam != null)
+        {
+            var orbit = cam.GetComponent<OrbitCamera>();
+            if (orbit != null)
+            {
+                float length = Mathf.Max((sel.endPoint - sel.startPoint).magnitude, 8f);
+                orbit.FocusOn(lastHitPoint, Mathf.Clamp(length * 4f, 18f, 90f));
+            }
+        }
+    }
+
     private void SetElementSelection(ElementSelectable sel)
     {
         if (selectedElement != null)
@@ -130,7 +164,8 @@ public class ElementPicker : MonoBehaviour
         float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
         float maxW = Screen.width - panelOffset.x * 2f - pmZone;
         float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * panelMaxWidthRatio, maxW));
-        float panelH = Mathf.Min(panelFontSize * 20 + panelSectionSpacing * 4 + 80f, Screen.height * 0.5f);
+        float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 92f);
+        float panelH = Mathf.Min(Mathf.Max(420f, Screen.height * 0.72f), maxPanelH);
 
         float px = Screen.width - panelOffset.x - panelW;
         float py = Screen.height - panelOffset.y - panelH;
@@ -142,9 +177,9 @@ public class ElementPicker : MonoBehaviour
         float contentH = labelStyle.CalcHeight(content, innerW);
         if (contentH < panelH - 60f) contentH = panelH - 60f;
 
-        var rect = new Rect(px + panelPaddingX, py + 8f, innerW, contentH);
+        var rect = new Rect(panelPaddingX, 0f, innerW, contentH);
         scroll = GUI.BeginScrollView(new Rect(px, py + 8f, panelW, panelH - 16f), scroll,
-            new Rect(px, py, panelW, contentH + 16f));
+            new Rect(0f, 0f, panelW - 20f, contentH + 24f));
 
         int prevSize = labelStyle.fontSize;
         labelStyle.fontSize = panelFontSize;

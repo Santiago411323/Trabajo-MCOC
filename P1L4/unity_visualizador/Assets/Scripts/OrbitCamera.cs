@@ -109,4 +109,28 @@ public class OrbitCamera : MonoBehaviour
         transform.position = target.position + offset;
         transform.rotation = rotation;
     }
+
+    public void FocusOn(Vector3 point, float newDistance = -1f)
+    {
+        if (target == null)
+        {
+            GameObject pivot = new GameObject("CameraPivot");
+            target = pivot.transform;
+        }
+        target.position = point;
+        if (newDistance > 0f)
+        {
+            distance = Mathf.Clamp(newDistance, 5f, 120f);
+        }
+        UpdatePosition();
+    }
+
+    public void SetPreset(string preset)
+    {
+        if (preset == "TOP") { x = 0f; y = 80f; }
+        else if (preset == "FRONT") { x = 0f; y = 8f; }
+        else if (preset == "RIGHT") { x = 90f; y = 8f; }
+        else if (preset == "ISO") { x = 45f; y = 30f; }
+        UpdatePosition();
+    }
 }

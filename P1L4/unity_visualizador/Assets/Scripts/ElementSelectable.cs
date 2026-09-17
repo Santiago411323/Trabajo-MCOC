@@ -159,6 +159,11 @@ public class ElementSelectable : MonoBehaviour
             }
         }
 
+        if (!string.IsNullOrEmpty(pmSectionId))
+        {
+            result += GetComboBreakdownText();
+        }
+
         result += $"\n--- Trazabilidad ---\n" +
                   $"OpenSees tag: {tag}\n" +
                   $"Unity obj: {gameObject.name}\n" +
@@ -166,6 +171,51 @@ public class ElementSelectable : MonoBehaviour
                   $"Seccion/Capacidad: {secId} -> {pmSectionId ?? "sin curva"}\n";
 
         return result;
+    }
+
+    private string GetComboBreakdownText()
+    {
+        if (data == null)
+        {
+            return "";
+        }
+
+        string text = "\n--- Valores P-M por combinacion ---\n";
+        string[] combos = new string[] { "C1", "C2", "C3" };
+        foreach (string combo in combos)
+        {
+            Vector2 g = GetPMDemandForCase("G");
+            Vector2 q = GetPMDemandForCase("Q");
+            Vector2 ex = GetPMDemandForCase("EX");
+            Vector2 ey = GetPMDemandForCase("EY");
+            Vector2 total = GetPMDemandForCase(combo);
+            ComboInfo info = UnityData.GetComboInfo(combo);
+            float fg = info != null ? info.G : 0f;
+            float fq = info != null ? info.Q : 0f;
+            float fex = info != null ? info.EX : 0f;
+            float fey = info != null ? info.EY : 0f;
+
+            text += $"{combo}: P={total.x:0.##} kN | M={total.y:0.##} kN*m\n" +
+                    $"  G({fg:0.##}) P={g.x:0.##}, M={g.y:0.##} | Q({fq:0.##}) P={q.x:0.##}, M={q.y:0.##}\n" +
+                    $"  EX({fex:0.##}) P={ex.x:0.##}, M={ex.y:0.##} | EY({fey:0.##}) P={ey.x:0.##}, M={ey.y:0.##}\n";
+        }
+        return text;
+    }
+
+    private Vector2 GetPMDemandForCase(string caseName)
+    {
+        if (data == null || string.IsNullOrEmpty(caseName))
+        {
+            return Vector2.zero;
+        }
+        float[] forces = UnityData.GetElementForces(caseName, data.id);
+        if (forces == null || forces.Length < 6)
+        {
+            return Vector2.zero;
+        }
+        float pComp = -forces[0];
+        float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
+        return new Vector2(pComp, mTotal);
     }
 
     private string GetWallValuesAt(Vector3 hitPoint)

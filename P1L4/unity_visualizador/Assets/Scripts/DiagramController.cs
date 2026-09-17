@@ -53,6 +53,24 @@ public class DiagramController : MonoBehaviour
 
     private DiagramMode modeToRedraw = DiagramMode.None;
 
+    public void SetResultMode(string modeName)
+    {
+        if (modeName == "None" || modeName == "Exploration") ShowDiagram(DiagramMode.None);
+        else if (modeName == "Axial") ShowDiagram(DiagramMode.Axial);
+        else if (modeName == "Corte") ShowDiagram(DiagramMode.Shear);
+        else if (modeName == "Momento") ShowDiagram(DiagramMode.Moment);
+        else if (modeName == "Deformada") ShowDiagram(DiagramMode.Deformed);
+        else ShowDiagram(DiagramMode.None);
+    }
+
+    public string CurrentResultName()
+    {
+        if (currentMode == DiagramMode.Shear) return "Corte";
+        if (currentMode == DiagramMode.Moment) return "Momento";
+        if (currentMode == DiagramMode.Deformed) return "Deformada";
+        return currentMode.ToString();
+    }
+
     public void Refresh()
     {
         if (modeToRedraw != DiagramMode.None)
@@ -450,28 +468,6 @@ public class DiagramController : MonoBehaviour
 
     private void OnGUI()
     {
-        float boxW = Mathf.Min(430f, Screen.width * 0.40f);
-        float boxY = 16f;
-        float boxX = Mathf.Max(390f, (Screen.width - boxW) * 0.5f);
-
-        GUILayout.BeginArea(new Rect(boxX, boxY, boxW, 92f), GUI.skin.box);
-        GUILayout.Label("Diagramas OpenSees (teclas 0,1,2,3,5)");
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button("0 Ocultar")) ShowDiagram(DiagramMode.None);
-        if (GUILayout.Button("1 Axial")) ShowDiagram(DiagramMode.Axial);
-        if (GUILayout.Button("2 Corte")) ShowDiagram(DiagramMode.Shear);
-        if (GUILayout.Button("3 Momento")) ShowDiagram(DiagramMode.Moment);
-        if (GUILayout.Button("5 Deformada")) ShowDiagram(DiagramMode.Deformed);
-        GUILayout.EndHorizontal();
-        string comboText = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "sin combo" : UnityData.ActiveCombo;
-        GUILayout.Label($"Actual: {currentMode} | Combo: {comboText}");
-        GUILayout.EndArea();
-
-        if (currentMode == DiagramMode.Moment)
-        {
-            GUI.Label(new Rect(boxX, boxY + 96f, boxW, 22f), "Momento resultante My/Mz: OpenSees + qL2/8 en vigas");
-        }
-
         DrawSelectedValueTable();
     }
 
