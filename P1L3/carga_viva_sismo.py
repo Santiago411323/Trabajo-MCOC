@@ -2233,6 +2233,202 @@ def ask_lambdas():
     }
 
 
+def find_element(data, wanted_id):
+    for element in data.get("elements", []):
+        if id_matches(element.get("id"), wanted_id) or id_matches(element_tag(element), wanted_id) or id_matches(element.get("sourceId"), wanted_id):
+            return element
+    return None
+
+
+def find_wall(data, wanted_id):
+    for wall in data.get("walls", []):
+        if id_matches(wall.get("id"), wanted_id) or id_matches(wall.get("sourceId"), wanted_id):
+            return wall
+    return None
+
+
+def ask_load_combination():
+    print("\nCaso/combinacion para fuerzas internas")
+    print("  G  = carga permanente")
+    print("  Q  = carga viva")
+    print("  EX = sismo en X")
+    print("  EY = sismo en Y")
+    print("  C1 = G+0.5Q+0.3EX+0.2EY")
+    print("  C2 = G+0.5Q+0.3EX-0.2EY")
+    print("  C3 = G+0.5Q-0.3EX+0.2EY")
+    print("  P  = personalizada")
+    choice = input("Elige caso/combinacion [C1]: ").strip().upper() or "C1"
+    if choice in ("G", "Q", "EX", "EY"):
+        return choice, {"G": 1.0 if choice == "G" else 0.0, "Q": 1.0 if choice == "Q" else 0.0, "EX": 1.0 if choice == "EX" else 0.0, "EY": 1.0 if choice == "EY" else 0.0}
+    if choice in COMBINACIONES_NCH433:
+        return choice, COMBINACIONES_NCH433[choice]
+    if choice == "P":
+        return "PERSONALIZADA", ask_lambdas()
+    print("  Opcion no reconocida. Se usa C1.")
+    return "C1", COMBINACIONES_NCH433["C1"]
+
+
+def component_resultant(a, b):
+    sign = 1.0 if abs(a) >= abs(b) and a >= 0.0 else -1.0 if abs(a) >= abs(b) else 1.0 if b >= 0.0 else -1.0
+    return sign * math.sqrt(a * a + b * b)
+
+
+def force_values_at(force, element, t, length):
+    n = (1.0 - t) * force[0] + t * force[6]
+    vy = (1.0 - t) * force[1] + t * force[7]
+    vz = (1.0 - t) * force[2] + t * force[8]
+    torsion = (1.0 - t) * force[3] + t * force[9]
+    my = (1.0 - t) * force[4] + t * force[10]
+    mz = (1.0 - t) * force[5] + t * force[11]
+    if element.get("type") == "viga" and abs(float(element.get("uniformLoad") or 0.0)) > 1e-12:
+        mz += abs(float(element.get("uniformLoad") or 0.0)) * length * length * t * (1.0 - t) / 2.0
+    return {
+        "N": n,
+        "Vy": vy,
+        "Vz": vz,
+        "V": component_resultant(vy, vz),
+        "T": torsion,
+        "My": my,
+        "Mz": mz,
+        "M": component_resultant(my, mz),
+    }
+
+
+def max_internal_value(force, element, length, key):
+    best = None
+    for i in range(101):
+        t = i / 100.0
+        vals = force_values_at(force, element, t, length)
+        value = vals[key]
+        if best is None or abs(value) > abs(best["valor"]):
+            best = {"valor": value, "t": t, "x_m": t * length, "x_pct": 100.0 * t}
+    return best
+
+
+def format_row(name, unit, vi, vc, vj, vmax):
+    return f"{name:<10} {vi:>14.3f} {vc:>14.3f} {vj:>14.3f} {vmax['valor']:>14.3f} {vmax['x_m']:>10.3f} {vmax['x_pct']:>8.1f} {unit}"
+
+
+def internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, lambdas):
+    element = find_element(data, wanted_id)
+    if element is None:
+        wall = find_wall(data, wanted_id)
+        if wall is not None:
+            return {
+                "tipo": "muro",
+                "error": "El muro existe, pero en P1L3 no esta modelado como elemento OpenSees con eleForce. Su demanda P-M se revisa en P1L4/Unity.",
+                "muro": wall,
+            }
+        return {"error": "No se encontro el elemento solicitado.", "id_buscado": wanted_id}
+
+    load_sets = {
+        "G": dead_nodal_loads(data),
+        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
+        "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
+    }
+    combined_loads = combine_nodal_loads(load_sets, lambdas)
+    result = run_and_extract(data, combined_loads)
+    force = result["element_forces"].get(element["id"])
+    if not force or len(force) < 12:
+        return {"error": "No se pudieron extraer fuerzas internas para este elemento.", "elemento": element}
+
+    nodes = node_map(data)
+    length = element_length(element, nodes)
+    vals_i = force_values_at(force, element, 0.0, length)
+    vals_c = force_values_at(force, element, 0.5, length)
+    vals_j = force_values_at(force, element, 1.0, length)
+    maxima = {key: max_internal_value(force, element, length, key) for key in ("N", "V", "M", "T", "Vy", "Vz", "My", "Mz")}
+    return {
+        "combo": combo_name,
+        "lambdas": lambdas,
+        "elemento": element,
+        "largo_m": length,
+        "ok_analisis": result["ok"],
+        "valores_I": vals_i,
+        "valores_centro": vals_c,
+        "valores_J": vals_j,
+        "maximos": maxima,
+        "force_12_componentes": force,
+    }
+
+
+def print_internal_forces_report(report):
+    if "error" in report:
+        print("\nNo se pudo generar la tabla de fuerzas internas.")
+        print(f"  {report['error']}")
+        if report.get("tipo") == "muro":
+            wall = report["muro"]
+            print(f"  Muro: id={wall.get('id')} sourceId={wall.get('sourceId', '-')}, nodos {wall.get('nodeI')} - {wall.get('nodeJ')}")
+        return
+
+    element = report["elemento"]
+    print("\nFuerzas internas del elemento")
+    print(f"  Combo/caso       = {report['combo']}")
+    print(f"  Lambdas          = G {report['lambdas'].get('G', 0):.3f}, Q {report['lambdas'].get('Q', 0):.3f}, EX {report['lambdas'].get('EX', 0):.3f}, EY {report['lambdas'].get('EY', 0):.3f}")
+    print(f"  ID               = {element.get('id')} | tag = {element_tag(element)}")
+    print(f"  Tipo             = {element.get('type')} | seccion = {element.get('sectionId') or element.get('seccion')}")
+    print(f"  Nodos            = I {element.get('nodeI')} | J {element.get('nodeJ')}")
+    print(f"  Largo            = {report['largo_m']:.3f} m")
+    print("\nTabla resumida: valores en I, centro, J y maximo absoluto")
+    print("Magnitud             Nodo I         Centro         Nodo J        Max abs        x [m]    x/L [%] unidad")
+    print("-" * 108)
+    vi = report["valores_I"]
+    vc = report["valores_centro"]
+    vj = report["valores_J"]
+    mx = report["maximos"]
+    print(format_row("Axial N", "kN", vi["N"], vc["N"], vj["N"], mx["N"]))
+    print(format_row("Corte V", "kN", vi["V"], vc["V"], vj["V"], mx["V"]))
+    print(format_row("Momento M", "kN*m", vi["M"], vc["M"], vj["M"], mx["M"]))
+    print(format_row("Torsion T", "kN*m", vi["T"], vc["T"], vj["T"], mx["T"]))
+    print("\nComponentes locales para revisar ejes")
+    print("Magnitud             Nodo I         Centro         Nodo J        Max abs        x [m]    x/L [%] unidad")
+    print("-" * 108)
+    print(format_row("Vy", "kN", vi["Vy"], vc["Vy"], vj["Vy"], mx["Vy"]))
+    print(format_row("Vz", "kN", vi["Vz"], vc["Vz"], vj["Vz"], mx["Vz"]))
+    print(format_row("My", "kN*m", vi["My"], vc["My"], vj["My"], mx["My"]))
+    print(format_row("Mz", "kN*m", vi["Mz"], vc["Mz"], vj["Mz"], mx["Mz"]))
+
+
+def print_internal_forces_at_position(data, live_transfer, seismic, wanted_id, combo_name, lambdas):
+    report = internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, lambdas)
+    if "error" in report:
+        print_internal_forces_report(report)
+        return
+
+    element = report["elemento"]
+    length = report["largo_m"]
+    print("\nConsulta puntual de fuerzas internas")
+    print(f"  ID               = {element.get('id')} | tag = {element_tag(element)}")
+    print(f"  Tipo             = {element.get('type')} | seccion = {element.get('sectionId') or element.get('seccion')}")
+    print(f"  Nodos            = I {element.get('nodeI')} | J {element.get('nodeJ')}")
+    print(f"  Largo total      = {length:.3f} m")
+    x = ask_float(f"En que parte del elemento quieres evaluar x [m], entre 0 y {length:.3f}", 0.5 * length)
+    if x < 0.0:
+        print("  x menor que 0. Se usa x = 0.")
+        x = 0.0
+    if x > length:
+        print(f"  x mayor que el largo. Se usa x = {length:.3f}.")
+        x = length
+    t = x / length if length > 0.0 else 0.0
+    values = force_values_at(report["force_12_componentes"], element, t, length)
+
+    print(f"\nValores en x = {x:.3f} m desde nodo I ({100.0 * t:.1f}% del largo)")
+    print(f"  Combo/caso       = {combo_name}")
+    print(f"  Lambdas          = G {lambdas.get('G', 0):.3f}, Q {lambdas.get('Q', 0):.3f}, EX {lambdas.get('EX', 0):.3f}, EY {lambdas.get('EY', 0):.3f}")
+    print("\nTabla puntual")
+    print("Magnitud                  Valor      Unidad")
+    print("-" * 42)
+    print(f"Axial N             {values['N']:>12.3f}      kN")
+    print(f"Corte Vy            {values['Vy']:>12.3f}      kN")
+    print(f"Corte Vz            {values['Vz']:>12.3f}      kN")
+    print(f"Corte resultante V  {values['V']:>12.3f}      kN")
+    print(f"Torsion T           {values['T']:>12.3f}      kN*m")
+    print(f"Momento My          {values['My']:>12.3f}      kN*m")
+    print(f"Momento Mz          {values['Mz']:>12.3f}      kN*m")
+    print(f"Momento resultante M{values['M']:>12.3f}      kN*m")
+
+
 def interactive_menu():
     data = load_json(JSON_PATH)
     sc_kg_m2 = ask_float("Sobrecarga SC en kg/m2", 500.0)
@@ -2256,6 +2452,8 @@ def interactive_menu():
         print("12. Superposicion 3 combinaciones C1/C2/C3 (sin ID)")
         print("13. Sensibilidad M-phi 10x10/20x20/40x40   (sin ID)")
         print("14. Capacidad P-M del muro                 (sin ID)")
+        print("15. Fuerzas internas N/V/M/T de elemento   (con ID/tag)")
+        print("16. Fuerzas internas en una posicion x     (con ID/tag)")
         print("0. Salir")
         option = input("Elige una opcion: ").strip()
 
@@ -2314,6 +2512,15 @@ def interactive_menu():
         elif option == "14":
             report = wall_pm_curve()
             save_result_section("parte_E2_muro_PM", report)
+        elif option == "15":
+            wanted_id = input("ID/tag del elemento, ej. B3002_V60/80, 359 o COL...: ").strip()
+            combo_name, lambdas = ask_load_combination()
+            report = internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, lambdas)
+            print_internal_forces_report(report)
+        elif option == "16":
+            wanted_id = input("ID/tag del elemento, ej. B3002_V60/80, 359 o COL...: ").strip()
+            combo_name, lambdas = ask_load_combination()
+            print_internal_forces_at_position(data, live_transfer, seismic, wanted_id, combo_name, lambdas)
         else:
             print("Opcion no valida.")
 

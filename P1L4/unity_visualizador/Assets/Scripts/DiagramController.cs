@@ -30,6 +30,9 @@ public class DiagramController : MonoBehaviour
     private DiagramMode currentMode = DiagramMode.None;
     private readonly Dictionary<string, float> deformedScaleByBuilding = new Dictionary<string, float>();
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
+    private GUIStyle tableBoxStyle;
+    private GUIStyle tableTextStyle;
+    private GUIStyle tableTitleStyle;
 
     public void Initialize(List<ElementSelectable> selectables)
     {
@@ -325,12 +328,20 @@ public class DiagramController : MonoBehaviour
 
         if (mode == DiagramMode.Shear)
         {
-            return GetForceGradient(data, t, 1, 7);
+            float vy = GetForceGradient(data, t, 1, 7);
+            float vz = GetForceGradient(data, t, 2, 8);
+            float sign = Mathf.Abs(vy) >= Mathf.Abs(vz) ? Mathf.Sign(vy) : Mathf.Sign(vz);
+            return sign * Mathf.Sqrt(vy * vy + vz * vz);
         }
 
-        float linearMoment = GetForceGradient(data, t, 4, 10);
-        float spanMoment = Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
-        return linearMoment + spanMoment;
+        float my = GetForceGradient(data, t, 4, 10);
+        float mz = GetForceGradient(data, t, 5, 11);
+        if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
+        {
+            mz += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
+        }
+        float momentSign = Mathf.Abs(my) >= Mathf.Abs(mz) ? Mathf.Sign(my) : Mathf.Sign(mz);
+        return momentSign * Mathf.Sqrt(my * my + mz * mz);
     }
 
     private float GetForceGradient(ElementData data, float t, int iIndex, int jIndex)
@@ -458,7 +469,169 @@ public class DiagramController : MonoBehaviour
 
         if (currentMode == DiagramMode.Moment)
         {
-            GUI.Label(new Rect(boxX, boxY + 96f, boxW, 22f), "Momento My: OpenSees + qL2/8 en vigas");
+            GUI.Label(new Rect(boxX, boxY + 96f, boxW, 22f), "Momento resultante My/Mz: OpenSees + qL2/8 en vigas");
         }
+
+        DrawSelectedValueTable();
+    }
+
+    private void DrawSelectedValueTable()
+    {
+        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed)
+        {
+            return;
+        }
+
+        ElementPicker picker = FindObjectOfType<ElementPicker>();
+        if (picker == null || picker.Selected == null)
+        {
+            return;
+        }
+
+        EnsureTableStyles();
+        ElementSelectable selected = picker.Selected;
+        if (selected.data == null && selected.isWall)
+        {
+            DrawSelectedWallValueTable(selected);
+            return;
+        }
+        if (selected.data == null)
+        {
+            return;
+        }
+
+        ElementData data = selected.data;
+        float length = (selected.endPoint - selected.startPoint).magnitude;
+        float vi = GetValue(selected, currentMode, 0f, length);
+        float vm = GetValue(selected, currentMode, 0.5f, length);
+        float vj = GetValue(selected, currentMode, 1f, length);
+
+        float vmax = vi;
+        int segments = 24;
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = i / (float)segments;
+            float v = GetValue(selected, currentMode, t, length);
+            if (Mathf.Abs(v) > Mathf.Abs(vmax))
+            {
+                vmax = v;
+            }
+        }
+
+        float nI, vyI, vzI, tI, myI, mzI;
+        float nJ, vyJ, vzJ, tJ, myJ, mzJ;
+        GetForcesAt(selected, 0f, length, out nI, out vyI, out vzI, out tI, out myI, out mzI);
+        GetForcesAt(selected, 1f, length, out nJ, out vyJ, out vzJ, out tJ, out myJ, out mzJ);
+
+        string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
+        string unit = UnitFor(currentMode).Trim();
+        string title = $"Valores {currentMode} - {tag}";
+        string body = $"Combo: {UnityData.GetComboLabel(UnityData.ActiveCombo)}\n" +
+                      $"I = {vi:0.##} {unit} | centro = {vm:0.##} {unit} | J = {vj:0.##} {unit}\n" +
+                      $"Max abs = {vmax:0.##} {unit}\n";
+
+        if (currentMode == DiagramMode.Moment)
+        {
+            body += $"My I/J = {myI:0.##} / {myJ:0.##} kN*m\n" +
+                    $"Mz I/J = {mzI:0.##} / {mzJ:0.##} kN*m";
+        }
+        else if (currentMode == DiagramMode.Shear)
+        {
+            body += $"Vy I/J = {vyI:0.##} / {vyJ:0.##} kN\n" +
+                    $"Vz I/J = {vzI:0.##} / {vzJ:0.##} kN";
+        }
+        else
+        {
+            body += $"N I/J = {nI:0.##} / {nJ:0.##} kN\n" +
+                    $"T I/J = {tI:0.##} / {tJ:0.##} kN*m";
+        }
+
+        float w = Mathf.Min(380f, Screen.width * 0.34f);
+        float h = 132f;
+        float x = Mathf.Max(16f, (Screen.width - w) * 0.5f);
+        float y = Screen.height - h - 18f;
+        GUI.Box(new Rect(x, y, w, h), GUIContent.none, tableBoxStyle);
+        GUI.Label(new Rect(x + 12f, y + 8f, w - 24f, 22f), title, tableTitleStyle);
+        GUI.Label(new Rect(x + 12f, y + 32f, w - 24f, h - 40f), body, tableTextStyle);
+    }
+
+    private void DrawSelectedWallValueTable(ElementSelectable selected)
+    {
+        DemandRecord demand = selected.GetActiveWallDemand();
+        if (demand == null)
+        {
+            return;
+        }
+
+        float value = 0f;
+        string unit = "kN";
+        string detail = "";
+        if (currentMode == DiagramMode.Axial)
+        {
+            value = demand.P_kN;
+            detail = $"N demanda = {demand.P_kN:0.##} kN";
+        }
+        else if (currentMode == DiagramMode.Shear)
+        {
+            value = 0f;
+            detail = "Vy/Vz no se extraen como fuerza interna de barra para muros equivalentes.";
+        }
+        else if (currentMode == DiagramMode.Moment)
+        {
+            value = demand.M_kN_m;
+            unit = "kN*m";
+            detail = $"My/Mz demanda P-M = {demand.M_kN_m:0.##} kN*m";
+        }
+
+        string body = $"Combo: {UnityData.GetComboLabel(demand.combo)}\n" +
+                      $"I = {value:0.##} {unit} | centro = {value:0.##} {unit} | J = {value:0.##} {unit}\n" +
+                      $"Max abs = {value:0.##} {unit}\n" +
+                      detail;
+
+        float w = Mathf.Min(380f, Screen.width * 0.34f);
+        float h = 118f;
+        float x = Mathf.Max(16f, (Screen.width - w) * 0.5f);
+        float y = Screen.height - h - 18f;
+        GUI.Box(new Rect(x, y, w, h), GUIContent.none, tableBoxStyle);
+        GUI.Label(new Rect(x + 12f, y + 8f, w - 24f, 22f), $"Valores {currentMode} - Muro {selected.wallId}", tableTitleStyle);
+        GUI.Label(new Rect(x + 12f, y + 32f, w - 24f, h - 40f), body, tableTextStyle);
+    }
+
+    private void GetForcesAt(ElementSelectable element, float t, float length,
+        out float n, out float vy, out float vz, out float torsion, out float my, out float mz)
+    {
+        ElementData data = element.data;
+        n = GetForceGradient(data, t, 0, 6);
+        vy = GetForceGradient(data, t, 1, 7);
+        vz = GetForceGradient(data, t, 2, 8);
+        torsion = GetForceGradient(data, t, 3, 9);
+        my = GetForceGradient(data, t, 4, 10);
+        mz = GetForceGradient(data, t, 5, 11);
+        if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
+        {
+            mz += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
+        }
+    }
+
+    private void EnsureTableStyles()
+    {
+        if (tableBoxStyle != null) return;
+        tableBoxStyle = new GUIStyle(GUI.skin.box);
+        tableBoxStyle.normal.background = MakeTex(new Color(0.03f, 0.03f, 0.04f, 0.88f));
+        tableTextStyle = new GUIStyle(GUI.skin.label);
+        tableTextStyle.fontSize = 13;
+        tableTextStyle.normal.textColor = Color.white;
+        tableTextStyle.wordWrap = true;
+        tableTitleStyle = new GUIStyle(tableTextStyle);
+        tableTitleStyle.fontStyle = FontStyle.Bold;
+        tableTitleStyle.fontSize = 14;
+    }
+
+    private Texture2D MakeTex(Color color)
+    {
+        Texture2D tex = new Texture2D(1, 1);
+        tex.SetPixel(0, 0, color);
+        tex.Apply();
+        return tex;
     }
 }

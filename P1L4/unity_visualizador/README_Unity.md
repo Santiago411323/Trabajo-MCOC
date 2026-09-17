@@ -7,6 +7,7 @@ Visualizador Unity de la estructura 3D con resultados de análisis estático lin
 - **Estructura 3D**: 553 nodos, 129 columnas, 333 vigas, 75 muros equivalentes, diafragmas/losas, apoyos empotrados.
 - **Selector de combinaciones de carga**: C1 = G+0.5Q+0.3EX+0.2EY, C2 = G+0.5Q+0.3EX-0.2EY, C3 = G+0.5Q-0.3EX+0.2EY (NCh433).
 - **Diagrams OpenSees** (tecla 0–3): Axial, Corte, Momento — con fuerzas internas reales del combo activo.
+- **Tabla compacta de valores**: al seleccionar un elemento y activar axial/corte/momento, muestra I, centro, J y maximo absoluto del diagrama.
 - **Deformada** (tecla 5): desplazamientos escalados ×120 del combo activo.
 - **Panel de información por elemento** (click izquierdo): sección, material, restricciones, ejes locales, fuerzas interpoladas, trazabilidad OpenSees→Unity→resultados.
 - **Diagrama P-M interactivo** (click izquierdo en columna/muro): curva de capacidad HA con punto de demanda (N, M) del elemento en el combo activo.
@@ -83,6 +84,7 @@ Usa el toolbar en la parte superior izquierda para seleccionar entre C1, C2, C3.
 - `5` — Deformada (verde, ×120)
 
 Las fuerzas provienen de los 12 componentes de `eleForce` de OpenSees (coordenadas locales). Para vigas, se suma el efecto de carga distribuida (qL²/8 parabólico).
+Al seleccionar una viga, columna o muro, aparece una tabla compacta con los valores del diagrama activo: extremos I/J, centro y maximo absoluto. Para momento/corte se muestran tambien componentes locales My/Mz o Vy/Vz segun corresponda.
 
 ### Panel de información (click)
 
