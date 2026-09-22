@@ -6,6 +6,7 @@ public class ElementSelectable : MonoBehaviour
     public Vector3 startPoint;
     public Vector3 endPoint;
     public string customLabel;
+    public string visualFloor;
     public bool isWall;
     public int wallId;
     public float wallThickness;
@@ -86,6 +87,10 @@ public class ElementSelectable : MonoBehaviour
         string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
         string secId = !string.IsNullOrEmpty(data.sectionId) ? data.sectionId : data.seccion;
         string building = !string.IsNullOrEmpty(data.sourceBuilding) ? data.sourceBuilding : "?";
+        string floor = !string.IsNullOrEmpty(visualFloor)
+            ? visualFloor
+            : string.IsNullOrEmpty(data.piso) ? "Sin piso" : data.piso;
+        Vector3 midPoint = (startPoint + endPoint) * 0.5f;
 
         float n, vy, vz, my, mz, torsion;
         GetForces(t, length, out n, out vy, out vz, out my, out mz, out torsion);
@@ -94,9 +99,11 @@ public class ElementSelectable : MonoBehaviour
             $"=== Elemento {tag} ({data.type}) ===\n" +
             $"ID Unity: {gameObject.name}\n" +
             $"elementTag OpenSees: {tag}\n" +
-            $"Nodo I: {data.nodeI}  Nodo J: {data.nodeJ}\n" +
-            $"Piso: {data.piso ?? "-"}\n" +
+            $"\n--- Ubicacion ---\n" +
+            $"Piso / nivel: {floor}\n" +
             $"Edificio: {building}\n" +
+            $"Nodo I: {data.nodeI}  Nodo J: {data.nodeJ}\n" +
+            $"Centro aprox.: X={midPoint.x:0.###}, Y={midPoint.z:0.###}, Z={midPoint.y:0.###} m\n" +
             $"\n--- Seccion y Material ---\n" +
             $"Seccion: {secId} ({data.width_m:0.00} x {data.height_m:0.00} m)\n";
 
@@ -282,13 +289,16 @@ public class ElementSelectable : MonoBehaviour
         string source = !string.IsNullOrEmpty(wallSourceBuilding) ? wallSourceBuilding : "?";
         string sourceId = !string.IsNullOrEmpty(wallSourceId) ? wallSourceId : wallId.ToString();
         string secId = !string.IsNullOrEmpty(pmSectionId) ? pmSectionId : "MURO_EQ";
+        Vector3 wallMid = (startPoint + endPoint) * 0.5f;
         string result =
             $"=== Muro {wallId} ===\n" +
             $"ID Unity: {gameObject.name}\n" +
             $"ID origen: {sourceId}\n" +
-            $"Nodo I: {nodeIId}  Nodo J: {nodeJId}\n" +
-            $"Tramo: {wallBottom} -> {wallTop}\n" +
+            $"\n--- Ubicacion ---\n" +
+            $"Piso / tramo: {wallBottom} -> {wallTop}\n" +
             $"Edificio: {source}\n" +
+            $"Nodo I: {nodeIId}  Nodo J: {nodeJId}\n" +
+            $"Centro aprox.: X={wallMid.x:0.###}, Y={wallMid.z:0.###}, Z={wallMid.y:0.###} m\n" +
             $"\n--- Seccion y Material ---\n" +
             $"Seccion: {secId}\n" +
             $"Geometria: t={wallThickness:0.###} m | L={wallLength:0.###} m\n" +

@@ -21,9 +21,12 @@ public class StructureViewer : MonoBehaviour
     private Material defaultDiaphragmMaterial;
 
     private readonly Dictionary<int, Vector3> nodes = new Dictionary<int, Vector3>();
+    private readonly Dictionary<string, float> columnBaseLevels = new Dictionary<string, float>();
+    private readonly List<float> structuralLevels = new List<float>();
     private readonly List<ElementSelectable> selectables = new List<ElementSelectable>();
     private DiagramController diagramController;
     private PMPanel pmPanel;
+    private MobileLoadController mobileLoadController;
     private StructureData loadedData;
 
     // Grupos de objetos para los toggles
@@ -103,6 +106,7 @@ public class StructureViewer : MonoBehaviour
 
         ClearStructureChildren();
         nodes.Clear();
+        columnBaseLevels.Clear();
         selectables.Clear();
         columnObjects.Clear();
         beamObjects.Clear();
@@ -115,14 +119,16 @@ public class StructureViewer : MonoBehaviour
         objectFloor.Clear();
 
         CreateNodes(loadedData);
+        BuildStructuralLevels();
+        BuildColumnBaseLevels(loadedData);
         CreateColumnAndBeamElements(loadedData);
         CreateWalls(loadedData);
         CreateDiaphragms(loadedData);
-        CreateSupports(loadedData);
         CreatePointLoads(loadedData);
         CreateGlobalAxes();
         CreateDiagramController();
         CreatePMPanel();
+        CreateMobileLoadController();
 
         BuildComboOptions();
         BuildFloorOptions();
@@ -237,10 +243,15 @@ public class StructureViewer : MonoBehaviour
 
             Vector3 start = nodes[element.nodeI];
             Vector3 end = nodes[element.nodeJ];
+            bool isColumn = element.type == "columna";
+            bool isBaseColumn = false;
+            if (isColumn)
+            {
+                isBaseColumn = ClampColumnVisualEnds(element, ref start, ref end);
+            }
             Vector3 midpoint = (start + end) * 0.5f;
             Vector3 direction = end - start;
 
-            bool isColumn = element.type == "columna";
             float sectionWidth = GetSectionWidth(element, isColumn);
             float sectionHeight = GetSectionHeight(element, isColumn);
 
@@ -260,10 +271,16 @@ public class StructureViewer : MonoBehaviour
             selectable.data = element;
             selectable.startPoint = start;
             selectable.endPoint = end;
+            selectable.visualFloor = ResolveElementFloor(element, start, end, isColumn);
             selectable.nodeIId = element.nodeI;
             selectable.nodeJId = element.nodeJ;
             selectable.nodeISupport = FindSupportForNode(data, element.nodeI);
             selectable.nodeJSupport = FindSupportForNode(data, element.nodeJ);
+
+            if (isColumn && isBaseColumn)
+            {
+                AssignColumnBottomFixedSupport(selectable, start, end);
+            }
 
             if (isColumn)
             {
@@ -289,6 +306,72 @@ public class StructureViewer : MonoBehaviour
             }
         }
         return null;
+    }
+
+    private void AssignColumnBottomFixedSupport(ElementSelectable selectable, Vector3 start, Vector3 end)
+    {
+        bool baseAtI = start.y <= end.y;
+        if (baseAtI)
+        {
+            selectable.nodeISupport = CreateFixedSupport(selectable.nodeIId);
+        }
+        else
+        {
+            selectable.nodeJSupport = CreateFixedSupport(selectable.nodeJId);
+        }
+    }
+
+    private SupportData CreateFixedSupport(int nodeId)
+    {
+        return new SupportData
+        {
+            node = nodeId,
+            type = "fixed",
+            ux = 1,
+            uy = 1,
+            uz = 1,
+            rx = 1,
+            ry = 1,
+            rz = 1
+        };
+    }
+
+    private string ResolveElementFloor(ElementData element, Vector3 start, Vector3 end, bool isColumn)
+    {
+        if (!string.IsNullOrEmpty(element.piso))
+        {
+            return element.piso;
+        }
+
+        if (isColumn)
+        {
+            float topY = Mathf.Max(start.y, end.y);
+            return "hasta " + FormatNearestLevel(topY);
+        }
+
+        float midY = (start.y + end.y) * 0.5f;
+        return FormatNearestLevel(midY);
+    }
+
+    private string FormatNearestLevel(float y)
+    {
+        if (structuralLevels.Count == 0)
+        {
+            return $"z={y:0.###} m";
+        }
+
+        float best = structuralLevels[0];
+        float bestDist = Mathf.Abs(y - best);
+        foreach (float level in structuralLevels)
+        {
+            float dist = Mathf.Abs(y - level);
+            if (dist < bestDist)
+            {
+                best = level;
+                bestDist = dist;
+            }
+        }
+        return $"nivel z={best:0.###} m";
     }
 
     private string GetSectionName(ElementData element)
@@ -353,6 +436,7 @@ public class StructureViewer : MonoBehaviour
             Vector3 direction = end - start;
             float wallLength = Mathf.Max(direction.magnitude, wall.longitud, 0.01f);
             float wallHeight = EstimateWallHeight(start, end);
+            wallHeight = ClampWallVisualHeight(start, end, wallHeight);
             Vector3 lengthAxis = direction.sqrMagnitude > 1e-8f ? direction.normalized : Vector3.forward;
             Vector3 midpoint = baseMidpoint + Vector3.up * (wallHeight * 0.5f);
 
@@ -374,6 +458,7 @@ public class StructureViewer : MonoBehaviour
             selectable.wallLength = wall.longitud;
             selectable.wallBottom = wall.bottom;
             selectable.wallTop = wall.top;
+            selectable.visualFloor = $"{wall.bottom} -> {wall.top}";
             selectable.wallSourceBuilding = wall.sourceBuilding;
             selectable.wallSourceId = wall.sourceId;
             selectable.startPoint = start;
@@ -390,6 +475,97 @@ public class StructureViewer : MonoBehaviour
 
             selectables.Add(selectable);
         }
+    }
+
+    private void BuildStructuralLevels()
+    {
+        structuralLevels.Clear();
+        foreach (Vector3 node in nodes.Values)
+        {
+            bool exists = false;
+            foreach (float level in structuralLevels)
+            {
+                if (Mathf.Abs(level - node.y) < 0.05f)
+                {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists)
+            {
+                structuralLevels.Add(node.y);
+            }
+        }
+        structuralLevels.Sort();
+    }
+
+    private void BuildColumnBaseLevels(StructureData data)
+    {
+        foreach (ElementData element in data.elements)
+        {
+            if (element.type != "columna" || !nodes.ContainsKey(element.nodeI) || !nodes.ContainsKey(element.nodeJ))
+            {
+                continue;
+            }
+
+            Vector3 start = nodes[element.nodeI];
+            Vector3 end = nodes[element.nodeJ];
+            string key = ColumnLineKey(element, start, end);
+            float bottom = Mathf.Min(start.y, end.y);
+            if (!columnBaseLevels.ContainsKey(key) || bottom < columnBaseLevels[key])
+            {
+                columnBaseLevels[key] = bottom;
+            }
+        }
+    }
+
+    private bool ClampColumnVisualEnds(ElementData element, ref Vector3 start, ref Vector3 end)
+    {
+        float visibleBaseY = 0f;
+        string key = ColumnLineKey(element, start, end);
+        float baseLevel = columnBaseLevels.ContainsKey(key) ? columnBaseLevels[key] : Mathf.Min(start.y, end.y);
+        bool startAtBase = Mathf.Abs(start.y - baseLevel) < 0.05f && end.y > start.y;
+        bool endAtBase = Mathf.Abs(end.y - baseLevel) < 0.05f && start.y > end.y;
+
+        if (startAtBase)
+        {
+            start.y = visibleBaseY;
+            return true;
+        }
+        if (endAtBase)
+        {
+            end.y = visibleBaseY;
+            return true;
+        }
+
+        return false;
+    }
+
+    private string ColumnLineKey(ElementData element, Vector3 start, Vector3 end)
+    {
+        float x = (start.x + end.x) * 0.5f;
+        float z = (start.z + end.z) * 0.5f;
+        return $"{element.sourceBuilding}|{Mathf.RoundToInt(x * 20f)}|{Mathf.RoundToInt(z * 20f)}";
+    }
+
+    private float GetMaxStructureY()
+    {
+        if (structuralLevels.Count == 0)
+        {
+            return 0f;
+        }
+        return structuralLevels[structuralLevels.Count - 1];
+    }
+
+    private float ClampWallVisualHeight(Vector3 start, Vector3 end, float wallHeight)
+    {
+        float baseY = Mathf.Min(start.y, end.y);
+        float maxY = GetMaxStructureY();
+        if (baseY + wallHeight > maxY + 0.05f)
+        {
+            return Mathf.Max(maxY - baseY, 0.5f);
+        }
+        return wallHeight;
     }
 
     private float EstimateWallHeight(Vector3 start, Vector3 end)
@@ -597,6 +773,22 @@ public class StructureViewer : MonoBehaviour
             }
         }
         pmPanel = gameObject.AddComponent<PMPanel>();
+    }
+
+    private void CreateMobileLoadController()
+    {
+        if (mobileLoadController != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(mobileLoadController);
+            }
+            else
+            {
+                DestroyImmediate(mobileLoadController);
+            }
+        }
+        mobileLoadController = gameObject.AddComponent<MobileLoadController>();
     }
 
     private void CreateSupports(StructureData data)

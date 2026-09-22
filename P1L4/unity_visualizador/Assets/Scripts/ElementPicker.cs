@@ -40,6 +40,11 @@ public class ElementPicker : MonoBehaviour
             if (cam == null) return;
         }
 
+        if (Input.GetMouseButtonDown(0) && IsMouseOverViewerGui())
+        {
+            return;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -69,6 +74,11 @@ public class ElementPicker : MonoBehaviour
                             pmPanel.ShowPMForElement(selectedElement);
                         }
                     }
+                    var mobileLoad = FindObjectOfType<MobileLoadController>();
+                    if (mobileLoad != null)
+                    {
+                        mobileLoad.SetSelectedElement(selectedElement);
+                    }
                     return;
                 }
 
@@ -89,6 +99,24 @@ public class ElementPicker : MonoBehaviour
 
     private ElementSelectable selectedElement;
     private InfoSelectable selectedInfo;
+
+    private bool IsMouseOverViewerGui()
+    {
+        Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        if (guiMouse.y <= 90f)
+        {
+            return true;
+        }
+        if (guiMouse.x <= 350f && guiMouse.y <= Mathf.Min(Screen.height - 20f, 620f))
+        {
+            return true;
+        }
+        if (MobileLoadController.PanelRect().Contains(guiMouse))
+        {
+            return true;
+        }
+        return false;
+    }
 
     public void SelectElement(ElementSelectable sel, bool centerCamera)
     {
@@ -111,6 +139,11 @@ public class ElementPicker : MonoBehaviour
             {
                 pmPanel.ShowPMForElement(sel);
             }
+        }
+        var mobileLoad = FindObjectOfType<MobileLoadController>();
+        if (mobileLoad != null)
+        {
+            mobileLoad.SetSelectedElement(sel);
         }
 
         if (centerCamera && cam != null)
@@ -163,7 +196,7 @@ public class ElementPicker : MonoBehaviour
             : $"==={selectedInfo.name}===\n{selectedInfo.GetInfo()}";
         float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
         float maxW = Screen.width - panelOffset.x * 2f - pmZone;
-        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.54f, maxW));
+        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.36f, maxW));
         float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 82f);
         float panelH = Mathf.Min(Mathf.Max(480f, Screen.height * 0.86f), maxPanelH);
 
