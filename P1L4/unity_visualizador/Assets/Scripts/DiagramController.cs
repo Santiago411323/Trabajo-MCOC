@@ -522,7 +522,7 @@ public class DiagramController : MonoBehaviour
         string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
         string unit = UnitFor(currentMode).Trim();
         string title = $"Valores {currentMode} - {tag}";
-        string body = $"Combo: {UnityData.GetComboLabel(UnityData.ActiveCombo)}\n" +
+        string body = $"Combo: {UnityData.GetActiveLoadLabel()}\n" +
                       $"I = {vi:0.##} {unit} | centro = {vm:0.##} {unit} | J = {vj:0.##} {unit}\n" +
                       $"Max abs = {vmax:0.##} {unit}\n";
 
@@ -579,7 +579,7 @@ public class DiagramController : MonoBehaviour
             detail = $"My/Mz demanda P-M = {demand.M_kN_m:0.##} kN*m";
         }
 
-        string body = $"Combo: {UnityData.GetComboLabel(demand.combo)}\n" +
+        string body = $"Combo: {UnityData.GetActiveLoadLabel()}\n" +
                       $"I = {value:0.##} {unit} | centro = {value:0.##} {unit} | J = {value:0.##} {unit}\n" +
                       $"Max abs = {value:0.##} {unit}\n" +
                       detail;

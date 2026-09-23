@@ -154,7 +154,7 @@ public class ElementSelectable : MonoBehaviour
 
         if (UnityData.ActiveCombo != null)
         {
-            result += $"\n--- Demanda-capacidad ({UnityData.GetComboLabel(UnityData.ActiveCombo)}) ---\n";
+            result += $"\n--- Demanda-capacidad ({UnityData.GetActiveLoadLabel()}) ---\n";
             Vector2 pmDemand = !string.IsNullOrEmpty(pmSectionId)
                 ? GetPMDemandForCase(UnityData.ActiveCombo)
                 : new Vector2(-n, Mathf.Sqrt(my * my + mz * mz));
@@ -177,7 +177,7 @@ public class ElementSelectable : MonoBehaviour
         result += $"\n--- Trazabilidad ---\n" +
                   $"OpenSees tag: {tag}\n" +
                   $"Unity obj: {gameObject.name}\n" +
-                  "Resultado: " + UnityData.GetComboLabel(UnityData.ActiveCombo) + "\n" +
+                  "Resultado: " + UnityData.GetActiveLoadLabel() + "\n" +
                   $"Seccion/Capacidad: {secId} -> {pmSectionId ?? "sin curva"}\n";
 
         return result;
@@ -198,12 +198,12 @@ public class ElementSelectable : MonoBehaviour
         Vector2 total = GetPMDemandForCase(combo);
         float cRatio = GetCapacityRatio(total);
         ComboInfo info = UnityData.GetComboInfo(combo);
-        float fg = info != null ? info.G : 0f;
-        float fq = info != null ? info.Q : 0f;
-        float fex = info != null ? info.EX : 0f;
-        float fey = info != null ? info.EY : 0f;
+        float fg = UnityData.UseBaseCaseFactors ? UnityData.FactorG : info != null ? info.G : 0f;
+        float fq = UnityData.UseBaseCaseFactors ? UnityData.FactorQ : info != null ? info.Q : 0f;
+        float fex = UnityData.UseBaseCaseFactors ? UnityData.FactorEX : info != null ? info.EX : 0f;
+        float fey = UnityData.UseBaseCaseFactors ? UnityData.FactorEY : info != null ? info.EY : 0f;
 
-        return $"\n--- Valores P-M de {combo} ---\n" +
+        return $"\n--- Valores P-M de {UnityData.GetActiveLoadLabel()} ---\n" +
                $"Resultado: P={total.x:0.##} kN | M={total.y:0.##} kN*m | C={cRatio:0.###}\n" +
                $"G  x {fg:0.##}: P={g.x:0.##}, M={g.y:0.##}\n" +
                $"Q  x {fq:0.##}: P={q.x:0.##}, M={q.y:0.##}\n" +
@@ -257,7 +257,9 @@ public class ElementSelectable : MonoBehaviour
         {
             return Vector2.zero;
         }
-        float[] forces = UnityData.GetElementForces(caseName, data.id);
+        float[] forces = UnityData.UseBaseCaseFactors && caseName != UnityData.ActiveCombo
+            ? UnityData.GetElementForcesForCase(caseName, data.id)
+            : UnityData.GetElementForces(caseName, data.id);
         if (forces == null || forces.Length < 6)
         {
             return Vector2.zero;
@@ -322,7 +324,7 @@ public class ElementSelectable : MonoBehaviour
                   $"Z' (espesor): {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
 
         string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
-        result += $"\n--- Demanda-capacidad ({UnityData.GetComboLabel(combo)}) ---\n" +
+        result += $"\n--- Demanda-capacidad ({UnityData.GetActiveLoadLabel()}) ---\n" +
                   $"N  = {n:0.###} kN (compresion+)\n" +
                   $"Vy = {vy:0.###} kN\n" +
                   $"Vz = {vz:0.###} kN\n" +
@@ -342,7 +344,7 @@ public class ElementSelectable : MonoBehaviour
         result += $"\n--- Trazabilidad ---\n" +
                   $"OpenSees/JSON origen: {sourceId}\n" +
                   $"Unity obj: {gameObject.name}\n" +
-                  $"Resultado: {UnityData.GetComboLabel(combo)}\n" +
+                  $"Resultado: {UnityData.GetActiveLoadLabel()}\n" +
                   $"Seccion/Capacidad: {secId}\n";
         return result;
     }

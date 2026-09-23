@@ -13,6 +13,13 @@ public class MobileLoadController : MonoBehaviour
     private ElementSelectable selectedBeam;
     private GameObject marker;
     private GameObject arrow;
+    private GameObject runnerRoot;
+    private Transform runnerLeftArm;
+    private Transform runnerRightArm;
+    private Transform runnerLeftLeg;
+    private Transform runnerRightLeg;
+    private float runnerPhase;
+    private float lastRunnerPosition = -1f;
     private GameObject axialLine;
     private GameObject shearLine;
     private GameObject momentLine;
@@ -24,7 +31,7 @@ public class MobileLoadController : MonoBehaviour
 
     public static Rect PanelRect()
     {
-        return new Rect(360f, 92f, 330f, 204f);
+        return new Rect(360f, 92f, 330f, 232f);
     }
 
     public void SetSelectedElement(ElementSelectable element)
@@ -32,6 +39,10 @@ public class MobileLoadController : MonoBehaviour
         if (element != null && element.data != null && element.data.type == "viga")
         {
             selectedBeam = element;
+        }
+        else
+        {
+            selectedBeam = null;
         }
     }
 
@@ -72,11 +83,29 @@ public class MobileLoadController : MonoBehaviour
         iy += 24f;
 
         GUI.Label(new Rect(x + 12f, iy, 90f, 20f), "Posicion x/L", labelStyle);
-        if (GUI.Button(new Rect(x + 102f, iy, 26f, 20f), "-")) position01 = Mathf.Max(0f, position01 - 0.05f);
-        position01 = GUI.HorizontalSlider(new Rect(x + 132f, iy + 5f, 125f, 18f), position01, 0f, 1f);
+        bool positionChanged = false;
+        if (GUI.Button(new Rect(x + 102f, iy, 26f, 20f), "-"))
+        {
+            position01 = Mathf.Max(0f, position01 - 0.05f);
+            positionChanged = true;
+        }
+        float nextPosition = GUI.HorizontalSlider(new Rect(x + 132f, iy + 5f, 125f, 18f), position01, 0f, 1f);
+        if (Mathf.Abs(nextPosition - position01) > 0.0001f)
+        {
+            position01 = nextPosition;
+            positionChanged = true;
+        }
         GUI.Box(new Rect(x + 260f, iy, 44f, 20f), GUIContent.none, valueStyle);
         GUI.Label(new Rect(x + 263f, iy + 1f, 40f, 18f), (position01 * 100f).ToString("0") + "%", valueStyle);
-        if (GUI.Button(new Rect(x + 304f, iy, 22f, 20f), "+")) position01 = Mathf.Min(1f, position01 + 0.05f);
+        if (GUI.Button(new Rect(x + 304f, iy, 22f, 20f), "+"))
+        {
+            position01 = Mathf.Min(1f, position01 + 0.05f);
+            positionChanged = true;
+        }
+        if (positionChanged && visible && selectedBeam != null)
+        {
+            UpdateVisuals();
+        }
         iy += 26f;
 
         GUI.Label(new Rect(x + 12f, iy, 70f, 20f), "Diagramas", labelStyle);
@@ -100,11 +129,13 @@ public class MobileLoadController : MonoBehaviour
 
         GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Viga: " + beamTag, labelStyle);
         iy += 18f;
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), $"Carga asignada a viga receptora: P={loadKN:0.00} kN", labelStyle);
+        iy += 18f;
         GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), $"Reparto: I={ri:0.00} kN | J={rj:0.00} kN", labelStyle);
         iy += 18f;
         GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), $"Conservacion: I+J={ri + rj:0.00} kN | error={error:0.000}", labelStyle);
         iy += 18f;
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Respuesta visual local de la viga seleccionada.", labelStyle);
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "La viga seleccionada recibe la carga movil.", labelStyle);
     }
 
     private void SyncSelectedBeam()
@@ -118,6 +149,10 @@ public class MobileLoadController : MonoBehaviour
         if (picker.Selected.data.type == "viga")
         {
             selectedBeam = picker.Selected;
+        }
+        else
+        {
+            selectedBeam = null;
         }
     }
 
@@ -133,12 +168,7 @@ public class MobileLoadController : MonoBehaviour
         Vector3 pos = a + axis * position01;
         Vector3 up = Vector3.up;
 
-        marker.transform.position = pos + up * 0.28f;
-        marker.transform.localScale = Vector3.one * 0.28f;
-
-        arrow.transform.position = pos + up * 1.0f;
-        arrow.transform.rotation = Quaternion.FromToRotation(Vector3.up, Vector3.down);
-        arrow.transform.localScale = new Vector3(0.08f, 0.45f, 0.08f);
+        UpdateRunner(pos, dir, up);
 
         float ri = loadKN * (1f - position01);
         float rj = loadKN * position01;
@@ -196,22 +226,7 @@ public class MobileLoadController : MonoBehaviour
 
     private void EnsureObjects()
     {
-        if (marker == null)
-        {
-            marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            marker.name = "CargaMovil_Punto";
-            marker.GetComponent<Renderer>().material = CreateMaterial(Color.red);
-            DestroyCollider(marker);
-        }
-        marker.SetActive(true);
-        if (arrow == null)
-        {
-            arrow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            arrow.name = "CargaMovil_Flecha";
-            arrow.GetComponent<Renderer>().material = CreateMaterial(Color.red);
-            DestroyCollider(arrow);
-        }
-        arrow.SetActive(true);
+        EnsureRunner();
         if (shearLine == null)
         {
             shearLine = CreateLineObject("CargaMovil_Corte", new Color(1f, 0.55f, 0f));
@@ -227,6 +242,115 @@ public class MobileLoadController : MonoBehaviour
             axialLine = CreateLineObject("CargaMovil_Axial", Color.red);
         }
         axialLine.SetActive(showAxial);
+
+    }
+
+    private void EnsureRunner()
+    {
+        ClearStaleRunnerObjects();
+
+        if (runnerRoot != null)
+        {
+            runnerRoot.SetActive(true);
+            return;
+        }
+
+        runnerRoot = new GameObject("CargaMovil_Persona");
+        runnerRoot.transform.SetParent(transform);
+
+        Material shirt = CreateMaterial(new Color(0.1f, 0.35f, 1f));
+        Material skin = CreateMaterial(new Color(1f, 0.74f, 0.52f));
+        Material pants = CreateMaterial(new Color(0.08f, 0.08f, 0.12f));
+
+        CreateRunnerPart("Cuerpo", PrimitiveType.Capsule, new Vector3(0f, 0.74f, 0f), new Vector3(0.28f, 0.44f, 0.28f), Quaternion.identity, shirt, null);
+        CreateRunnerPart("Cabeza", PrimitiveType.Sphere, new Vector3(0f, 1.30f, 0f), new Vector3(0.32f, 0.32f, 0.32f), Quaternion.identity, skin, null);
+        runnerLeftArm = CreateRunnerPart("Brazo_I", PrimitiveType.Cylinder, new Vector3(-0.25f, 0.78f, 0f), new Vector3(0.06f, 0.36f, 0.06f), Quaternion.Euler(25f, 0f, 12f), skin, null).transform;
+        runnerRightArm = CreateRunnerPart("Brazo_J", PrimitiveType.Cylinder, new Vector3(0.25f, 0.78f, 0f), new Vector3(0.06f, 0.36f, 0.06f), Quaternion.Euler(-25f, 0f, -12f), skin, null).transform;
+        runnerLeftLeg = CreateRunnerPart("Pierna_I", PrimitiveType.Cylinder, new Vector3(-0.11f, 0.30f, 0f), new Vector3(0.075f, 0.40f, 0.075f), Quaternion.Euler(-18f, 0f, 4f), pants, null).transform;
+        runnerRightLeg = CreateRunnerPart("Pierna_J", PrimitiveType.Cylinder, new Vector3(0.11f, 0.30f, 0f), new Vector3(0.075f, 0.40f, 0.075f), Quaternion.Euler(18f, 0f, -4f), pants, null).transform;
+    }
+
+    private GameObject CreateRunnerPart(string name, PrimitiveType primitive, Vector3 localPosition, Vector3 localScale, Quaternion localRotation, Material material, Transform parent)
+    {
+        GameObject part = GameObject.CreatePrimitive(primitive);
+        part.name = "CargaMovil_" + name;
+        part.transform.SetParent(parent != null ? parent : runnerRoot.transform);
+        part.transform.localPosition = localPosition;
+        part.transform.localRotation = localRotation;
+        part.transform.localScale = localScale;
+        part.GetComponent<Renderer>().material = material;
+        DestroyCollider(part);
+        return part;
+    }
+
+    private void UpdateRunner(Vector3 pos, Vector3 dir, Vector3 up)
+    {
+        if (runnerRoot == null)
+        {
+            return;
+        }
+
+        runnerRoot.SetActive(true);
+        runnerRoot.transform.position = pos + up * 0.72f;
+        if (dir.sqrMagnitude > 0.001f)
+        {
+            runnerRoot.transform.rotation = Quaternion.LookRotation(dir, up);
+        }
+
+        if (lastRunnerPosition < 0f)
+        {
+            lastRunnerPosition = position01;
+        }
+        float delta = Mathf.Abs(position01 - lastRunnerPosition);
+        if (delta > 0.0001f)
+        {
+            runnerPhase += delta * 36f;
+            lastRunnerPosition = position01;
+        }
+        float swing = Mathf.Sin(runnerPhase) * 36f;
+
+        if (runnerLeftArm != null) runnerLeftArm.localRotation = Quaternion.Euler(24f + swing, 0f, 14f);
+        if (runnerRightArm != null) runnerRightArm.localRotation = Quaternion.Euler(-24f - swing, 0f, -14f);
+        if (runnerLeftLeg != null) runnerLeftLeg.localRotation = Quaternion.Euler(-18f - swing * 0.75f, 0f, 5f);
+        if (runnerRightLeg != null) runnerRightLeg.localRotation = Quaternion.Euler(18f + swing * 0.75f, 0f, -5f);
+
+    }
+
+    private void ClearStaleRunnerObjects()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = transform.GetChild(i);
+            if (child == null || !IsStaleRunnerObject(child.name))
+            {
+                continue;
+            }
+            if (runnerRoot != null && child.gameObject == runnerRoot)
+            {
+                continue;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(child.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(child.gameObject);
+            }
+        }
+    }
+
+    private bool IsStaleRunnerObject(string objectName)
+    {
+        return objectName.StartsWith("CargaMovil_Persona") ||
+               objectName.StartsWith("CargaMovil_Cuerpo") ||
+               objectName.StartsWith("CargaMovil_Cabeza") ||
+               objectName.StartsWith("CargaMovil_Brazo") ||
+               objectName.StartsWith("CargaMovil_Pierna") ||
+               objectName.StartsWith("CargaMovil_Punto") ||
+               objectName.StartsWith("CargaMovil_Flecha") ||
+               objectName.StartsWith("CargaMovil_Posicion");
     }
 
     private GameObject CreateLineObject(string name, Color color)
@@ -266,6 +390,7 @@ public class MobileLoadController : MonoBehaviour
     {
         if (marker != null) marker.SetActive(false);
         if (arrow != null) arrow.SetActive(false);
+        if (runnerRoot != null) runnerRoot.SetActive(false);
         if (shearLine != null) shearLine.SetActive(false);
         if (momentLine != null) momentLine.SetActive(false);
         if (axialLine != null) axialLine.SetActive(false);

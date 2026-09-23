@@ -5,6 +5,11 @@ public static class UnityData
 {
     public static StructureData Structure;
     public static string ActiveCombo;
+    public static bool UseBaseCaseFactors;
+    public static float FactorG = 1f;
+    public static float FactorQ = 0f;
+    public static float FactorEX = 0f;
+    public static float FactorEY = 0f;
 
     public static Dictionary<string, List<DisplacementRecord>> DisplacementsByCombo;
     public static Dictionary<string, List<ElementForceRecord>> ElementForcesByCombo;
@@ -17,6 +22,7 @@ public static class UnityData
     {
         Structure = data;
         ActiveCombo = null;
+        UseBaseCaseFactors = false;
 
         if (data.p1l4 == null)
         {
@@ -95,6 +101,19 @@ public static class UnityData
 
     public static Vector3 GetNodeDisplacement(string combo, int nodeId)
     {
+        if (UseBaseCaseFactors)
+        {
+            return GetNodeDisplacementForCombo("G", nodeId) * FactorG +
+                   GetNodeDisplacementForCombo("Q", nodeId) * FactorQ +
+                   GetNodeDisplacementForCombo("EX", nodeId) * FactorEX +
+                   GetNodeDisplacementForCombo("EY", nodeId) * FactorEY;
+        }
+
+        return GetNodeDisplacementForCombo(combo, nodeId);
+    }
+
+    private static Vector3 GetNodeDisplacementForCombo(string combo, int nodeId)
+    {
         if (string.IsNullOrEmpty(combo) || DisplacementsByCombo == null || !DisplacementsByCombo.TryGetValue(combo, out var list) || list == null)
         {
             return Vector3.zero;
@@ -113,6 +132,21 @@ public static class UnityData
 
     public static float[] GetElementForces(string combo, int elementId)
     {
+        if (UseBaseCaseFactors)
+        {
+            float[] result = new float[12];
+            AddScaledForces(result, GetElementForcesForCombo("G", elementId), FactorG);
+            AddScaledForces(result, GetElementForcesForCombo("Q", elementId), FactorQ);
+            AddScaledForces(result, GetElementForcesForCombo("EX", elementId), FactorEX);
+            AddScaledForces(result, GetElementForcesForCombo("EY", elementId), FactorEY);
+            return result;
+        }
+
+        return GetElementForcesForCombo(combo, elementId);
+    }
+
+    private static float[] GetElementForcesForCombo(string combo, int elementId)
+    {
         if (string.IsNullOrEmpty(combo) || ElementForcesByCombo == null || !ElementForcesByCombo.TryGetValue(combo, out var list) || list == null)
         {
             return null;
@@ -127,6 +161,34 @@ public static class UnityData
         }
 
         return null;
+    }
+
+    public static float[] GetElementForcesForCase(string combo, int elementId)
+    {
+        return GetElementForcesForCombo(combo, elementId);
+    }
+
+    private static void AddScaledForces(float[] target, float[] source, float factor)
+    {
+        if (target == null || source == null || Mathf.Abs(factor) < 1e-9f)
+        {
+            return;
+        }
+
+        int count = Mathf.Min(target.Length, source.Length);
+        for (int i = 0; i < count; i++)
+        {
+            target[i] += source[i] * factor;
+        }
+    }
+
+    public static string GetActiveLoadLabel()
+    {
+        if (UseBaseCaseFactors)
+        {
+            return $"Superposicion: {FactorG:0.##}G + {FactorQ:0.##}Q + {FactorEX:0.##}EX + {FactorEY:0.##}EY";
+        }
+        return GetComboLabel(ActiveCombo);
     }
 
     public static PMCurveData GetPMCurve(string sectionId)

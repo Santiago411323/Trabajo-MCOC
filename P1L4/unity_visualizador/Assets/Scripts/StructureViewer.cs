@@ -64,6 +64,8 @@ public class StructureViewer : MonoBehaviour
     private int floorIndex = 0;
     private string statusMessage = "Click sobre un elemento para ver informacion y P-M.";
     private Vector2 leftScroll;
+    private bool showTopBar = true;
+    private bool showLeftPanel = true;
 
     private void Start()
     {
@@ -125,6 +127,7 @@ public class StructureViewer : MonoBehaviour
         CreateWalls(loadedData);
         CreateDiaphragms(loadedData);
         CreatePointLoads(loadedData);
+        CreateSimpleEnvironment();
         CreateGlobalAxes();
         CreateDiagramController();
         CreatePMPanel();
@@ -179,9 +182,15 @@ public class StructureViewer : MonoBehaviour
             name = "";
         }
         UnityData.ActiveCombo = name;
+        UnityData.UseBaseCaseFactors = false;
         comboIndex = index;
 
-        if (diagramController != null && Application.isPlaying)
+        RefreshActiveResults();
+    }
+
+    private void RefreshActiveResults()
+    {
+        if (diagramController != null)
         {
             diagramController.Refresh();
         }
@@ -194,6 +203,14 @@ public class StructureViewer : MonoBehaviour
                 pmPanel.ShowPMForElement(picker.Selected);
             }
         }
+    }
+
+    private void ActivateBaseSuperposition()
+    {
+        UnityData.UseBaseCaseFactors = true;
+        UnityData.ActiveCombo = "SUPER";
+        statusMessage = UnityData.GetActiveLoadLabel();
+        RefreshActiveResults();
     }
 
     private void MarkGeneratedDontSave()
@@ -921,6 +938,20 @@ public class StructureViewer : MonoBehaviour
         CreateAxis("Z global", Vector3.zero, Vector3.up, Color.blue);
     }
 
+    private void CreateSimpleEnvironment()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            mainCamera.clearFlags = CameraClearFlags.SolidColor;
+            mainCamera.backgroundColor = new Color(0.48f, 0.72f, 0.95f);
+        }
+        RenderSettings.ambientLight = new Color(0.82f, 0.86f, 0.88f);
+        RenderSettings.fog = true;
+        RenderSettings.fogColor = new Color(0.58f, 0.78f, 0.96f);
+        RenderSettings.fogDensity = 0.006f;
+    }
+
     private void CreateAxis(string name, Vector3 start, Vector3 direction, Color color)
     {
         GameObject axis = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -1128,10 +1159,37 @@ public class StructureViewer : MonoBehaviour
 
     private void OnGUI()
     {
-        DrawTopBar();
-        DrawLeftPanel();
+        if (showTopBar)
+        {
+            DrawTopBar();
+        }
+        if (showLeftPanel)
+        {
+            DrawLeftPanel();
+        }
         DrawViewportHint();
+        DrawPanelToggleButtons();
         RefreshVisibility();
+    }
+
+    private void DrawPanelToggleButtons()
+    {
+        float x = 12f;
+        float y = 10f;
+        if (showTopBar)
+        {
+            y = 138f;
+        }
+
+        if (GUI.Button(new Rect(x, y, 96f, 22f), showTopBar ? "Ocultar top" : "Mostrar top"))
+        {
+            showTopBar = !showTopBar;
+        }
+
+        if (GUI.Button(new Rect(x + 102f, y, 110f, 22f), showLeftPanel ? "Ocultar capas" : "Mostrar capas"))
+        {
+            showLeftPanel = !showLeftPanel;
+        }
     }
 
     private void DrawTopBar()
@@ -1139,7 +1197,7 @@ public class StructureViewer : MonoBehaviour
         float x = 12f;
         float y = 10f;
         float w = Screen.width - 24f;
-        float h = 70f;
+        float h = 124f;
         GUI.Box(new Rect(x, y, w, h), "P1L4 Visualizador | TopBar");
 
         float cx = x + 12f;
@@ -1175,14 +1233,56 @@ public class StructureViewer : MonoBehaviour
         if (GUI.Button(new Rect(bx + 60f, cy, 55f, 22f), "TOP")) SetCameraPreset("TOP");
         if (GUI.Button(new Rect(bx + 120f, cy, 55f, 22f), "FRONT")) SetCameraPreset("FRONT");
         if (GUI.Button(new Rect(bx + 180f, cy, 55f, 22f), "RIGHT")) SetCameraPreset("RIGHT");
+
+        DrawBaseCaseSliders(x + 12f, y + 58f, Mathf.Min(820f, w - 24f));
+    }
+
+    private void DrawBaseCaseSliders(float x, float y, float w)
+    {
+        GUI.Label(new Rect(x, y, w, 18f), UnityData.GetActiveLoadLabel());
+        y += 20f;
+
+        bool changed = false;
+        changed |= DrawLoadSlider(ref UnityData.FactorG, x, y, "G", 0f, 2f);
+        changed |= DrawLoadSlider(ref UnityData.FactorQ, x + 200f, y, "Q", 0f, 2f);
+        changed |= DrawLoadSlider(ref UnityData.FactorEX, x + 400f, y, "EX", -1f, 1f);
+        changed |= DrawLoadSlider(ref UnityData.FactorEY, x + 600f, y, "EY", -1f, 1f);
+
+        if (GUI.Button(new Rect(x + 800f, y, 82f, 22f), "Reset"))
+        {
+            UnityData.FactorG = 1f;
+            UnityData.FactorQ = 0f;
+            UnityData.FactorEX = 0f;
+            UnityData.FactorEY = 0f;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            ActivateBaseSuperposition();
+        }
+    }
+
+    private bool DrawLoadSlider(ref float value, float x, float y, string label, float min, float max)
+    {
+        GUI.Label(new Rect(x, y, 38f, 20f), label);
+        float next = GUI.HorizontalSlider(new Rect(x + 34f, y + 5f, 108f, 18f), value, min, max);
+        GUI.Label(new Rect(x + 146f, y, 48f, 20f), next.ToString("0.00"));
+        if (Mathf.Abs(next - value) < 0.0001f)
+        {
+            return false;
+        }
+
+        value = next;
+        return true;
     }
 
     private void DrawLeftPanel()
     {
         float x = 12f;
-        float y = 90f;
+        float y = showTopBar ? 148f : 90f;
         float w = Mathf.Min(340f, Screen.width * 0.34f);
-        float h = Mathf.Min(Screen.height - 112f, 520f);
+        float h = Mathf.Min(Screen.height - y - 22f, 520f);
         GUI.Box(new Rect(x, y, w, h), "LeftPanel | Capas y filtro");
 
         float innerX = x + 12f;
