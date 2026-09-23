@@ -244,6 +244,11 @@ public class StructureViewer : MonoBehaviour
             Vector3 start = nodes[element.nodeI];
             Vector3 end = nodes[element.nodeJ];
             bool isColumn = element.type == "columna";
+            if (isColumn && IsBuilding2BaseStub(element, start, end))
+            {
+                continue;
+            }
+
             bool isBaseColumn = false;
             if (isColumn)
             {
@@ -510,6 +515,11 @@ public class StructureViewer : MonoBehaviour
 
             Vector3 start = nodes[element.nodeI];
             Vector3 end = nodes[element.nodeJ];
+            if (IsBuilding2BaseStub(element, start, end))
+            {
+                continue;
+            }
+
             string key = ColumnLineKey(element, start, end);
             float bottom = Mathf.Min(start.y, end.y);
             if (!columnBaseLevels.ContainsKey(key) || bottom < columnBaseLevels[key])
@@ -521,24 +531,54 @@ public class StructureViewer : MonoBehaviour
 
     private bool ClampColumnVisualEnds(ElementData element, ref Vector3 start, ref Vector3 end)
     {
-        float visibleBaseY = 0f;
         string key = ColumnLineKey(element, start, end);
         float baseLevel = columnBaseLevels.ContainsKey(key) ? columnBaseLevels[key] : Mathf.Min(start.y, end.y);
         bool startAtBase = Mathf.Abs(start.y - baseLevel) < 0.05f && end.y > start.y;
         bool endAtBase = Mathf.Abs(end.y - baseLevel) < 0.05f && start.y > end.y;
 
+        if (IsBuilding2(element))
+        {
+            start.y = SnapToBuilding1Level(start.y);
+            end.y = SnapToBuilding1Level(end.y);
+        }
+
         if (startAtBase)
         {
-            start.y = visibleBaseY;
             return true;
         }
         if (endAtBase)
         {
-            end.y = visibleBaseY;
             return true;
         }
 
         return false;
+    }
+
+    private bool IsBuilding2BaseStub(ElementData element, Vector3 start, Vector3 end)
+    {
+        return IsBuilding2(element) && Mathf.Abs(end.y - start.y) < 0.3f;
+    }
+
+    private bool IsBuilding2(ElementData element)
+    {
+        return element != null && element.sourceBuilding == "edificio_2";
+    }
+
+    private float SnapToBuilding1Level(float y)
+    {
+        float[] levels = new float[] { 0f, 4f, 8f, 12f, 16f };
+        float best = levels[0];
+        float bestDist = Mathf.Abs(y - best);
+        for (int i = 1; i < levels.Length; i++)
+        {
+            float dist = Mathf.Abs(y - levels[i]);
+            if (dist < bestDist)
+            {
+                best = levels[i];
+                bestDist = dist;
+            }
+        }
+        return best;
     }
 
     private string ColumnLineKey(ElementData element, Vector3 start, Vector3 end)
