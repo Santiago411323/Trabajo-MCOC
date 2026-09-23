@@ -171,10 +171,26 @@ public class MobileLoadController : MonoBehaviour
         if (showMoment)
         {
             var moment = momentLine.GetComponent<LineRenderer>();
-            moment.positionCount = 3;
-            moment.SetPosition(0, a + lateral * 0.70f);
-            moment.SetPosition(1, pos + lateral * 0.70f + up * (mMax * diagramScale));
-            moment.SetPosition(2, b + lateral * 0.70f);
+            int pointCount = 25;
+            moment.positionCount = pointCount;
+            float loadPos = Mathf.Clamp(position01, 0.02f, 0.98f);
+            for (int i = 0; i < pointCount; i++)
+            {
+                float s = i / (float)(pointCount - 1);
+                float shape;
+                if (s <= loadPos)
+                {
+                    float u = s / loadPos;
+                    shape = 1f - (1f - u) * (1f - u);
+                }
+                else
+                {
+                    float u = (s - loadPos) / (1f - loadPos);
+                    shape = 1f - u * u;
+                }
+                Vector3 point = a + axis * s + lateral * 0.70f + up * (mMax * diagramScale * shape);
+                moment.SetPosition(i, point);
+            }
         }
     }
 
