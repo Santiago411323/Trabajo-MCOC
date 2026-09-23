@@ -1128,6 +1128,7 @@ public class StructureViewer : MonoBehaviour
             }
             statusMessage = "Resultado activo: " + resultOptions[resultIndex];
         }
+        GUI.Label(new Rect(cx + 78f, cy + 24f, 380f, 18f), "Teclas: 0 Ninguno | 1 Axial | 2 Corte | 3 Momento");
 
         float bx = x + w - 245f;
         if (GUI.Button(new Rect(bx, cy, 55f, 22f), "ISO")) SetCameraPreset("ISO");
