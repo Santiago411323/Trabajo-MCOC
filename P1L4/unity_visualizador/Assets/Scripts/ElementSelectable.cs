@@ -371,11 +371,6 @@ public class ElementSelectable : MonoBehaviour
                 torsion = Mathf.Lerp(tI, tJ, t);
                 my = Mathf.Lerp(myI, myJ, t);
                 mz = Mathf.Lerp(mzI, mzJ, t);
-
-                if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
-                {
-                    mz += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
-                }
                 return;
             }
         }
@@ -383,10 +378,6 @@ public class ElementSelectable : MonoBehaviour
         n = Mathf.Lerp(data.axialI, data.axialJ, t);
         vz = Mathf.Lerp(data.shearI, data.shearJ, t);
         my = Mathf.Lerp(data.momentI, data.momentJ, t);
-        if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
-        {
-            my += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
-        }
     }
 
     public Vector3 GetDemandPoint()

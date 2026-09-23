@@ -27,6 +27,7 @@ public class StructureViewer : MonoBehaviour
     private DiagramController diagramController;
     private PMPanel pmPanel;
     private MobileLoadController mobileLoadController;
+    private SelectedDiagramPanel selectedDiagramPanel;
     private StructureData loadedData;
 
     // Grupos de objetos para los toggles
@@ -132,6 +133,7 @@ public class StructureViewer : MonoBehaviour
         CreateDiagramController();
         CreatePMPanel();
         CreateMobileLoadController();
+        CreateSelectedDiagramPanel();
 
         BuildComboOptions();
         BuildFloorOptions();
@@ -266,10 +268,9 @@ public class StructureViewer : MonoBehaviour
                 continue;
             }
 
-            bool isBaseColumn = false;
             if (isColumn)
             {
-                isBaseColumn = ClampColumnVisualEnds(element, ref start, ref end);
+                ClampColumnVisualEnds(element, ref start, ref end);
             }
             Vector3 midpoint = (start + end) * 0.5f;
             Vector3 direction = end - start;
@@ -296,13 +297,8 @@ public class StructureViewer : MonoBehaviour
             selectable.visualFloor = ResolveElementFloor(element, start, end, isColumn);
             selectable.nodeIId = element.nodeI;
             selectable.nodeJId = element.nodeJ;
-            selectable.nodeISupport = FindSupportForNode(data, element.nodeI);
-            selectable.nodeJSupport = FindSupportForNode(data, element.nodeJ);
-
-            if (isColumn && isBaseColumn)
-            {
-                AssignColumnBottomFixedSupport(selectable, start, end);
-            }
+            selectable.nodeISupport = CreateFixedSupport(element.nodeI);
+            selectable.nodeJSupport = CreateFixedSupport(element.nodeJ);
 
             if (isColumn)
             {
@@ -328,19 +324,6 @@ public class StructureViewer : MonoBehaviour
             }
         }
         return null;
-    }
-
-    private void AssignColumnBottomFixedSupport(ElementSelectable selectable, Vector3 start, Vector3 end)
-    {
-        bool baseAtI = start.y <= end.y;
-        if (baseAtI)
-        {
-            selectable.nodeISupport = CreateFixedSupport(selectable.nodeIId);
-        }
-        else
-        {
-            selectable.nodeJSupport = CreateFixedSupport(selectable.nodeJId);
-        }
     }
 
     private SupportData CreateFixedSupport(int nodeId)
@@ -488,8 +471,8 @@ public class StructureViewer : MonoBehaviour
             selectable.data = null;
             selectable.nodeIId = wall.nodeI;
             selectable.nodeJId = wall.nodeJ;
-            selectable.nodeISupport = FindSupportForNode(data, wall.nodeI);
-            selectable.nodeJSupport = FindSupportForNode(data, wall.nodeJ);
+            selectable.nodeISupport = CreateFixedSupport(wall.nodeI);
+            selectable.nodeJSupport = CreateFixedSupport(wall.nodeJ);
 
             string pmSec = ResolveWallPMSection(data, wall.id, wall.nodeI, wall.nodeJ);
             selectable.pmSectionId = pmSec;
@@ -846,6 +829,22 @@ public class StructureViewer : MonoBehaviour
             }
         }
         mobileLoadController = gameObject.AddComponent<MobileLoadController>();
+    }
+
+    private void CreateSelectedDiagramPanel()
+    {
+        if (selectedDiagramPanel != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(selectedDiagramPanel);
+            }
+            else
+            {
+                DestroyImmediate(selectedDiagramPanel);
+            }
+        }
+        selectedDiagramPanel = gameObject.AddComponent<SelectedDiagramPanel>();
     }
 
     private void CreateSupports(StructureData data)
