@@ -220,6 +220,10 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
         {
             return true;
         }
+        if (SelectedDiagramPanel.ButtonRect().Contains(guiMouse) || SelectedDiagramPanel.PanelRect().Contains(guiMouse))
+        {
+            return true;
+        }
         return false;
     }
 
