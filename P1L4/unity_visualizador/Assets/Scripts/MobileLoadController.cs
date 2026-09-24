@@ -1,1161 +1,836 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
+// Slabs are load surfaces. The worker computes incremental FRAME responses;
+// no slab stress, shell mesh, or wall FE response is synthesized.
 public class MobileLoadController : MonoBehaviour
 {
     public static MobileLoadController Instance { get; private set; }
-
-    public float loadKN = 100f;
+    public float loadKN = 0.8f;
     public bool visible = true;
-    public float diagramScale = 0.018f;
-    public float posX01 = 0.5f;
-    public float posZ01 = 0.5f;
-    public bool showAxial = true;
-    public bool showShear = true;
-    public bool showMoment = true;
-    // Manual-only test mode: position changes come exclusively from the X/Z controls.
-    public bool autoWalk = false;
-
-    private const float LEVEL_TOL = 0.12f;
-    private const int MAX_SUPPORT_COLUMNS = 4;
-
-    private ElementSelectable selectedElement;
-    private DiagramController diagramController;
-    private GameObject personRoot;
-    private Transform personBody;
-    private Transform personHead;
-    private Transform personLeftArm;
-    private Transform personRightArm;
-    private Transform personLeftLeg;
-    private Transform personRightLeg;
+    public float speed = 1f;
+    public string pythonExecutable = "";
+    public bool active;
+    public bool followPerson;
+    private SlabData slab;
+    private SlabLoadMetadata slabMetadata;
+    private GameObject slabObject, person;
+    private GameObject directionRoot;
+    private readonly List<MobileDirectionArrow> directionArrows = new List<MobileDirectionArrow>();
+    private Transform leftArm, rightArm, leftLeg, rightLeg;
+    private Vector3 lastVisualPosition = new Vector3(float.NaN,float.NaN,float.NaN);
     private float walkPhase;
-    private float walkSpeed;
-    private bool personMoving;
-    private Vector2 lastPersonPlan = new Vector2(float.NaN, float.NaN);
-    private Vector2 personFacing = new Vector2(0f, 1f);
-    private GameObject axialLine;
-    private GameObject shearLine;
-    private GameObject momentLine;
-    private GameObject axialBaseLine;
-    private GameObject shearBaseLine;
-    private GameObject momentBaseLine;
-    private readonly List<GameObject> reactionArrows = new List<GameObject>();
-    private readonly List<ColumnSupport> supports = new List<ColumnSupport>();
-    private GUIStyle boxStyle;
-    private GUIStyle labelStyle;
-    private GUIStyle valueStyle;
-    private Texture2D panelBg;
-    private Texture2D valueBg;
-
-    private float levelY;
-    private string levelLabel = "";
-    private float planXMin, planXMax, planZMin, planZMax;
-    private bool boundsReady;
-    private bool hasLevel;
-    private bool lastAutoWalkState;
-    private float walkClockX;
-    private float walkClockZ;
-    private float lastRefreshLoadKN = float.NaN;
-    private float lastRefreshPosX = float.NaN;
-    private float lastRefreshPosZ = float.NaN;
-    private float refreshAccum;
-    private ElementSelectable lastRefreshElement;
-    private int diagnosticUpdateCount;
-    private float nextDiagnosticLogTime;
-    private Vector3 lastDiagnosticLoadPosition = new Vector3(float.NaN, float.NaN, float.NaN);
-
-    private class ColumnSupport
+    private Renderer slabRenderer;
+    private Color slabColor;
+    private Vector2 position, destination, origin, scroll;
+    private bool playing, place, chooseDestination, dragging, directionalWalking;
+    private Vector2 walkDirection;
+    private ElementSelectable observed;
+    private float nextRequest, sentAt, clock;
+    private int sequence, selectionVersion, sentVersion;
+    private Vector2 sentPosition;
+    private float sentLoad = float.NaN;
+    private Task<string> pending;
+    private System.Diagnostics.Process worker;
+    private string workerError = "", status = "Seleccione una losa; luego active la carga.";
+    private Response response;
+    private readonly Dictionary<int,float[]> forces = new Dictionary<int,float[]>();
+    private readonly Dictionary<int,Vector3> displacements = new Dictionary<int,Vector3>();
+    private readonly List<string> history = new List<string>();
+    private readonly Dictionary<string,Peak> peaks = new Dictionary<string,Peak>();
+    private readonly string[] results = { "N", "Vy", "Vz", "T", "My", "Mz", "Uz" };
+    private int result;
+    private string pText = "0.80", xText = "0", yText = "0";
+    private string exportMessage = "";
+    private float lastValue, lastMin, lastMax;
+    private int critical;
+    private bool hasValue;
+    private bool colorMap;
+    private readonly Dictionary<Renderer,Color> originalColors = new Dictionary<Renderer,Color>();
+    private string lastObservation="";
+    private string lastRecorded="";
+    private ElementPicker picker;
+    private int panelTab;
+    private bool showAdvanced;
+    private float displayedValue, displayedMin, displayedMax;
+    private readonly List<HistoryPoint> chartHistory = new List<HistoryPoint>();
+    private GUIStyle wrap, titleStyle, subtitleStyle, cardStyle, metricStyle, smallStyle;
+    private GUIStyle successStatus, warningStatus, errorStatus;
+    private Texture2D panelTexture, cardTexture, successTexture, warningTexture, errorTexture;
+    [Serializable] private class Request { public int seq; public string slab; public float x,y,p; }
+    [Serializable] public class Nodal { public int node; public float p; }
+    [Serializable] public class Receiver { public int beam; public string side; public float load,area,t; }
+    [Serializable] public class Response
     {
-        public Vector3 top;
-        public Vector2 plan;
-        public string tag;
-        public float reaction;
+        public bool ok; public int seq; public string slab,message; public float x,y,p,error,transferred;
+        public Nodal[] nodes; public Receiver[] receivers; public ElementForceRecord[] forces;
+        public DisplacementRecord[] displacements;
     }
-
-    public static Rect PanelRect()
+    private class Peak { public float value; public Vector2 at; public int element; }
+    private class HistoryPoint
     {
-        return PanelLayout.Get("MobileLoad", new Rect(360f, 150f, 380f, 372f));
+        public float time,value,x,y;
+        public int element,result;
+        public bool hasValue;
     }
-
-    public bool IsPanelVisible()
+    public static Rect PanelRect() => PanelLayout.Get("MobileLoad",new Rect(330,55,500,Mathf.Min(735,Screen.height-70)));
+    public bool IsPanelVisible() => visible;
+    public bool IsPanelReady() => active && response != null && response.ok;
+    public bool IsActiveFor(ElementSelectable e) => IsPanelReady() && e != null && e.data != null;
+    public bool SameElement(ElementSelectable e) => observed == e;
+    public void SetSelectedElement(ElementSelectable e) { observed=e; hasValue=false; }
+    public float[] Increment(int id) => IsPanelReady() && forces.TryGetValue(id,out var f) ? f : null;
+    public Vector3 IncrementDisplacement(int id) => IsPanelReady() && displacements.TryGetValue(id,out var d) ? d : Vector3.zero;
+    public static bool CapturesPointer => Instance != null && Instance.active &&
+        (Instance.place || Instance.chooseDestination || Instance.dragging || Instance.PointerOnPerson() || Instance.PointerOnDirectionArrow());
+    private bool PointerOnPerson()
     {
-        return visible;
+        if(person==null||Camera.main==null||!Input.GetMouseButton(0)) return false;
+        Vector3 screen=Camera.main.WorldToScreenPoint(person.transform.position+Vector3.up*.7f);
+        return screen.z>0 && Vector2.Distance(new Vector2(screen.x,screen.y),Input.mousePosition)<22;
     }
-
-    private void OnEnable()
+    private bool PointerOnDirectionArrow() => DirectionArrowUnderPointer()!=null;
+    private MobileDirectionArrow DirectionArrowUnderPointer()
     {
-        if (Instance == null || Instance == this)
+        if(Camera.main==null||!Input.GetMouseButton(0)) return null;
+        Ray ray=Camera.main.ScreenPointToRay(Input.mousePosition);
+        foreach(var hit in Physics.RaycastAll(ray,500f,~0,QueryTriggerInteraction.Ignore))
         {
-            Instance = this;
+            var arrow=hit.collider.GetComponent<MobileDirectionArrow>();
+            if(arrow!=null) return arrow;
         }
-        else
-        {
-            enabled = false;
-        }
+        return null;
     }
-
+    private void OnEnable() { Instance=this; }
     private void OnDisable()
     {
-        if (Instance == this)
+        RestoreColors();
+        ClearResponse(); RestoreSlab();
+        if(person!=null) Destroy(person);
+        if(directionRoot!=null) Destroy(directionRoot);
+        if(worker!=null) { try { worker.StandardInput.Close(); if(!worker.HasExited) worker.Kill(); } catch {} worker.Dispose(); worker=null; }
+        if(Instance==this) Instance=null;
+    }
+    private void RestoreSlab() { if(slabRenderer!=null) slabRenderer.material.color=slabColor; }
+    public void SetLoadOnSlabPanel(GameObject obj,Vector3 point)
+    {
+        SlabData found=null;
+        foreach(var s in UnityData.Structure.slabs)
+            if(obj.name=="Losa_"+s.id+"_"+s.nivel) { found=s; break; }
+        if(found==null) return;
+        var metadata=Resources.Load<TextAsset>("slab_load_surfaces");
+        slabMetadata=null;
+        if(metadata!=null)
+            foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
+                if(row.id==found.id) {slabMetadata=row;break;}
+        if(slabObject!=obj)
         {
-            Instance = null;
+            RestoreSlab(); slabObject=obj; slab=found;
+            slabRenderer=obj.GetComponent<Renderer>(); slabColor=slabRenderer.material.color;
+            slabRenderer.material.color=new Color(1,0.8f,0.1f,slabColor.a);
+            selectionVersion++; playing=false; directionalWalking=false; ClearResponse();
         }
+        Vector2 p=new Vector2(point.x,point.z);
+        if(Contains(p)) { position=origin=destination=p; SyncCoordinates(); }
+        playing=directionalWalking=false;UpdateDirectionArrowColors();
+        visible=true; active=true; sentLoad=float.NaN;
+        DrawPerson();
+        status="Persona colocada. Elija una de las cuatro flechas para caminar por losas conectadas.";
     }
-
-    public bool IsPanelReady()
+    private bool Contains(Vector2 p) => slab != null && slab.Contains(p.x,p.y);
+    private bool PathValid(Vector2 a,Vector2 b) => slab != null && slab.CanMove(a.x,a.y,b.x,b.y);
+    private void Move(Vector2 p)
     {
-        return visible && hasLevel && boundsReady;
+        if(!PathValid(position,p)) { playing=false; directionalWalking=false; status="Movimiento rechazado: contorno o vacio."; return; }
+        position=p; SyncCoordinates();
     }
 
-    public bool SameElement(ElementSelectable check)
+    private void StartDirectionalWalk(Vector2 direction)
     {
-        return selectedElement != null && check != null && selectedElement == check;
+        if(slab==null||!active) return;
+        walkDirection=direction.normalized;directionalWalking=true;playing=true;
+        place=chooseDestination=dragging=false;
+        status="Caminando hacia "+DirectionName(walkDirection)+" por losas conectadas.";
+        UpdateDirectionArrowColors();
     }
 
-    public bool IsActiveFor(ElementSelectable check)
+    private void AdvanceDirectional(float distance)
     {
-        return IsPanelReady() && SameElement(check);
+        float remaining=distance;
+        int guard=0;
+        // Small substeps prevent narrow load panels from being skipped at high speed.
+        while(remaining>.00001f&&directionalWalking&&guard++<256)
+        {
+            float step=Mathf.Min(remaining,.01f);
+            Vector2 target=position+walkDirection*step;
+            if(PathValid(position,target)) {position=target;remaining-=step;continue;}
+            if(!CanReachBoundaryWithoutOpening(walkDirection)) {StopAtBuildingEnd("vacio o borde no transitable");break;}
+            SlabData next=SlabNavigation.FindAdjacent(slab,UnityData.Structure.slabs,target.x,target.y,walkDirection.x,walkDirection.y);
+            if(next==null) {StopAtBuildingEnd("fin del edificio");break;}
+            if(!next.Contains(target.x,target.y)) {StopAtBuildingEnd("conexion incompleta");break;}
+            SwitchWalkingSlab(next);position=target;remaining-=step;
+        }
+        SyncCoordinates();
     }
 
-    public bool TryGetLocalBeamContribution(ElementSelectable element, float sectionPosition01,
-        out float extraVz, out float extraMy)
+    private bool CanReachBoundaryWithoutOpening(Vector2 direction)
     {
-        extraVz = 0f;
-        extraMy = 0f;
-        if (!IsActiveFor(element) || element.data == null || element.data.type != "viga")
-            return false;
-
-        float length = UnityData.TryGetFrameGeometry(element.data.id, out var frame)
-            ? (float)frame.Length : Mathf.Max((element.endPoint - element.startPoint).magnitude, 0.001f);
-        extraVz = ExtraAt(element, "Shear", sectionPosition01, length);
-        extraMy = ExtraAt(element, "Moment", sectionPosition01, length);
-        return true;
+        float distance=float.MaxValue;
+        if(direction.x>0) distance=(Mathf.Max(slab.x0,slab.x1)-position.x)/direction.x;
+        else if(direction.x<0) distance=(Mathf.Min(slab.x0,slab.x1)-position.x)/direction.x;
+        if(direction.y>0) distance=Mathf.Min(distance,(Mathf.Max(slab.y0,slab.y1)-position.y)/direction.y);
+        else if(direction.y<0) distance=Mathf.Min(distance,(Mathf.Min(slab.y0,slab.y1)-position.y)/direction.y);
+        Vector2 justInside=position+direction*Mathf.Max(0,distance-.002f);
+        return slab.CanMove(position.x,position.y,justInside.x,justInside.y);
     }
 
-    public void SetSelectedElement(ElementSelectable element)
+    private void SwitchWalkingSlab(SlabData next)
     {
-        selectedElement = element;
+        string previous=slab.id;RestoreSlab();slab=next;slabObject=GameObject.Find("Losa_"+slab.id+"_"+slab.nivel);
+        slabRenderer=slabObject!=null?slabObject.GetComponent<Renderer>():null;
+        if(slabRenderer!=null) {slabColor=slabRenderer.material.color;slabRenderer.material.color=new Color(1,.8f,.1f,slabColor.a);}
+        LoadSlabMetadata();selectionVersion++;ClearResponse();sentLoad=float.NaN;
+        status=$"Cambio de losa: {previous} → {slab.id}. Actualizando resultados…";
     }
 
+    private void StopAtBuildingEnd(string reason)
+    {
+        playing=false;directionalWalking=false;UpdateDirectionArrowColors();
+        status=$"Recorrido terminado en {slab.id}: {reason}.";
+    }
+
+    private string DirectionName(Vector2 direction)
+    {
+        if(direction.x>.5f)return "+X / derecha";if(direction.x<-.5f)return "-X / izquierda";
+        return direction.y>.5f?"+Y / adelante":"-Y / atrás";
+    }
+
+    private void LoadSlabMetadata()
+    {
+        var metadata=Resources.Load<TextAsset>("slab_load_surfaces");slabMetadata=null;
+        if(metadata==null)return;
+        foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
+            if(row.id==slab.id) {slabMetadata=row;break;}
+    }
+    private void SyncCoordinates()
+    {
+        xText=(position.x-Mathf.Min(slab.x0,slab.x1)).ToString("0.###",CultureInfo.InvariantCulture);
+        yText=(position.y-Mathf.Min(slab.y0,slab.y1)).ToString("0.###",CultureInfo.InvariantCulture);
+    }
+    private void ClearResponse()
+    {
+        UnityData.MobileForces.Clear(); UnityData.MobileDisplacements.Clear(); RestoreColors();
+        response=null; forces.Clear(); displacements.Clear(); hasValue=false;
+        var diagrams=GetComponent<DiagramController>(); if(diagrams!=null) diagrams.Refresh();
+    }
     private void Update()
     {
-        diagnosticUpdateCount++;
-        SyncSelectedElement();
-
-        if (!visible)
+        if(slab==null) return;
+        if(!active)
         {
-            LogDiagnostics("visible=false");
-            ClearVisuals();
+            if(person!=null) person.SetActive(false);
+            if(directionRoot!=null) directionRoot.SetActive(false);
             return;
         }
-
-        if (selectedElement != null)
+        clock+=Time.deltaTime;
+        HandlePointer();
+        if(directionalWalking)
+            AdvanceDirectional(speed*Time.deltaTime);
+        else if(playing)
         {
-            ComputeLevelAndBounds();
-            if (boundsReady)
+            Move(Vector2.MoveTowards(position,destination,speed*Time.deltaTime));
+            if(Vector2.Distance(position,destination)<0.001f) {playing=false;UpdateDirectionArrowColors();}
+        }
+        DrawPerson();
+        if(followPerson && Camera.main!=null)
+        {
+            var orbit=Camera.main.GetComponent<OrbitCamera>();
+            if(orbit!=null && orbit.target!=null)
+                orbit.target.position=Vector3.Lerp(orbit.target.position,person.transform.position,1-Mathf.Exp(-3*Time.deltaTime));
+        }
+        Poll();
+        string observation=(observed?.data==null?"":observed.data.id.ToString())+"/"+result+"/"+UnityData.GetActiveLoadLabel();
+        if(response!=null && observation!=lastObservation) {lastObservation=observation; Record();}
+        if(pending!=null && Time.unscaledTime-nextRequest>30)
+        {
+            status="ERROR: tiempo de analisis excedido. Reintente."; ClearResponse();
+            try {worker.Kill();} catch {} pending=null;
+        }
+        if(pending==null && Time.unscaledTime>=nextRequest &&
+            (float.IsNaN(sentLoad)||Mathf.Abs(loadKN-sentLoad)>1e-6f||Vector2.Distance(position,sentPosition)>0.005f)) Send();
+        float smooth=1-Mathf.Exp(-8*Time.unscaledDeltaTime);
+        displayedValue=Mathf.Lerp(displayedValue,lastValue,smooth);
+        displayedMin=Mathf.Lerp(displayedMin,lastMin,smooth);
+        displayedMax=Mathf.Lerp(displayedMax,lastMax,smooth);
+    }
+    private void HandlePointer()
+    {
+        if(Input.GetKeyDown(KeyCode.Escape)) {place=chooseDestination=dragging=playing=directionalWalking=false;UpdateDirectionArrowColors();return;}
+        if(Camera.main==null) return;
+        if(Input.GetMouseButtonDown(0))
+        {
+            var selectedArrow=DirectionArrowUnderPointer();
+            if(selectedArrow!=null) {StartDirectionalWalk(new Vector2(selectedArrow.x,selectedArrow.y));return;}
+        }
+        Vector2 mouse=new Vector2(Input.mousePosition.x,Screen.height-Input.mousePosition.y);
+        if(PanelRect().Contains(mouse)||SelectedBeamDiagramPanel.BlocksPointer()) return;
+        if(picker==null) picker=FindObjectOfType<ElementPicker>();
+        if(picker!=null && picker.IsMouseOverViewerGui()) return;
+        if(Input.GetMouseButtonDown(0) && (Input.GetKey(KeyCode.LeftShift)||PointerOnPerson())) {dragging=true;directionalWalking=playing=false;UpdateDirectionArrowColors();}
+        if(!place&&!chooseDestination&&!dragging) return;
+        Ray ray=Camera.main.ScreenPointToRay(Input.mousePosition);
+        Plane plane=new Plane(Vector3.up,new Vector3(0,slab.z,0));
+        if(plane.Raycast(ray,out float distance) && Input.GetMouseButton(0))
+        {
+            Vector3 hit=ray.GetPoint(distance); Vector2 p=new Vector2(hit.x,hit.z);
+            if(chooseDestination)
             {
-                hasLevel = true;
+                if(PathValid(position,p)) { destination=p; chooseDestination=false;directionalWalking=false; status="Destino listo. PLAY para avanzar."; }
+                else status="Destino o trayectoria invalidos.";
+            }
+            else if(Contains(p))
+            {
+                if(place) {position=origin=destination=p;SyncCoordinates();place=false;dragging=true;}
+                else Move(p);
             }
         }
-        else if (!boundsReady && !hasLevel)
+        if(Input.GetMouseButtonUp(0)) dragging=false;
+    }
+    private void DrawPerson()
+    {
+        if(person==null)
         {
-            InitDefaultLevel();
+            person=new GameObject("Person slab load");
+            Part(PrimitiveType.Cylinder,new Vector3(0,.025f,0),new Vector3(.7f,.025f,.7f),new Color(1f,.8f,.05f));
+            Part(PrimitiveType.Capsule,new Vector3(0,1.05f,0),new Vector3(.48f,.58f,.34f),new Color(.05f,.55f,1f));
+            Part(PrimitiveType.Sphere,new Vector3(0,1.82f,0),Vector3.one*.38f,new Color(1f,.72f,.5f));
+            GameObject hair=Part(PrimitiveType.Sphere,new Vector3(0,1.98f,-.02f),new Vector3(.39f,.17f,.39f),new Color(.15f,.07f,.03f));
+            hair.transform.localScale=new Vector3(.39f,.17f,.39f);
+            leftArm=Part(PrimitiveType.Capsule,new Vector3(-.38f,1.08f,0),new Vector3(.16f,.48f,.16f),new Color(1f,.72f,.5f)).transform;
+            rightArm=Part(PrimitiveType.Capsule,new Vector3(.38f,1.08f,0),new Vector3(.16f,.48f,.16f),new Color(1f,.72f,.5f)).transform;
+            leftLeg=Part(PrimitiveType.Capsule,new Vector3(-.18f,.42f,0),new Vector3(.19f,.55f,.19f),new Color(.08f,.1f,.22f)).transform;
+            rightLeg=Part(PrimitiveType.Capsule,new Vector3(.18f,.42f,0),new Vector3(.19f,.55f,.19f),new Color(.08f,.1f,.22f)).transform;
+            var arrow=new GameObject("Vertical load arrow"); arrow.transform.SetParent(person.transform,false);
+            var line=arrow.AddComponent<LineRenderer>(); line.useWorldSpace=false; line.positionCount=5;
+            line.SetPositions(new[]{new Vector3(.72f,2.55f,0),new Vector3(.72f,.12f,0),new Vector3(.47f,.48f,0),new Vector3(.72f,.12f,0),new Vector3(.97f,.48f,0)});
+            line.startWidth=line.endWidth=.075f; line.material=new Material(Shader.Find("Sprites/Default")); line.startColor=line.endColor=Color.red;
+            CreateDirectionArrows();
         }
-
-        if (!boundsReady || !hasLevel)
+        if(directionRoot!=null) directionRoot.SetActive(true);
+        person.SetActive(true);
+        Vector3 next=new Vector3(position.x,slab.z+.03f,position.y);
+        Vector3 movement=float.IsNaN(lastVisualPosition.x)?Vector3.zero:next-lastVisualPosition;
+        if(movement.sqrMagnitude>.000001f)
         {
-            LogDiagnostics("sin bounds/level");
-            ClearVisuals();
-            return;
+            person.transform.rotation=Quaternion.LookRotation(new Vector3(movement.x,0,movement.z));
+            walkPhase+=movement.magnitude*10f;
+            float swing=Mathf.Sin(walkPhase)*24f;
+            leftArm.localRotation=Quaternion.Euler(swing,0,0); rightArm.localRotation=Quaternion.Euler(-swing,0,0);
+            leftLeg.localRotation=Quaternion.Euler(-swing,0,0); rightLeg.localRotation=Quaternion.Euler(swing,0,0);
         }
-
-        UpdateManualPositionFromMouse();
-        UpdateManualDiagramButtonsFromMouse();
-        UpdateVisuals();
-        LogDiagnostics("actualizando");
+        else if(!playing)
+        {
+            leftArm.localRotation=rightArm.localRotation=leftLeg.localRotation=rightLeg.localRotation=Quaternion.identity;
+        }
+        person.transform.position=next; lastVisualPosition=next;
+        if(directionRoot!=null) directionRoot.transform.position=new Vector3(position.x,slab.z+.12f,position.y);
     }
 
-    private void UpdateManualDiagramButtonsFromMouse()
+    private void CreateDirectionArrows()
     {
-        if (!Input.GetMouseButtonDown(0) || SelectedBeamDiagramPanel.BlocksPointer())
-        {
-            return;
-        }
-
-        Rect panel = PanelRect();
-        Vector2 mouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-        float rowY = panel.y + 180f;
-        string selected = selectedElement == null
-            ? "null"
-            : (selectedElement.data == null ? selectedElement.name : selectedElement.data.type);
-        Debug.Log($"[MobileDiagramDiagnostics] click mouse={mouse} panel={panel} rowY={rowY:0.0} " +
-                  $"selected={selected} states=A:{showAxial} S:{showShear} M:{showMoment}");
-
-        if (selectedElement == null || selectedElement.data == null)
-        {
-            return;
-        }
-
-        bool isViga = selectedElement.data.type == "viga";
-        bool isColumna = selectedElement.data.type == "columna";
-        if (!isViga && !isColumna)
-        {
-            return;
-        }
-
-        if (new Rect(panel.x + 82f, rowY, 62f, 20f).Contains(mouse))
-        {
-            showAxial = !showAxial;
-            Debug.Log($"[MobileDiagramDiagnostics] axial changed to {showAxial}");
-        }
-        else if (isViga && new Rect(panel.x + 146f, rowY, 62f, 20f).Contains(mouse))
-        {
-            showShear = !showShear;
-            Debug.Log($"[MobileDiagramDiagnostics] shear changed to {showShear}");
-        }
-        else if (isViga && new Rect(panel.x + 210f, rowY, 82f, 20f).Contains(mouse))
-        {
-            showMoment = !showMoment;
-            Debug.Log($"[MobileDiagramDiagnostics] moment changed to {showMoment}");
-        }
+        directionRoot=new GameObject("Mobile walk direction controls");
+        CreateDirectionArrow("+X",Vector2.right,new Color(.15f,.8f,1f));
+        CreateDirectionArrow("-X",Vector2.left,new Color(.15f,.8f,1f));
+        CreateDirectionArrow("+Y",Vector2.up,new Color(.15f,.8f,1f));
+        CreateDirectionArrow("-Y",Vector2.down,new Color(.15f,.8f,1f));
     }
 
-    private void UpdateManualPositionFromMouse()
+    private void CreateDirectionArrow(string label,Vector2 direction,Color color)
     {
-        if (!Input.GetMouseButton(0) || SelectedBeamDiagramPanel.BlocksPointer())
-        {
-            return;
-        }
-
-        Rect panel = PanelRect();
-        Vector2 mouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-        float sliderX = panel.x + 132f;
-        float sliderWidth = 125f;
-        float rowX = panel.x + 102f;
-        float rowWidth = 224f;
-        float rowY = panel.y + 130f;
-
-        bool onX = new Rect(rowX, rowY, rowWidth, 20f).Contains(mouse);
-        bool onZ = new Rect(rowX, rowY + 24f, rowWidth, 20f).Contains(mouse);
-        if (!onX && !onZ)
-        {
-            return;
-        }
-
-        float value = Mathf.Clamp01((mouse.x - sliderX) / sliderWidth);
-        if (onX)
-        {
-            posX01 = value;
-        }
-        else
-        {
-            posZ01 = value;
-        }
-        autoWalk = false;
-        lastAutoWalkState = false;
-        walkClockX = posX01;
-        walkClockZ = posZ01;
+        var root=new GameObject("Walk "+label);root.transform.SetParent(directionRoot.transform,false);
+        Vector3 d=new Vector3(direction.x,0,direction.y),perp=new Vector3(-direction.y,0,direction.x);
+        var line=root.AddComponent<LineRenderer>();line.useWorldSpace=false;line.positionCount=5;
+        Vector3 end=d*2.15f;
+        line.SetPositions(new[]{d*.9f,end,end-d*.42f+perp*.28f,end,end-d*.42f-perp*.28f});
+        line.startWidth=line.endWidth=.09f;line.material=new Material(Shader.Find("Sprites/Default"));line.startColor=line.endColor=color;
+        var head=GameObject.CreatePrimitive(PrimitiveType.Cube);head.name="Flecha "+label;head.transform.SetParent(root.transform,false);
+        head.transform.localPosition=end;head.transform.localScale=new Vector3(.48f,.16f,.48f);
+        head.GetComponent<Renderer>().material.color=color;
+        var control=head.AddComponent<MobileDirectionArrow>();control.x=direction.x;control.y=direction.y;control.line=line;control.head=head.GetComponent<Renderer>();control.baseColor=color;
+        directionArrows.Add(control);
+        var textObject=new GameObject("Label "+label);textObject.transform.SetParent(root.transform,false);textObject.transform.localPosition=end+Vector3.up*.28f;
+        var text=textObject.AddComponent<TextMesh>();text.text=label;text.anchor=TextAnchor.MiddleCenter;text.alignment=TextAlignment.Center;text.characterSize=.22f;text.fontSize=42;text.color=Color.white;
+        textObject.transform.rotation=Quaternion.Euler(90,0,0);
     }
 
-    private void LogDiagnostics(string reason)
+    private void UpdateDirectionArrowColors()
     {
-        if (Time.unscaledTime < nextDiagnosticLogTime)
+        foreach(var arrow in directionArrows)
         {
-            return;
+            if(arrow==null)continue;
+            bool selected=directionalWalking&&Vector2.Dot(new Vector2(arrow.x,arrow.y),walkDirection)>.99f;
+            Color color=selected?new Color(.25f,1f,.35f):arrow.baseColor;
+            arrow.head.material.color=color;arrow.line.startColor=arrow.line.endColor=color;
         }
-
-        nextDiagnosticLogTime = Time.unscaledTime + 1f;
-        string selected = selectedElement == null
-            ? "null"
-            : (selectedElement.data == null ? selectedElement.name : selectedElement.data.type);
-        string person = personRoot == null ? "null" : personRoot.transform.position.ToString("F3");
-        string load = float.IsNaN(lastDiagnosticLoadPosition.x)
-            ? "NaN"
-            : lastDiagnosticLoadPosition.ToString("F3");
-        Debug.Log($"[MobileLoadDiagnostics] reason={reason} updates={diagnosticUpdateCount} " +
-                  $"visible={visible} bounds={boundsReady} level={hasLevel} " +
-                  $"selected={selected} pos01=({posX01:0.000},{posZ01:0.000}) " +
-                  $"loadWorld={load} person={person} " +
-                  $"diagrams=A:{showAxial}/S:{showShear}/M:{showMoment}");
     }
-
-    private void InitDefaultLevel()
+    private GameObject Part(PrimitiveType kind,Vector3 p,Vector3 scale,Color color)
     {
-        StructureData structure = UnityData.Structure;
-        if (structure == null || structure.slabs == null || structure.slabs.Length == 0)
+        var obj=GameObject.CreatePrimitive(kind); obj.transform.SetParent(person.transform,false);
+        obj.transform.localPosition=p; obj.transform.localScale=scale; Destroy(obj.GetComponent<Collider>());
+        obj.GetComponent<Renderer>().material.color=color;
+        return obj;
+    }
+    private void StartWorker()
+    {
+        if(worker!=null && !worker.HasExited) return;
+        string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../../.."));
+        string script=Path.Combine(root,"P1L4/mobile_slab_worker.py");
+        if(string.IsNullOrWhiteSpace(pythonExecutable))
         {
+            string bundled=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),".cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe");
+            pythonExecutable=File.Exists(bundled)?bundled:Path.Combine(root,".venv/Scripts/python.exe");
+        }
+        if(!File.Exists(script)||!File.Exists(pythonExecutable)) throw new IOException("Configure Python y mobile_slab_worker.py (requiere OpenSeesPy).");
+        worker=new System.Diagnostics.Process(); worker.StartInfo=new System.Diagnostics.ProcessStartInfo {
+            FileName=pythonExecutable, Arguments="-u \""+script+"\" \""+Path.Combine(Application.dataPath,"Resources/estructura_p1l4_unity.json")+"\"",
+            UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true };
+        worker.ErrorDataReceived+=(s,e)=> { if(e.Data!=null) workerError=e.Data; };
+        worker.Start(); worker.BeginErrorReadLine();
+    }
+    private void Send()
+    {
+        nextRequest=Time.unscaledTime+.15f;
+        try
+        {
+            StartWorker(); sentVersion=selectionVersion; sentPosition=position; sentLoad=loadKN; sentAt=clock;
+            var request=new Request {seq=++sequence,slab=slab.id,x=position.x,y=position.y,p=loadKN};
+            worker.StandardInput.WriteLine(JsonUtility.ToJson(request)); worker.StandardInput.Flush();
+            pending=worker.StandardOutput.ReadLineAsync(); status="Calculando respuesta OpenSees...";
+        }
+        catch(Exception ex) { status="ERROR: "+ex.Message; ClearResponse(); sentLoad=loadKN; sentPosition=position; }
+    }
+    private void Poll()
+    {
+        if(pending==null||!pending.IsCompleted) return;
+        var completed=pending; pending=null;
+        if(sentVersion!=selectionVersion) { sentLoad=float.NaN; return; }
+        try
+        {
+            string line=completed.GetAwaiter().GetResult();
+            if(string.IsNullOrEmpty(line)) throw new IOException("Worker detenido. "+workerError);
+            var r=JsonUtility.FromJson<Response>(line);
+            if(r.seq!=sequence) throw new IOException("Respuesta fuera de secuencia");
+            if(!r.ok) throw new IOException(r.message);
+            if(r.error>Mathf.Max(1e-6f,r.p*1e-6f)||Mathf.Abs(r.transferred-r.p)>Mathf.Max(1e-6f,r.p*1e-6f))
+                throw new IOException("FAIL: conservacion");
+            response=r; forces.Clear(); displacements.Clear();
+            UnityData.MobileForces.Clear(); UnityData.MobileDisplacements.Clear();
+            foreach(var f in r.forces) {forces[f.id]=f.f;UnityData.MobileForces[f.id]=f.f;}
+            foreach(var u in r.displacements) {displacements[u.node]=new Vector3(u.ux,u.uz,u.uy);UnityData.MobileDisplacements[u.node]=displacements[u.node];}
+            status="PASS — respuesta global incremental OpenSees. Aproximacion nodal.";
+            GetComponent<DiagramController>()?.Refresh(); Record();
+        }
+        catch(Exception ex) { ClearResponse(); status="ERROR: "+ex.Message; }
+    }
+    private float Component(ElementData e,float t)
+    {
+        if(result==6) return Mathf.Lerp(UnityData.GetNodeDisplacement(UnityData.ActiveCombo,e.nodeI).y,
+            UnityData.GetNodeDisplacement(UnityData.ActiveCombo,e.nodeJ).y,t)*1000;
+        return UnityData.TryGetSectionForces(e.id,UnityData.ActiveCombo,t,out var f)?f.Component(result):float.NaN;
+    }
+    private string Units => result==6?"mm":result>=3?"kN m":"kN";
+    private void Record()
+    {
+        string recordKey=response.seq+"/"+(observed?.data==null?"":observed.data.id.ToString())+"/"+result+"/"+UnityData.GetActiveLoadLabel();
+        if(recordKey==lastRecorded) return;
+        lastRecorded=recordKey;
+        if(observed==null||observed.data==null)
+        {
+            hasValue=false;
+            chartHistory.Add(new HistoryPoint {time=sentAt,x=response.x,y=response.y,result=result,hasValue=false});
+            history.Add(string.Join(",",sentAt.ToString("R",CultureInfo.InvariantCulture),slab.id,
+                (response.x-Mathf.Min(slab.x0,slab.x1)).ToString("R",CultureInfo.InvariantCulture),
+                (response.y-Mathf.Min(slab.y0,slab.y1)).ToString("R",CultureInfo.InvariantCulture),
+                response.p.ToString("R",CultureInfo.InvariantCulture),"",results[result],"",Units,""));
             return;
         }
-
-        List<float> levels = new List<float>();
-        foreach (SlabData slab in structure.slabs)
-        {
-            if (slab == null || levels.Contains(slab.z))
+        lastValue=Component(observed.data,.5f); lastMin=float.PositiveInfinity; lastMax=float.NegativeInfinity;
+        foreach(var e in UnityData.Structure.elements)
+            for(int i=0;i<=10;i++)
             {
-                continue;
+                float value=Component(e,i/10f); if(float.IsNaN(value)) continue;
+                lastMin=Mathf.Min(lastMin,value); lastMax=Mathf.Max(lastMax,value);
+                if(Mathf.Abs(value)>=Mathf.Max(Mathf.Abs(lastMin),Mathf.Abs(lastMax))) critical=e.id;
             }
-            levels.Add(slab.z);
-        }
-        levels.Sort();
-
-        foreach (float level in levels)
+        hasValue=!float.IsNaN(lastValue);
+        bool firstChartPoint=chartHistory.Count==0;
+        if(firstChartPoint || !hasValue)
         {
-            if (ComputePlanBounds(level))
-            {
-                levelY = level;
-                levelLabel = "Nivel " + level.ToString("0.##");
-                boundsReady = true;
-                hasLevel = true;
-                return;
-            }
+            displayedValue=lastValue; displayedMin=lastMin; displayedMax=lastMax;
         }
+        chartHistory.Add(new HistoryPoint {time=sentAt,x=response.x,y=response.y,value=lastValue,
+            element=observed.data.id,result=result,hasValue=hasValue});
+        if(chartHistory.Count>800) chartHistory.RemoveRange(0,chartHistory.Count-800);
+        if(colorMap) ApplyColors();
+        string key=slab.id+"/"+observed.data.id+"/"+results[result]+"/"+UnityData.GetActiveLoadLabel();
+        if(!peaks.TryGetValue(key,out var peak)||Mathf.Abs(lastValue)>Mathf.Abs(peak.value))
+            peaks[key]=new Peak {value=lastValue,at=new Vector2(response.x,response.y),element=observed.data.id};
+        history.Add(string.Join(",",sentAt.ToString("R",CultureInfo.InvariantCulture),slab.id,
+            (response.x-Mathf.Min(slab.x0,slab.x1)).ToString("R",CultureInfo.InvariantCulture),
+            (response.y-Mathf.Min(slab.y0,slab.y1)).ToString("R",CultureInfo.InvariantCulture),
+            response.p.ToString("R",CultureInfo.InvariantCulture),observed.data.id,results[result],
+            lastValue.ToString("R",CultureInfo.InvariantCulture),Units,"\""+UnityData.GetActiveLoadLabel().Replace("\"","\"\"")+"\""));
     }
-
-    private void SyncSelectedElement()
+    private void RestoreColors()
     {
-        ElementPicker picker = FindObjectOfType<ElementPicker>();
-        if (picker == null || picker.Selected == null)
-        {
-            return;
-        }
-
-        ElementSelectable sel = picker.Selected;
-        if (sel.data == null && !sel.isWall)
-        {
-            selectedElement = null;
-            return;
-        }
-        selectedElement = sel;
+        foreach(var pair in originalColors) if(pair.Key!=null) pair.Key.material.color=pair.Value;
+        originalColors.Clear();
     }
-
-    private void ComputeLevelAndBounds()
+    private void ApplyColors()
     {
-        ElementSelectable sel = selectedElement;
-        Vector3 a = sel.startPoint;
-        Vector3 b = sel.endPoint;
-
-        if (sel.isWall)
+        foreach(var element in FindObjectsOfType<ElementSelectable>())
         {
-            levelY = Mathf.Max(a.y, b.y);
-            levelLabel = "Nivel " + (string.IsNullOrEmpty(sel.wallTop) ? levelY.ToString("0.##") : sel.wallTop);
-        }
-        else if (sel.data != null && sel.data.type == "columna")
-        {
-            levelY = Mathf.Max(a.y, b.y);
-            levelLabel = !string.IsNullOrEmpty(sel.visualFloor) ? sel.visualFloor : "z=" + levelY.ToString("0.##") + " m";
-        }
-        else
-        {
-            levelY = 0.5f * (a.y + b.y);
-            levelLabel = !string.IsNullOrEmpty(sel.visualFloor) ? sel.visualFloor : "z=" + levelY.ToString("0.##") + " m";
-        }
-
-        boundsReady = ComputePlanBounds(levelY);
-    }
-
-    private bool ComputePlanBounds(float y)
-    {
-        bool found = false;
-        planXMin = float.PositiveInfinity;
-        planXMax = float.NegativeInfinity;
-        planZMin = float.PositiveInfinity;
-        planZMax = float.NegativeInfinity;
-
-        StructureData structure = UnityData.Structure;
-        if (structure != null && structure.slabs != null)
-        {
-            foreach (SlabData slab in structure.slabs)
-            {
-                if (slab == null || Mathf.Abs(slab.z - y) > 0.25f)
-                {
-                    continue;
-                }
-                float zx0 = Mathf.Min(slab.x0, slab.x1);
-                float zx1 = Mathf.Max(slab.x0, slab.x1);
-                float zz0 = Mathf.Min(slab.y0, slab.y1);
-                float zz1 = Mathf.Max(slab.y0, slab.y1);
-                planXMin = Mathf.Min(planXMin, zx0);
-                planXMax = Mathf.Max(planXMax, zx1);
-                planZMin = Mathf.Min(planZMin, zz0);
-                planZMax = Mathf.Max(planZMax, zz1);
-                found = true;
-            }
-        }
-
-        if (!found)
-        {
-            foreach (ElementSelectable col in FindObjectsOfType<ElementSelectable>())
-            {
-                if (col == null || col.data == null || col.data.type != "columna")
-                {
-                    continue;
-                }
-                float colTopY = Mathf.Max(col.startPoint.y, col.endPoint.y);
-                if (Mathf.Abs(colTopY - y) > LEVEL_TOL)
-                {
-                    continue;
-                }
-                Vector2 topPlan = TopPlan(col);
-                planXMin = Mathf.Min(planXMin, topPlan.x);
-                planXMax = Mathf.Max(planXMax, topPlan.x);
-                planZMin = Mathf.Min(planZMin, topPlan.y);
-                planZMax = Mathf.Max(planZMax, topPlan.y);
-                found = true;
-            }
-        }
-
-        if (!found)
-        {
-            return false;
-        }
-
-        if (planXMax - planXMin < 1e-4f || planZMax - planZMin < 1e-4f)
-        {
-            planXMax = planXMin + 4f;
-            planZMax = planZMin + 4f;
-        }
-
-        return true;
-    }
-
-    public void SetLoadOnSlabPanel(GameObject slabPanel, Vector3 worldPoint)
-    {
-        if (slabPanel == null)
-        {
-            return;
-        }
-        Transform t = slabPanel.transform;
-        Vector3 c = t.position;
-        Vector3 s = t.localScale;
-        float hx = s.x * 0.5f;
-        float hz = s.z * 0.5f;
-
-        planXMin = c.x - hx;
-        planXMax = c.x + hx;
-        planZMin = c.z - hz;
-        planZMax = c.z + hz;
-        levelY = c.y;
-        levelLabel = !string.IsNullOrEmpty(slabPanel.name) ? slabPanel.name : "Losa";
-        posX01 = Mathf.Clamp01((worldPoint.x - planXMin) / Mathf.Max(planXMax - planXMin, 1e-4f));
-        posZ01 = Mathf.Clamp01((worldPoint.z - planZMin) / Mathf.Max(planZMax - planZMin, 1e-4f));
-
-        autoWalk = false;
-        lastAutoWalkState = false;
-
-        boundsReady = true;
-        hasLevel = true;
-    }
-
-    private Vector2 TopPlan(ElementSelectable col)
-    {
-        if (col.startPoint.y >= col.endPoint.y)
-        {
-            return new Vector2(col.startPoint.x, col.startPoint.z);
-        }
-        return new Vector2(col.endPoint.x, col.endPoint.z);
-    }
-
-    private Vector2 LoadPlanPos()
-    {
-        return new Vector2(
-            Mathf.Lerp(planXMin, planXMax, Mathf.Clamp01(posX01)),
-            Mathf.Lerp(planZMin, planZMax, Mathf.Clamp01(posZ01)));
-    }
-
-    private void UpdateVisuals()
-    {
-        EnsureObjects();
-        ComputeSupports();
-
-        AdvanceAutoWalk();
-
-        Vector2 loadPlan = LoadPlanPos();
-        Vector3 loadPos = new Vector3(loadPlan.x, levelY, loadPlan.y);
-        lastDiagnosticLoadPosition = loadPos;
-
-        UpdatePerson(loadPos);
-        UpdateReactionArrows();
-        UpdateBeamDiagrams(loadPos);
-
-        if (diagramController != null && selectedElement != null)
-        {
-            bool loadChanged = Mathf.Abs(loadKN - lastRefreshLoadKN) > 0.5f;
-            bool elementChanged = lastRefreshElement != selectedElement;
-            float dx = Mathf.Abs(posX01 - lastRefreshPosX);
-            float dz = Mathf.Abs(posZ01 - lastRefreshPosZ);
-            refreshAccum += dx + dz;
-            bool movedEnough = refreshAccum > 0.002f;
-
-            if (loadChanged || elementChanged || movedEnough)
-            {
-                diagramController.RefreshDiagramForElement(selectedElement);
-                lastRefreshLoadKN = loadKN;
-                lastRefreshPosX = posX01;
-                lastRefreshPosZ = posZ01;
-                lastRefreshElement = selectedElement;
-                refreshAccum = 0f;
-            }
+            if(element.data==null || element==observed) continue;
+            var renderer=element.GetComponent<Renderer>(); if(renderer==null) continue;
+            float value=Component(element.data,.5f); if(float.IsNaN(value)) continue;
+            if(!originalColors.ContainsKey(renderer)) originalColors[renderer]=renderer.material.color;
+            renderer.material.color=Color.Lerp(Color.blue,Color.red,Mathf.InverseLerp(lastMin,lastMax,value));
         }
     }
-
-    private void ComputeSupports()
-    {
-        supports.Clear();
-        List<ColumnSupport> candidates = new List<ColumnSupport>();
-        foreach (ElementSelectable col in FindObjectsOfType<ElementSelectable>())
-        {
-            if (col == null || col.data == null || col.data.type != "columna")
-            {
-                continue;
-            }
-            float colTopY = Mathf.Max(col.startPoint.y, col.endPoint.y);
-            if (Mathf.Abs(colTopY - levelY) > LEVEL_TOL)
-            {
-                continue;
-            }
-            Vector2 topPlan = TopPlan(col);
-            candidates.Add(new ColumnSupport
-            {
-                top = new Vector3(topPlan.x, colTopY, topPlan.y),
-                plan = topPlan,
-                tag = !string.IsNullOrEmpty(col.data.elementTag) ? col.data.elementTag : col.data.id.ToString()
-            });
-        }
-
-        if (candidates.Count == 0)
-        {
-            return;
-        }
-
-        Vector2 loadPlan = LoadPlanPos();
-        candidates.Sort(delegate (ColumnSupport a, ColumnSupport b)
-        {
-            return PlanDistSqr(a.plan, loadPlan).CompareTo(PlanDistSqr(b.plan, loadPlan));
-        });
-
-        int count = Mathf.Min(MAX_SUPPORT_COLUMNS, candidates.Count);
-        double totalWeight = 0.0;
-        double[] weights = new double[count];
-        bool snapped = false;
-
-        for (int i = 0; i < count; i++)
-        {
-            double dist = Mathf.Sqrt(PlanDistSqr(candidates[i].plan, loadPlan));
-            if (dist < 0.02f)
-            {
-                weights[i] = 1e9;
-                snapped = true;
-            }
-            else
-            {
-                weights[i] = 1.0 / (dist * dist + 0.05);
-            }
-            if (!snapped)
-            {
-                totalWeight += weights[i];
-            }
-        }
-
-        if (snapped)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                double w = weights[i] >= 1e8 ? loadKN : 0.0;
-                candidates[i].reaction = (float)w;
-                supports.Add(candidates[i]);
-            }
-            return;
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            candidates[i].reaction = (float)(loadKN * weights[i] / totalWeight);
-            supports.Add(candidates[i]);
-        }
-    }
-
-    private float PlanDistSqr(Vector2 a, Vector2 b)
-    {
-        float dx = a.x - b.x;
-        float dz = a.y - b.y;
-        return dx * dx + dz * dz;
-    }
-
-    private void AdvanceAutoWalk()
-    {
-        // Automatic walking is disabled while validating manual X/Z movement.
-        autoWalk = false;
-    }
-
-    private void UpdatePerson(Vector3 loadPos)
-    {
-        if (personRoot == null)
-        {
-            return;
-        }
-
-        float feetY = levelY;
-        Vector2 plan = new Vector2(loadPos.x, loadPos.z);
-
-        if (!float.IsNaN(lastPersonPlan.x))
-        {
-            Vector2 delta = plan - lastPersonPlan;
-            float moved = delta.magnitude;
-            if (moved > 0.0001f)
-            {
-                personFacing = delta / moved;
-                personMoving = true;
-            }
-        }
-        lastPersonPlan = plan;
-
-        Vector3 dir3 = new Vector3(personFacing.x, 0f, personFacing.y);
-        if (dir3.sqrMagnitude > 0.001f)
-        {
-            personRoot.transform.rotation = Quaternion.LookRotation(dir3.normalized, Vector3.up);
-        }
-
-        if (personMoving)
-        {
-            walkSpeed = Mathf.MoveTowards(walkSpeed, 1f, Time.deltaTime * 4f);
-        }
-        else
-        {
-            walkSpeed = Mathf.MoveTowards(walkSpeed, 0f, Time.deltaTime * 6f);
-        }
-
-        personMoving = false;
-
-        float bob = 1f + Mathf.Sin(walkPhase) * 0.03f * walkSpeed;
-        personRoot.transform.position = new Vector3(loadPos.x, feetY, loadPos.z);
-        personRoot.transform.localScale = new Vector3(bob, 2f - bob, bob);
-
-        float swing = Mathf.Sin(walkPhase) * 42f * walkSpeed;
-        walkPhase += Time.deltaTime * 10f * Mathf.Max(walkSpeed, 0.25f);
-
-        if (personLeftArm != null) personLeftArm.localRotation = Quaternion.Euler(28f + swing, 0f, 16f);
-        if (personRightArm != null) personRightArm.localRotation = Quaternion.Euler(-28f - swing, 0f, -16f);
-        if (personLeftLeg != null) personLeftLeg.localRotation = Quaternion.Euler(-22f - swing * 0.8f, 0f, 5f);
-        if (personRightLeg != null) personRightLeg.localRotation = Quaternion.Euler(22f + swing * 0.8f, 0f, -5f);
-        if (personBody != null) personBody.localRotation = Quaternion.Euler(Mathf.Sin(walkPhase) * 4f * walkSpeed, 0f, 0f);
-        if (personHead != null) personHead.localRotation = Quaternion.Euler(0f, Mathf.Sin(walkPhase * 0.5f) * 3f, 0f);
-    }
-
-    private void UpdateReactionArrows()
-    {
-        for (int i = 0; i < reactionArrows.Count; i++)
-        {
-            GameObject go = reactionArrows[i];
-            if (i < supports.Count)
-            {
-                go.SetActive(true);
-                ColumnSupport support = supports[i];
-                float length = Mathf.Max(0.15f, support.reaction * 0.004f);
-                Vector3 a = support.top + Vector3.up * 0.05f;
-                Vector3 b = a - Vector3.up * length;
-                LineRenderer line = go.GetComponent<LineRenderer>();
-                line.positionCount = 2;
-                line.SetPosition(0, a);
-                line.SetPosition(1, b);
-            }
-            else
-            {
-                go.SetActive(false);
-            }
-        }
-    }
-
-    private void UpdateBeamDiagrams(Vector3 loadPos)
-    {
-        ElementSelectable el = selectedElement;
-        bool isViga = el != null && el.data != null && el.data.type == "viga";
-        bool isColumna = el != null && el.data != null && el.data.type == "columna";
-        bool active = isViga || isColumna;
-
-        axialLine.SetActive(active && showAxial);
-        shearLine.SetActive(isViga && showShear);
-        momentLine.SetActive(isViga && showMoment);
-        axialBaseLine.SetActive(active && showAxial);
-        shearBaseLine.SetActive(isViga && showShear);
-        momentBaseLine.SetActive(isViga && showMoment);
-
-        if (!active)
-        {
-            return;
-        }
-
-        Vector3 a = el.startPoint;
-        Vector3 b = el.endPoint;
-        Vector3 axis = b - a;
-        float length = Mathf.Max(axis.magnitude, 0.001f);
-        Vector3 dir = axis / length;
-        Vector3 lateral = Vector3.Cross(dir, Vector3.up).normalized;
-        if (lateral.sqrMagnitude < 0.01f) lateral = Vector3.right;
-
-        if (diagramController == null)
-        {
-            diagramController = FindObjectOfType<DiagramController>();
-        }
-
-        DrawModePolylines(axialBaseLine, axialLine, a, axis, length, lateral, 0.18f, 0.08f, 0.6f,
-            "Axial", s => ExtraAt(el, "Axial", s, length), active && showAxial);
-        DrawModePolylines(shearBaseLine, shearLine, a, axis, length, lateral, 0.35f, 0f, 0.7f,
-            "Shear", s => ExtraAt(el, "Shear", s, length), isViga && showShear);
-        DrawModePolylines(momentBaseLine, momentLine, a, axis, length, lateral, 0.70f, 0f, 0.8f,
-            "Moment", s => ExtraAt(el, "Moment", s, length), isViga && showMoment);
-    }
-
-    public float ExtraAt(ElementSelectable element, string modeName, float s, float length)
-    {
-        if (!visible || !boundsReady || !hasLevel)
-        {
-            return 0f;
-        }
-        if (element == null || element != selectedElement || element.data == null)
-        {
-            return 0f;
-        }
-
-        bool isViga = element.data.type == "viga";
-        bool isColumna = element.data.type == "columna";
-        if (!isViga && !isColumna)
-        {
-            return 0f;
-        }
-
-        Vector3 a = element.startPoint;
-        Vector3 b = element.endPoint;
-        float beamLength = UnityData.TryGetFrameGeometry(element.data.id, out var frame)
-            ? (float)frame.Length : Mathf.Max(length, 0.001f);
-        Vector2 loadPlan = LoadPlanPos();
-        Vector2 beamI = new Vector2(a.x, a.z);
-        Vector2 beamJ = new Vector2(b.x, b.z);
-        Vector2 ab = beamJ - beamI;
-        float denominator = ab.sqrMagnitude;
-        float t = denominator > 0.0001f
-            ? Mathf.Clamp01(Vector2.Dot(loadPlan - beamI, ab) / denominator)
-            : 0.5f;
-
-        if (modeName == "Axial")
-        {
-            return isColumna ? -ColumnExtraAxial() : 0f; // N is tension-positive.
-        }
-        if (!isViga) return 0f;
-        FrameSectionForces contribution = FrameForces.EvaluateFixedFixedPointLoad(loadKN, beamLength, t, s);
-        if (modeName == "Shear") return contribution.Vz;
-        if (modeName == "Moment") return contribution.My;
-        return 0f;
-    }
-
-    private float ColumnExtraAxial()
-    {
-        if (selectedElement == null || selectedElement.data == null)
-        {
-            return 0f;
-        }
-        string tag = !string.IsNullOrEmpty(selectedElement.data.elementTag)
-            ? selectedElement.data.elementTag
-            : selectedElement.data.id.ToString();
-        foreach (ColumnSupport support in supports)
-        {
-            if (support.tag == tag)
-            {
-                return support.reaction;
-            }
-        }
-        return 0f;
-    }
-
-    private void DrawModePolylines(GameObject baseObj, GameObject totalObj,
-        Vector3 a, Vector3 axis, float length, Vector3 lateral,
-        float lateralOffset, float upOffset, float amplitude, string modeName,
-        System.Func<float, float> extraAt, bool enabled)
-    {
-        if (!enabled)
-        {
-            return;
-        }
-
-        const int pointCount = 25;
-        float[] baseVals = new float[pointCount];
-        float[] totalVals = new float[pointCount];
-        float maxAbs = 1e-6f;
-        for (int i = 0; i < pointCount; i++)
-        {
-            float s = i / (float)(pointCount - 1);
-            float baseVal = diagramController != null
-                ? diagramController.ValueAt(selectedElement, modeName, s, length)
-                : 0f;
-            float extraVal = extraAt != null ? extraAt(s) : 0f;
-            baseVals[i] = baseVal;
-            totalVals[i] = baseVal + extraVal;
-            maxAbs = Mathf.Max(maxAbs, Mathf.Abs(baseVal), Mathf.Abs(totalVals[i]));
-        }
-        if (maxAbs < 1e-6f)
-        {
-            maxAbs = 1f;
-        }
-
-        float drawSign = (modeName == "Moment") ? -1f : 1f;
-        LineRenderer baseLr = baseObj.GetComponent<LineRenderer>();
-        baseLr.positionCount = pointCount;
-        for (int i = 0; i < pointCount; i++)
-        {
-            float s = i / (float)(pointCount - 1);
-            Vector3 p = a + axis * s + lateral * lateralOffset + Vector3.up * (upOffset + drawSign * baseVals[i] / maxAbs * amplitude);
-            baseLr.SetPosition(i, p);
-        }
-
-        LineRenderer totalLr = totalObj.GetComponent<LineRenderer>();
-        totalLr.positionCount = pointCount;
-        for (int i = 0; i < pointCount; i++)
-        {
-            float s = i / (float)(pointCount - 1);
-            Vector3 p = a + axis * s + lateral * lateralOffset + Vector3.up * (upOffset + drawSign * totalVals[i] / maxAbs * amplitude);
-            totalLr.SetPosition(i, p);
-        }
-    }
-
     private void OnGUI()
     {
+        if(!visible) return;
         EnsureStyles();
+        Rect panel=PanelLayout.Apply("MobileLoad",PanelRect());
+        GUI.DrawTexture(panel,panelTexture);
+        GUI.Label(new Rect(panel.x+14,panel.y+7,panel.width-28,25),"CARGA MÓVIL · LOSA",titleStyle);
+        GUILayout.BeginArea(new Rect(panel.x+12,panel.y+34,panel.width-24,panel.height-44));
+        scroll=GUILayout.BeginScrollView(scroll);
+        GUILayout.BeginHorizontal();
+        bool nextActive=GUILayout.Toggle(active," Persona + carga activa",GUILayout.Width(190));
+        if(nextActive!=active) { active=nextActive; selectionVersion++; ClearResponse(); sentLoad=float.NaN; playing=directionalWalking=false;UpdateDirectionArrowColors(); }
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(playing?"● CAMINANDO":pending!=null?"● CALCULANDO":response!=null?"● ACTUALIZADO":"● EN ESPERA",
+            playing||pending!=null?warningStyle():response!=null?successStyle():smallStyle);
+        GUILayout.EndHorizontal();
 
-        int prevDepth = GUI.depth;
-        GUI.depth = -200;
+        GUILayout.BeginHorizontal();
+        MetricCard("LOSA",slab==null?"—":slab.id,slab==null?"seleccione una":slab.nivel);
+        MetricCard("PERSONA",$"{loadKN:0.00} kN",active?"vertical ↓":"desactivada");
+        string pos=slab==null?"—":$"{position.x-Mathf.Min(slab.x0,slab.x1):0.00}, {position.y-Mathf.Min(slab.y0,slab.y1):0.00} m";
+        MetricCard("POSICIÓN",pos,playing?$"{speed:0.00} m/s":"detenida");
+        GUILayout.EndHorizontal();
 
-        Rect panel = PanelLayout.Apply("MobileLoad", PanelRect());
-        float w = panel.width;
-        float h = panel.height;
-        GUI.BeginGroup(panel);
-
-        float x = 0f;
-        float y = 0f;
-        GUI.Label(new Rect(0f, 0f, w, h), "Sidequest | Carga movil", boxStyle);
-
-        float iy = y + 26f;
-        if (GUI.Button(new Rect(x + 12f, iy, 150f, 20f), (visible ? "[x] " : "[ ] ") + "Activar carga movil"))
+        panelTab=GUILayout.Toolbar(panelTab,new[]{"MOVIMIENTO","REPARTO","RESPUESTA"},GUILayout.Height(28));
+        GUILayout.Space(6);
+        if(slab!=null)
         {
-            visible = !visible;
-        }
-        GUI.Label(new Rect(x + 170f, iy, 170f, 20f), "Movimiento manual X/Z", labelStyle);
-        if (!autoWalk)
-        {
-            lastAutoWalkState = false;
-            walkClockX = posX01;
-            walkClockZ = posZ01;
-        }
-        iy += 24f;
-
-        GUI.Label(new Rect(x + 12f, iy, 90f, 20f), "Carga P [kN]", labelStyle);
-        if (GUI.Button(new Rect(x + 102f, iy, 26f, 20f), "-")) loadKN = Mathf.Max(0f, loadKN - 10f);
-        loadKN = GUI.HorizontalSlider(new Rect(x + 132f, iy + 5f, 125f, 18f), loadKN, 0f, 300f);
-        GUI.Box(new Rect(x + 260f, iy, 44f, 20f), GUIContent.none, valueStyle);
-        GUI.Label(new Rect(x + 263f, iy + 1f, 40f, 18f), loadKN.ToString("0"), valueStyle);
-        if (GUI.Button(new Rect(x + 304f, iy, 22f, 20f), "+")) loadKN = Mathf.Min(300f, loadKN + 10f);
-        iy += 24f;
-
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 20f), "Nivel: " + levelLabel, labelStyle);
-        iy += 22f;
-
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "Viga: simulacion local empotrada-empotrada (Vz/My). Click en losa/elemento para ubicar la persona.", labelStyle);
-        iy += 34f;
-
-        if (boundsReady)
-        {
-            DrawPlanSliders(x, ref iy, w);
+            if(panelTab==0) DrawMovementTab();
+            else if(panelTab==1) DrawTransferTab();
+            else DrawResponseTab();
         }
         else
         {
-            GUI.Label(new Rect(x + 12f, iy, w - 24f, 36f), "Click en una losa o elemento para ubicar la carga.", labelStyle);
-            GUI.EndGroup();
-            GUI.depth = prevDepth;
+            GUILayout.Space(35);
+            GUILayout.Label("Haz click sobre una losa translúcida",subtitleStyle);
+            GUILayout.Label("La persona aparecerá automáticamente en el punto seleccionado.",wrap);
+        }
+
+        GUILayout.Space(7);
+        GUIStyle currentStatus=status.StartsWith("ERROR")?errorStyle():status.Contains("PASS")?successStyle():warningStyle();
+        GUILayout.Label(status,currentStatus);
+        GUILayout.EndScrollView(); GUILayout.EndArea();
+        if(person!=null && person.activeSelf && Camera.main!=null)
+        {
+            Vector3 s=Camera.main.WorldToScreenPoint(person.transform.position+Vector3.up*2);
+            if(s.z>0) GUI.Label(new Rect(s.x-65,Screen.height-s.y,160,25),$"Person ↓ P={loadKN:0.###} kN");
+        }
+    }
+
+    private void DrawMovementTab()
+    {
+        float xmin=Mathf.Min(slab.x0,slab.x1),ymin=Mathf.Min(slab.y0,slab.y1);
+        GUILayout.Label("Mover la persona",subtitleStyle);
+        GUILayout.Label("Arrástrala directamente o marca un destino para verla caminar.",smallStyle);
+        GUILayout.Space(4);
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Carga P",GUILayout.Width(70)); pText=GUILayout.TextField(pText,GUILayout.Width(85)); GUILayout.Label("kN",GUILayout.Width(30));
+        GUILayout.FlexibleSpace(); followPerson=GUILayout.Toggle(followPerson," Seguir con cámara",GUILayout.Width(145));
+        GUILayout.EndHorizontal();
+        if(float.TryParse(pText.Replace(',','.'),NumberStyles.Float,CultureInfo.InvariantCulture,out float p)&&!float.IsInfinity(p)&&p>=0) loadKN=p;
+        else GUILayout.Label("La carga debe ser un número mayor o igual a cero.",errorStyle());
+
+        GUILayout.Space(6);
+        GUILayout.Label($"X local  {position.x-xmin:0.00} m",smallStyle);
+        float x=GUILayout.HorizontalSlider(position.x,xmin,Mathf.Max(slab.x0,slab.x1));
+        GUILayout.Label($"Y local  {position.y-ymin:0.00} m",smallStyle);
+        float y=GUILayout.HorizontalSlider(position.y,ymin,Mathf.Max(slab.y0,slab.y1));
+        if(x!=position.x||y!=position.y) {playing=directionalWalking=false;UpdateDirectionArrowColors();Move(new Vector2(x,y));}
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("X",GUILayout.Width(18));xText=GUILayout.TextField(xText,GUILayout.Width(70));
+        GUILayout.Label("Y",GUILayout.Width(18));yText=GUILayout.TextField(yText,GUILayout.Width(70));
+        if(GUILayout.Button("APLICAR COORDENADAS")&&TryLocalPoint(xmin,ymin,out var localPoint)) {playing=directionalWalking=false;UpdateDirectionArrowColors();Move(localPoint);}
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(7); GUILayout.Label($"Velocidad  {speed:0.00} m/s",smallStyle);
+        speed=GUILayout.HorizontalSlider(speed,.05f,4);
+        GUILayout.BeginHorizontal();
+        if(GUILayout.Button("COLOCAR")) {place=true;chooseDestination=false;playing=directionalWalking=false;UpdateDirectionArrowColors();}
+        if(GUILayout.Button("ELEGIR DESTINO")) {chooseDestination=true;place=false;playing=directionalWalking=false;UpdateDirectionArrowColors();}
+        if(GUILayout.Button(playing?"PAUSA":"▶ PLAY"))
+        {
+            if(playing) {playing=directionalWalking=false;UpdateDirectionArrowColors();} else {directionalWalking=false;playing=active&&PathValid(position,destination);}
+        }
+        if(GUILayout.Button("RESET")) {playing=directionalWalking=false;UpdateDirectionArrowColors();position=destination=origin;SyncCoordinates();sentLoad=float.NaN;}
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        Direction("CAMINAR ←",Vector2.left);Direction("CAMINAR →",Vector2.right);Direction("CAMINAR ↑",Vector2.up);Direction("CAMINAR ↓",Vector2.down);
+        GUILayout.EndHorizontal();
+
+        if(directionalWalking) GUILayout.Label("Dirección continua: "+DirectionName(walkDirection)+" · se detendrá en el final conectado",successStyle());
+
+        GUILayout.Space(8);
+        GUILayout.BeginVertical(cardStyle);
+        GUILayout.Label($"{slab.id} · {slab.nivel}",subtitleStyle);
+        GUILayout.Label($"{Mathf.Abs(slab.x1-slab.x0):0.00} × {Mathf.Abs(slab.y1-slab.y0):0.00} m  ·  Área {Mathf.Abs((slab.x1-slab.x0)*(slab.y1-slab.y0)):0.00} m²",wrap);
+        if(slabMetadata!=null)
+            GUILayout.Label($"h {slabMetadata.thickness:0.00} m  ·  qG {slabMetadata.qG:0.00} kN/m²  ·  Perfil {slabMetadata.profile}",smallStyle);
+        GUILayout.EndVertical();
+        GUILayout.Label("TIP: haz click en una de las cuatro flechas alrededor de la persona para cruzar todas las losas conectadas.",smallStyle);
+    }
+
+    private bool TryLocalPoint(float xmin,float ymin,out Vector2 point)
+    {
+        point=position;
+        if(!float.TryParse(xText.Replace(',','.'),NumberStyles.Float,CultureInfo.InvariantCulture,out float xx)||
+           !float.TryParse(yText.Replace(',','.'),NumberStyles.Float,CultureInfo.InvariantCulture,out float yy)||
+           float.IsNaN(xx)||float.IsInfinity(xx)||float.IsNaN(yy)||float.IsInfinity(yy)) return false;
+        point=new Vector2(xmin+xx,ymin+yy); return Contains(point);
+    }
+
+    private void DrawTransferTab()
+    {
+        GUILayout.Label("Reparto de la carga",subtitleStyle);
+        if(response==null)
+        {
+            GUILayout.Label("Esperando una posición válida y el análisis de OpenSees.",wrap);
+            DrawPendingBar();
             return;
         }
+        bool stale=Vector2.Distance(position,new Vector2(response.x,response.y))>.005f||Mathf.Abs(loadKN-response.p)>1e-6f;
+        GUILayout.BeginHorizontal();
+        MetricCard("APLICADA",$"{response.p:F4} kN","persona");
+        MetricCard("TRANSFERIDA",$"{response.transferred:F4} kN",stale?"posición anterior":"actualizada");
+        MetricCard("ERROR",$"{response.error:F6} kN",response.error<1e-6f?"✓ conserva":"revisar");
+        GUILayout.EndHorizontal();
+        GUILayout.Label(stale?"⏳ Calculando la posición nueva…":"✓ MOBILE LOAD CONSERVATION · PASS",
+            stale?warningStyle():successStyle());
 
-        if (selectedElement != null && selectedElement.data != null && (selectedElement.data.type == "viga" || selectedElement.data.type == "columna"))
+        GUILayout.Space(5); GUILayout.Label("Nodos receptores",subtitleStyle);
+        float max=0; foreach(var n in response.nodes) max=Mathf.Max(max,n.p);
+        foreach(var n in response.nodes) DrawLoadBar($"Nodo {n.node}",n.p,max,$"{-n.p:F4} kN ↓");
+        GUILayout.Space(5); GUILayout.Label("Vigas receptoras",subtitleStyle);
+        foreach(var b in response.receivers)
+            DrawLoadBar($"Viga {b.beam} · {SideName(b.side)}",b.load,response.p,$"{b.load:F4} kN");
+
+        showAdvanced=GUILayout.Toggle(showAdvanced," Ver detalle tributario y técnico");
+        if(showAdvanced)
         {
-            GUI.Label(new Rect(x + 12f, iy, 70f, 20f), "Diagramas", labelStyle);
-            bool esViga = selectedElement.data.type == "viga";
-            GUI.Label(new Rect(x + 82f, iy, 62f, 20f), (showAxial ? "[x] " : "[ ] ") + "Axial", labelStyle);
-            GUI.Label(new Rect(x + 146f, iy, 62f, 20f), (showShear ? "[x] " : "[ ] ") + "Vz", labelStyle);
-            GUI.Label(new Rect(x + 210f, iy, 82f, 20f), (showMoment ? "[x] " : "[ ] ") + "My", labelStyle);
-            if (!esViga)
+            GUILayout.BeginVertical(cardStyle);
+            GUILayout.Label($"Respuesta confirmada: X={response.x:0.###}, Y={response.y:0.###} m globales",smallStyle);
+            if(slabMetadata!=null) foreach(var edge in slabMetadata.edges)
+                GUILayout.Label($"{SideName(edge.side)} · Atrib {edge.area:0.###} m² · "+
+                    (edge.beams.Length==0?"SIN RECEPTOR EN CENTRO":"vigas "+string.Join(", ",edge.beams)),smallStyle);
+            GUILayout.Label("La losa es superficie de carga; no existen resultados shell.",smallStyle);
+            GUILayout.EndVertical();
+        }
+    }
+
+    private void DrawResponseTab()
+    {
+        GUILayout.Label("Respuesta global de la estructura",subtitleStyle);
+        GUILayout.Label("Selecciona una viga o columna en el modelo y elige qué componente observar.",smallStyle);
+        int r=GUILayout.Toolbar(result,results,GUILayout.Height(28));
+        if(r!=result) {result=r;hasValue=false;if(response!=null)Record();}
+        GUILayout.BeginHorizontal();
+        bool nextMap=GUILayout.Toggle(colorMap," Mapa global",GUILayout.Width(125));
+        if(nextMap!=colorMap) {colorMap=nextMap;if(colorMap&&hasValue)ApplyColors();else RestoreColors();}
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Elemento: "+(observed?.data==null?"ninguno":observed.data.elementTag),smallStyle);
+        GUILayout.EndHorizontal();
+
+        if(hasValue)
+        {
+            GUILayout.BeginHorizontal();
+            MetricCard("VALOR ACTUAL",$"{displayedValue:0.###} {Units}",results[result]+" al centro");
+            MetricCard("RANGO GLOBAL",$"{displayedMin:0.##} / {displayedMax:0.##}",Units+" · azul / rojo");
+            MetricCard("CRÍTICO","E"+critical,"máximo absoluto");
+            GUILayout.EndHorizontal();
+            DrawSignedMeter(displayedValue,Mathf.Max(Mathf.Abs(displayedMin),Mathf.Abs(displayedMax)));
+            GUILayout.Space(5);GUILayout.Label(results[result]+" durante el recorrido",subtitleStyle);
+            DrawHistoryChart();
+            if(slab!=null&&observed?.data!=null)
             {
-                showShear = false;
-                showMoment = false;
-            }
-            iy += 24f;
-        }
-
-        DrawDistributionInfo(x, ref iy, w);
-
-        GUI.EndGroup();
-        GUI.depth = prevDepth;
-    }
-
-    private void DrawPlanSliders(float x, ref float iy, float w)
-    {
-        DrawPositionSlider(x, iy, "Posicion X", ref posX01);
-        iy += 24f;
-        DrawPositionSlider(x, iy, "Posicion Z", ref posZ01);
-        iy += 26f;
-    }
-
-    private void DrawPositionSlider(float x, float iy, string label, ref float value)
-    {
-        float before = value;
-        Rect sliderArea = new Rect(x + 102f, iy, 224f, 20f);
-        if ((Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag)
-            && Event.current.button == 0 && sliderArea.Contains(Event.current.mousePosition))
-        {
-            autoWalk = false;
-            lastAutoWalkState = false;
-            walkClockX = posX01;
-            walkClockZ = posZ01;
-        }
-        GUI.Label(new Rect(x + 12f, iy, 90f, 20f), label, labelStyle);
-        if (GUI.Button(new Rect(x + 102f, iy, 26f, 20f), "-")) value = Mathf.Max(0f, value - 0.05f);
-        float next = GUI.HorizontalSlider(new Rect(x + 132f, iy + 5f, 125f, 18f), value, 0f, 1f);
-        value = next;
-        GUI.Box(new Rect(x + 260f, iy, 44f, 20f), GUIContent.none, valueStyle);
-        GUI.Label(new Rect(x + 263f, iy + 1f, 40f, 18f), (value * 100f).ToString("0") + "%", valueStyle);
-        if (GUI.Button(new Rect(x + 304f, iy, 22f, 20f), "+")) value = Mathf.Min(1f, value + 0.05f);
-        if (Mathf.Abs(value - before) > 0.0001f)
-        {
-            autoWalk = false;
-        }
-    }
-
-    private void DrawDistributionInfo(float x, ref float iy, float w)
-    {
-        if (supports.Count == 0)
-        {
-            GUI.Label(new Rect(x + 12f, iy, w - 24f, 36f), "Sin columnas de apoyo en este nivel.", labelStyle);
-            iy += 40f;
-            return;
-        }
-
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Reparto a columnas", labelStyle);
-        iy += 18f;
-        foreach (ColumnSupport support in supports)
-        {
-            GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"{support.tag}: {support.reaction:0.00} kN", labelStyle);
-            iy += 16f;
-        }
-
-        float sum = 0f;
-        foreach (ColumnSupport support in supports)
-        {
-            sum += support.reaction;
-        }
-        float error = Mathf.Abs(loadKN - sum);
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"Conservacion: suma={sum:0.00} | error={error:0.000}", labelStyle);
-        iy += 20f;
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "La carga se reparte a las columnas cercanas por distancia.", labelStyle);
-        iy += 34f;
-    }
-
-    private void EnsureObjects()
-    {
-        ClearStaleGeneratedObjects();
-        EnsurePerson();
-        EnsureReactionArrows();
-        if (shearLine == null)
-        {
-            shearLine = CreateLineObject("CargaMovil_Corte", new Color(1f, 0.55f, 0f));
-        }
-        shearLine.SetActive(showShear);
-        if (momentLine == null)
-        {
-            momentLine = CreateLineObject("CargaMovil_Momento", Color.magenta);
-        }
-        momentLine.SetActive(showMoment);
-        if (axialLine == null)
-        {
-            axialLine = CreateLineObject("CargaMovil_Axial", Color.red);
-        }
-        axialLine.SetActive(showAxial);
-
-        if (shearBaseLine == null)
-        {
-            shearBaseLine = CreateLineObject("CargaMovil_CorteBase", new Color(1f, 0.75f, 0.45f, 0.7f));
-        }
-        shearBaseLine.SetActive(showShear);
-        if (momentBaseLine == null)
-        {
-            momentBaseLine = CreateLineObject("CargaMovil_MomentoBase", new Color(1f, 0.7f, 1f, 0.7f));
-        }
-        momentBaseLine.SetActive(showMoment);
-        if (axialBaseLine == null)
-        {
-            axialBaseLine = CreateLineObject("CargaMovil_AxialBase", new Color(1f, 0.6f, 0.6f, 0.7f));
-        }
-        axialBaseLine.SetActive(showAxial);
-    }
-
-    private void EnsurePerson()
-    {
-        if (personRoot != null)
-        {
-            personRoot.SetActive(true);
-            return;
-        }
-
-        personRoot = new GameObject("CargaMovil_Persona");
-        personRoot.transform.SetParent(transform);
-
-        Material shirt = CreateMaterial(new Color(0.1f, 0.35f, 1f));
-        Material skin = CreateMaterial(new Color(1f, 0.74f, 0.52f));
-        Material pants = CreateMaterial(new Color(0.08f, 0.08f, 0.12f));
-
-        personBody = CreatePersonPart("Cuerpo", PrimitiveType.Capsule, new Vector3(0f, 0.74f, 0f), new Vector3(0.28f, 0.44f, 0.28f), Quaternion.identity, shirt).transform;
-        personHead = CreatePersonPart("Cabeza", PrimitiveType.Sphere, new Vector3(0f, 1.32f, 0f), new Vector3(0.34f, 0.34f, 0.34f), Quaternion.identity, skin).transform;
-        personLeftArm = CreatePersonPart("Brazo_I", PrimitiveType.Cylinder, new Vector3(-0.25f, 0.80f, 0f), new Vector3(0.06f, 0.38f, 0.06f), Quaternion.Euler(25f, 0f, 14f), skin).transform;
-        personRightArm = CreatePersonPart("Brazo_J", PrimitiveType.Cylinder, new Vector3(0.25f, 0.80f, 0f), new Vector3(0.06f, 0.38f, 0.06f), Quaternion.Euler(-25f, 0f, -14f), skin).transform;
-        personLeftLeg = CreatePersonPart("Pierna_I", PrimitiveType.Cylinder, new Vector3(-0.11f, 0.28f, 0f), new Vector3(0.075f, 0.40f, 0.075f), Quaternion.Euler(-18f, 0f, 4f), pants).transform;
-        personRightLeg = CreatePersonPart("Pierna_J", PrimitiveType.Cylinder, new Vector3(0.11f, 0.28f, 0f), new Vector3(0.075f, 0.40f, 0.075f), Quaternion.Euler(18f, 0f, -4f), pants).transform;
-    }
-
-    private GameObject CreatePersonPart(string name, PrimitiveType primitive, Vector3 localPosition, Vector3 localScale, Quaternion localRotation, Material material)
-    {
-        GameObject part = GameObject.CreatePrimitive(primitive);
-        part.name = "CargaMovil_" + name;
-        part.transform.SetParent(personRoot.transform);
-        part.transform.localPosition = localPosition;
-        part.transform.localRotation = localRotation;
-        part.transform.localScale = localScale;
-        part.GetComponent<Renderer>().material = material;
-        DestroyCollider(part);
-        return part;
-    }
-
-    private void EnsureReactionArrows()
-    {
-        while (reactionArrows.Count < MAX_SUPPORT_COLUMNS)
-        {
-            GameObject arrowObj = CreateLineObject("CargaMovil_Reaccion_" + reactionArrows.Count, new Color(1f, 0.35f, 0.1f));
-            reactionArrows.Add(arrowObj);
-        }
-    }
-
-    private void ClearStaleGeneratedObjects()
-    {
-        for (int i = transform.childCount - 1; i >= 0; i--)
-        {
-            Transform child = transform.GetChild(i);
-            if (child == null || !IsStaleGeneratedObject(child.name))
-            {
-                continue;
-            }
-            if (personRoot != null && child.gameObject == personRoot)
-            {
-                continue;
-            }
-
-            if (Application.isPlaying)
-            {
-                Destroy(child.gameObject);
-            }
-            else
-            {
-                DestroyImmediate(child.gameObject);
+                string key=slab.id+"/"+observed.data.id+"/"+results[result]+"/"+UnityData.GetActiveLoadLabel();
+                if(peaks.TryGetValue(key,out var peak))
+                    GUILayout.Label($"★ Máximo recorrido  {peak.value:0.###} {Units}  en  X={peak.at.x-Mathf.Min(slab.x0,slab.x1):0.00}, Y={peak.at.y-Mathf.Min(slab.y0,slab.y1):0.00} m",successStyle());
             }
         }
-    }
+        else GUILayout.Label("Selecciona una viga o columna para comenzar el gráfico.",warningStyle());
 
-    private bool IsStaleGeneratedObject(string objectName)
-    {
-        return objectName.StartsWith("CargaMovil_Persona") ||
-               objectName.StartsWith("CargaMovil_Cuerpo") ||
-               objectName.StartsWith("CargaMovil_Cabeza") ||
-               objectName.StartsWith("CargaMovil_Brazo") ||
-               objectName.StartsWith("CargaMovil_Pierna") ||
-               objectName.StartsWith("CargaMovil_Punto") ||
-               objectName.StartsWith("CargaMovil_Flecha") ||
-               objectName.StartsWith("CargaMovil_Impacto") ||
-               objectName.StartsWith("CargaMovil_Posicion");
-    }
-
-    private void ClearVisuals()
-    {
-        if (personRoot != null) personRoot.SetActive(false);
-        if (shearLine != null) shearLine.SetActive(false);
-        if (momentLine != null) momentLine.SetActive(false);
-        if (axialLine != null) axialLine.SetActive(false);
-        if (shearBaseLine != null) shearBaseLine.SetActive(false);
-        if (momentBaseLine != null) momentBaseLine.SetActive(false);
-        if (axialBaseLine != null) axialBaseLine.SetActive(false);
-        foreach (GameObject go in reactionArrows)
+        GUILayout.BeginHorizontal();
+        if(GUILayout.Button("EXPORTAR CSV")) Export();
+        if(GUILayout.Button("BORRAR RECORRIDO")) {history.Clear();chartHistory.Clear();peaks.Clear();lastRecorded="";}
+        GUILayout.EndHorizontal();
+        GUILayout.Label($"{chartHistory.Count} muestras guardadas. {exportMessage}",smallStyle);
+        showAdvanced=GUILayout.Toggle(showAdvanced," Ajustes avanzados");
+        if(showAdvanced)
         {
-            if (go != null) go.SetActive(false);
-        }
-        supports.Clear();
-    }
-
-    private GameObject CreateLineObject(string name, Color color)
-    {
-        GameObject go = new GameObject(name);
-        LineRenderer line = go.AddComponent<LineRenderer>();
-        line.material = CreateMaterial(color);
-        line.startWidth = 0.08f;
-        line.endWidth = 0.08f;
-        line.useWorldSpace = true;
-        return go;
-    }
-
-    private Material CreateMaterial(Color color)
-    {
-        Shader shader = Shader.Find("Sprites/Default");
-        Material material = new Material(shader);
-        material.color = color;
-        return material;
-    }
-
-    private void DestroyCollider(GameObject go)
-    {
-        Collider col = go.GetComponent<Collider>();
-        if (col == null) return;
-        if (Application.isPlaying)
-        {
-            Destroy(col);
-        }
-        else
-        {
-            DestroyImmediate(col);
+            GUILayout.Label("Python + OpenSeesPy",smallStyle);pythonExecutable=GUILayout.TextField(pythonExecutable);
+            if(GUILayout.Button("REINTENTAR ANÁLISIS")) sentLoad=float.NaN;
+            GUILayout.Label("Muros: respuesta móvil FE no disponible. La deformada se activa desde el viewer.",smallStyle);
         }
     }
 
     private void EnsureStyles()
     {
-        if (boxStyle != null) return;
-        boxStyle = new GUIStyle(GUI.skin.box);
-        panelBg = MakeTexture(new Color(0.035f, 0.04f, 0.055f, 0.96f));
-        boxStyle.normal.background = panelBg;
-        boxStyle.normal.textColor = new Color(0.85f, 0.95f, 1f);
-        boxStyle.fontSize = 13;
-        boxStyle.fontStyle = FontStyle.Bold;
-
-        labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.normal.textColor = Color.white;
-        labelStyle.fontSize = 13;
-        labelStyle.fontStyle = FontStyle.Bold;
-        labelStyle.wordWrap = true;
-
-        valueBg = MakeTexture(new Color(0.0f, 0.0f, 0.0f, 0.55f));
-        valueStyle = new GUIStyle(GUI.skin.label);
-        valueStyle.normal.background = valueBg;
-        valueStyle.normal.textColor = Color.white;
-        valueStyle.fontSize = 13;
-        valueStyle.fontStyle = FontStyle.Bold;
-        valueStyle.alignment = TextAnchor.MiddleCenter;
-        valueStyle.padding = new RectOffset(2, 2, 0, 0);
+        if(wrap!=null) return;
+        panelTexture=Texture(new Color(.035f,.045f,.075f,.97f));
+        cardTexture=Texture(new Color(.075f,.095f,.14f,.96f));
+        successTexture=Texture(new Color(.04f,.28f,.19f,.96f));
+        warningTexture=Texture(new Color(.32f,.21f,.045f,.96f));
+        errorTexture=Texture(new Color(.35f,.075f,.085f,.96f));
+        wrap=new GUIStyle(GUI.skin.label) {wordWrap=true,fontSize=12};
+        wrap.normal.textColor=new Color(.9f,.94f,1f);
+        titleStyle=new GUIStyle(GUI.skin.label) {fontSize=16,fontStyle=FontStyle.Bold,alignment=TextAnchor.MiddleLeft};
+        titleStyle.normal.textColor=new Color(.35f,.88f,1f);
+        subtitleStyle=new GUIStyle(GUI.skin.label) {fontSize=13,fontStyle=FontStyle.Bold};
+        subtitleStyle.normal.textColor=Color.white;
+        smallStyle=new GUIStyle(wrap) {fontSize=11};smallStyle.normal.textColor=new Color(.67f,.75f,.86f);
+        cardStyle=new GUIStyle(GUI.skin.box) {padding=new RectOffset(9,9,7,7),margin=new RectOffset(3,3,3,3)};
+        cardStyle.normal.background=cardTexture;
+        metricStyle=new GUIStyle(GUI.skin.label) {fontSize=15,fontStyle=FontStyle.Bold,alignment=TextAnchor.MiddleLeft};
+        metricStyle.normal.textColor=Color.white;
+        successStatus=StatusStyle(successTexture,new Color(.52f,1f,.72f));
+        warningStatus=StatusStyle(warningTexture,new Color(1f,.84f,.38f));
+        errorStatus=StatusStyle(errorTexture,new Color(1f,.58f,.62f));
     }
 
-    private Texture2D MakeTexture(Color color)
+    private GUIStyle StatusStyle(Texture2D background,Color foreground)
     {
-        Texture2D tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, color);
-        tex.Apply();
-        return tex;
+        var style=new GUIStyle(wrap) {padding=new RectOffset(9,9,6,6),fontStyle=FontStyle.Bold};
+        style.normal.background=background;style.normal.textColor=foreground;return style;
     }
+    private GUIStyle successStyle() => successStatus;
+    private GUIStyle warningStyle() => warningStatus;
+    private GUIStyle errorStyle() => errorStatus;
+    private Texture2D Texture(Color color)
+    {
+        var texture=new Texture2D(1,1);texture.SetPixel(0,0,color);texture.Apply();return texture;
+    }
+
+    private void MetricCard(string label,string value,string detail)
+    {
+        GUILayout.BeginVertical(cardStyle,GUILayout.MinWidth(110),GUILayout.Height(67));
+        GUILayout.Label(label,smallStyle);GUILayout.Label(value,metricStyle,GUILayout.Height(21));
+        GUILayout.Label(detail,smallStyle);GUILayout.EndVertical();
+    }
+
+    private void DrawPendingBar()
+    {
+        Rect rect=GUILayoutUtility.GetRect(100,15);Color old=GUI.color;
+        GUI.color=new Color(.14f,.17f,.24f);GUI.DrawTexture(rect,Texture2D.whiteTexture);
+        GUI.color=new Color(.2f,.65f,1f);
+        GUI.DrawTexture(new Rect(rect.x,rect.y,rect.width*(.25f+.25f*Mathf.Sin(Time.unscaledTime*3)),rect.height),Texture2D.whiteTexture);
+        GUI.color=old;
+    }
+
+    private void DrawLoadBar(string label,float value,float maximum,string valueLabel)
+    {
+        GUILayout.BeginHorizontal();GUILayout.Label(label,smallStyle,GUILayout.Width(155));
+        Rect rect=GUILayoutUtility.GetRect(80,13,GUILayout.ExpandWidth(true));
+        Color old=GUI.color;GUI.color=new Color(.16f,.19f,.27f);GUI.DrawTexture(rect,Texture2D.whiteTexture);
+        GUI.color=new Color(.1f,.75f,1f);GUI.DrawTexture(new Rect(rect.x,rect.y,rect.width*Mathf.Clamp01(value/Mathf.Max(maximum,.000001f)),rect.height),Texture2D.whiteTexture);
+        GUI.color=old;GUILayout.Label(valueLabel,smallStyle,GUILayout.Width(82));GUILayout.EndHorizontal();
+    }
+
+    private void DrawSignedMeter(float value,float bound)
+    {
+        Rect rect=GUILayoutUtility.GetRect(100,18);Color old=GUI.color;
+        GUI.color=new Color(.14f,.17f,.24f);GUI.DrawTexture(rect,Texture2D.whiteTexture);
+        float center=rect.center.x;float width=Mathf.Abs(value)/Mathf.Max(bound,.000001f)*rect.width*.5f;
+        GUI.color=value>=0?new Color(1f,.42f,.28f):new Color(.2f,.65f,1f);
+        GUI.DrawTexture(value>=0?new Rect(center,rect.y,width,rect.height):new Rect(center-width,rect.y,width,rect.height),Texture2D.whiteTexture);
+        GUI.color=Color.white;GUI.DrawTexture(new Rect(center-1,rect.y,2,rect.height),Texture2D.whiteTexture);GUI.color=old;
+    }
+
+    private void DrawHistoryChart()
+    {
+        Rect rect=GUILayoutUtility.GetRect(100,145,GUILayout.ExpandWidth(true));
+        Color old=GUI.color;GUI.color=new Color(.055f,.07f,.105f);GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=old;
+        int elementId=observed?.data==null?0:observed.data.id;
+        var points=new List<HistoryPoint>();
+        for(int i=Mathf.Max(0,chartHistory.Count-160);i<chartHistory.Count;i++)
+        {
+            var p=chartHistory[i];if(p.hasValue&&p.element==elementId&&p.result==result) points.Add(p);
+        }
+        if(points.Count<2) {GUI.Label(new Rect(rect.x+10,rect.y+55,rect.width-20,25),"El gráfico aparecerá cuando la persona cambie de posición.",smallStyle);return;}
+        float min=points[0].value,max=min,t0=points[0].time,t1=points[points.Count-1].time;
+        foreach(var p in points) {min=Mathf.Min(min,p.value);max=Mathf.Max(max,p.value);}
+        if(Mathf.Abs(max-min)<1e-6f) {min-=1;max+=1;}
+        if(Mathf.Abs(t1-t0)<1e-6f) t1=t0+1;
+        float zero=Mathf.InverseLerp(max,min,0);
+        if(zero>=0&&zero<=1) DrawGuiLine(new Vector2(rect.x,rect.y+rect.height*zero),new Vector2(rect.xMax,rect.y+rect.height*zero),new Color(.5f,.55f,.65f,.5f),1);
+        Vector2 previous=Vector2.zero;
+        for(int i=0;i<points.Count;i++)
+        {
+            float px=Mathf.Lerp(rect.x+4,rect.xMax-4,Mathf.InverseLerp(t0,t1,points[i].time));
+            float py=Mathf.Lerp(rect.y+5,rect.yMax-20,Mathf.InverseLerp(max,min,points[i].value));
+            Vector2 current=new Vector2(px,py);if(i>0) DrawGuiLine(previous,current,new Color(.2f,.85f,1f),2);previous=current;
+        }
+        GUI.color=new Color(1f,.85f,.2f);GUI.DrawTexture(new Rect(previous.x-4,previous.y-4,8,8),Texture2D.whiteTexture);GUI.color=old;
+        GUI.Label(new Rect(rect.x+6,rect.y+3,rect.width-12,18),$"máx {max:0.###} · mín {min:0.###} {Units}",smallStyle);
+        GUI.Label(new Rect(rect.x+6,rect.yMax-18,rect.width-12,18),$"tiempo {t0:0.0} → {t1:0.0} s",smallStyle);
+    }
+
+    private static void DrawGuiLine(Vector2 a,Vector2 b,Color color,float thickness)
+    {
+        if(Event.current.type!=EventType.Repaint) return;
+        Vector2 delta=b-a;if(delta.sqrMagnitude<.000001f)return;
+        Matrix4x4 matrix=GUI.matrix;Color old=GUI.color;GUI.color=color;
+        GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg,a);
+        GUI.DrawTexture(new Rect(a.x,a.y-thickness*.5f,delta.magnitude,thickness),Texture2D.whiteTexture);
+        GUI.matrix=matrix;GUI.color=old;
+    }
+
+    private string SideName(string side)
+    {
+        if(side=="bottom")return "inferior";if(side=="top")return "superior";
+        if(side=="left")return "izquierda";if(side=="right")return "derecha";return side;
+    }
+    private void Direction(string label,Vector2 d)
+    {
+        if(GUILayout.Button(label) && slab!=null) StartDirectionalWalk(d);
+    }
+    private void Export()
+    {
+        try {
+            string path=Path.Combine(Application.persistentDataPath,"mobile-slab-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".csv");
+            File.WriteAllText(path,"time_s,slab,x_local_m,y_local_m,P_kN,element,result,value,units,combination\n"+string.Join("\n",history),Encoding.UTF8);
+            exportMessage=path;
+        } catch(Exception ex) {exportMessage=ex.Message;}
+    }
+}
+
+public class MobileDirectionArrow : MonoBehaviour
+{
+    public float x,y;
+    public Color baseColor;
+    public LineRenderer line;
+    public Renderer head;
 }

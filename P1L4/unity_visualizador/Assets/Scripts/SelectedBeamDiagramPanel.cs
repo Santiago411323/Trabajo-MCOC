@@ -5,12 +5,12 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 {
     private static int nextWindowId = 41050;
     private readonly int windowId = nextWindowId++;
-    private readonly float[,] samples = new float[5, 61];
-    private readonly string[] names = { "My", "Mz", "Vy", "Vz", "Axial N" };
+    private readonly float[,] samples = new float[6, 61];
+    private readonly string[] names = { "My", "Mz", "Vy", "Vz", "N", "T" };
     private readonly Color[] colors = {
         new Color(1f, 0.45f, 0.85f), new Color(0.7f, 0.6f, 1f),
         new Color(1f, 0.7f, 0.25f), new Color(0.3f, 0.85f, 1f),
-        new Color(0.5f, 1f, 0.6f)
+        new Color(0.5f, 1f, 0.6f), Color.cyan
     };
     private ElementPicker picker;
     private DiagramController diagrams;
@@ -30,7 +30,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
         if (picker == null) picker = FindObjectOfType<ElementPicker>();
         ElementSelectable beam = picker != null ? picker.Selected : null;
         return beam != null && beam.gameObject.activeInHierarchy && beam.data != null &&
-            beam.data.type == "viga" ? beam : null;
+            (beam.data.type == "viga" || beam.data.type == "columna") ? beam : null;
     }
 
     public bool ContainsMouse(Vector2 mouse)
@@ -78,7 +78,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
         GUI.depth = -20;
         string tag = string.IsNullOrEmpty(beam.data.elementTag) ? beam.data.id.ToString() : beam.data.elementTag;
         panel = GUI.Window(windowId, GetPanelRect(), DrawWindow,
-            "Diagramas de viga - " + tag, windowStyle);
+            "Diagramas de " + beam.data.type + " - " + tag, windowStyle);
         GUI.depth = previousDepth;
     }
 
@@ -101,7 +101,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
                 MobileLoadController.Instance.IsActiveFor(selected);
             GUI.Label(new Rect(0f, 36f, width, 38f),
                 "Eje I → J | N: tracción+ | escala propia\n" +
-                (includesMobile ? "OpenSees + carga móvil local en Vz/My" :
+                (includesMobile ? "OpenSees + carga móvil de losa (global)" :
                     "Combinación OpenSees; carga móvil inactiva"), textStyle);
             if (diagrams != null && diagrams.TryGetSelectedDiagramSamples(selected, samples))
             {
@@ -117,7 +117,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 
     private void DrawChart(Rect rect, int row)
     {
-        string unit = row < 2 ? "kN·m" : "kN";
+        string unit = row < 2 || row == 5 ? "kN·m" : "kN";
         int count = samples.GetLength(1);
         float min = samples[row, 0];
         float max = min;

@@ -744,6 +744,10 @@ public class StructureViewer : MonoBehaviour
     private void CreateSlabPanels(StructureData data)
     {
         float thickness = 0.02f;
+        var slabLoads=new Dictionary<string,SlabLoadMetadata>();
+        var catalog=Resources.Load<TextAsset>("slab_load_surfaces");
+        if(catalog!=null)
+            foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(catalog.text).slabs) slabLoads[row.id]=row;
         foreach (SlabData slab in data.slabs)
         {
             float cx = (slab.x0 + slab.x1) * 0.5f;
@@ -765,7 +769,8 @@ public class StructureViewer : MonoBehaviour
             plane.GetComponent<Renderer>().material = DiaphragmMaterial();
 
             float area = dx * dy;
-            float qG = data.q_G;
+            slabLoads.TryGetValue(slab.id,out var loadMetadata);
+            float qG = loadMetadata!=null ? loadMetadata.qG : data.q_G;
             float totalLoad = area * qG;
             InfoSelectable info = plane.AddComponent<InfoSelectable>();
             info.info = $"Losa / diafragma de area\n" +
@@ -776,6 +781,11 @@ public class StructureViewer : MonoBehaviour
                         $"qG: {qG:0.###} kN/m2\n" +
                         $"Carga gravitacional estimada: {totalLoad:0.###} kN\n" +
                         $"Nota: visualizada como panel; no es shell OpenSees.";
+            if(loadMetadata!=null)
+                info.info += $"\nPerfil: {loadMetadata.profile}\nEspesor de carga: {loadMetadata.thickness:0.###} m\n" +
+                    $"Peso unitario: {loadMetadata.unitWeight:0.####} kN/m3\n" +
+                    $"Terminaciones/adicional: {loadMetadata.finishes:0.####} kN/m2\n" +
+                    "q_G = espesor × peso unitario + adicional.\nNodos/malla shell: no disponibles.";
 
             diaphragmObjects.Add(plane);
             RegisterFloor(plane, slab.nivel);

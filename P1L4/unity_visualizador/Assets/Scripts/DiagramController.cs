@@ -472,8 +472,8 @@ public class DiagramController : MonoBehaviour
     // The selected panel uses the active combination, including the factor sliders.
     public bool TryGetSelectedDiagramSamples(ElementSelectable element, float[,] samples)
     {
-        if (element == null || element.data == null || element.data.type != "viga" ||
-            samples == null || samples.GetLength(0) != 5 || samples.GetLength(1) < 2 ||
+        if (element == null || element.data == null || (element.data.type != "viga" && element.data.type != "columna") ||
+            samples == null || samples.GetLength(0) != 6 || samples.GetLength(1) < 2 ||
             (element.endPoint - element.startPoint).sqrMagnitude < 0.000001f)
             return false;
 
@@ -483,20 +483,16 @@ public class DiagramController : MonoBehaviour
             if (float.IsNaN(value) || float.IsInfinity(value)) return false;
 
         if (!UnityData.TryGetFrameGeometry(element.data.id, out var frame)) return false;
-        MobileLoadController mobile = MobileLoadController.Instance;
         for (int i = 0; i < samples.GetLength(1); i++)
         {
             float t = i / (float)(samples.GetLength(1) - 1);
             var f = FrameForces.Evaluate(raw, frame.Length, t);
-            float extraVz = 0f;
-            float extraMy = 0f;
-            if (mobile != null)
-                mobile.TryGetLocalBeamContribution(element, t, out extraVz, out extraMy);
-            samples[0, i] = f.My + extraMy;
+            samples[0, i] = f.My;
             samples[1, i] = f.Mz;
             samples[2, i] = f.Vy;
-            samples[3, i] = f.Vz + extraVz;
+            samples[3, i] = f.Vz;
             samples[4, i] = f.N;
+            samples[5, i] = f.T;
         }
         return true;
     }
@@ -504,7 +500,7 @@ public class DiagramController : MonoBehaviour
     private InternalDiagramForces ConvertOpenSeesEndForcesToInternalForces(ElementSelectable element, string combo, bool printLog, float[] activeForces = null)
     {
         ElementData data = element.data;
-        float[] raw = activeForces ?? UnityData.GetElementForcesForCase(combo, data.id);
+        float[] raw = activeForces ?? UnityData.GetElementForces(combo, data.id);
         if (raw == null || raw.Length < 12)
         {
             raw = UnityData.GetElementForces(combo, data.id);

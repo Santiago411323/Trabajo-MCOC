@@ -58,6 +58,21 @@ public static class UnityForceChecks
 
     private static int Run(string[] args)
     {
+        var surface=new SlabData {x0=0,y0=0,x1=10,y1=5,openings=new[]{new SlabOpening{x0=4,x1=4.01f,y0=1,y1=4}}};
+        Check(surface.Contains(0,0),"slab boundary valid");
+        Check(!surface.Contains(-.01f,2),"outside slab rejected");
+        Check(!surface.Contains(float.NaN,2),"invalid coordinate rejected");
+        Check(!surface.Contains(4.005f,2),"opening rejected");
+        Check(!surface.CanMove(2,2,6,2),"cannot jump across narrow opening");
+        Check(surface.CanMove(2,.5f,6,.5f),"path around opening valid");
+        var nextSurface=new SlabData {x0=10,y0=0,x1=14,y1=5,z=0};
+        var upperSurface=new SlabData {x0=0,y0=5,x1=10,y1=9,z=0};
+        var disconnectedSurface=new SlabData {x0=14.2f,y0=0,x1=18,y1=5,z=0};
+        var surfaces=new[]{surface,nextSurface,upperSurface,disconnectedSurface};
+        Check(Object.ReferenceEquals(SlabNavigation.FindAdjacent(surface,surfaces,10.01f,2,1,0),nextSurface),"walk to connected right slab");
+        Check(Object.ReferenceEquals(SlabNavigation.FindAdjacent(surface,surfaces,2,5.01f,0,1),upperSurface),"walk to connected upper slab");
+        Check(SlabNavigation.FindAdjacent(nextSurface,surfaces,14.21f,2,1,0)==null,"gap is not automatic connectivity");
+        Check(SlabNavigation.FindAdjacent(surface,surfaces,10.01f,2,-1,0)==null,"direction must match shared edge");
         var options = new JsonSerializerOptions { IncludeFields = true };
         options.Converters.Add(new IdentifierConverter());
         string json = File.ReadAllText(args[0]);
@@ -132,6 +147,14 @@ public static class UnityForceChecks
         UnityData.UseBaseCaseFactors = false;
         UnityData.TryGetSectionForces(84, "C1", .5f, out var beam);
         Near(beam.Mz, -8.5362158184, "E1_84 center Mz");
+        float[] baseForces=(float[])UnityData.GetElementForces("C1",84).Clone();
+        var extra=new float[12];extra[0]=-2;extra[6]=2;
+        UnityData.MobileForces[84]=extra;
+        UnityData.TryGetSectionForces(84,"C1",.5f,out var loaded);
+        Near(loaded.N,beam.N+2,"global mobile increment added exactly once");
+        Near(UnityData.GetElementForcesForCase("C1",84)[0],baseForces[0],"base result immutable");
+        UnityData.MobileForces.Clear();
+        Near(UnityData.GetElementForces("C1",84)[0],baseForces[0],"deactivation restores baseline");
         UnityData.TryGetSectionForces(272, "C1", .5f, out var column);
         Near(column.N, -2620.7558614332, "E1_272 compression");
 

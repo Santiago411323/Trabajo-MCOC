@@ -34,6 +34,7 @@ public class ElementPicker : MonoBehaviour
 
     void Update()
     {
+        if(MobileLoadController.CapturesPointer || Input.GetKey(KeyCode.LeftShift)) return;
         if (cam == null)
         {
             cam = Camera.main;
@@ -50,6 +51,17 @@ public class ElementPicker : MonoBehaviour
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            if(hits.Length>0 && hits[0].collider.name.StartsWith("Losa_"))
+            {
+                var info=hits[0].collider.GetComponent<InfoSelectable>();
+                if(info!=null)
+                {
+                    SetElementSelection(null); selectedInfo=info; scroll=Vector2.zero;
+                    MobileLoadController.Instance?.SetLoadOnSlabPanel(hits[0].collider.gameObject,hits[0].point);
+                    return;
+                }
+            }
 
             ElementSelectable selectable = null;
             RaycastHit selectableHit = default(RaycastHit);
@@ -195,7 +207,7 @@ foreach (RaycastHit candidate in hits)
     private ElementSelectable selectedElement;
     private InfoSelectable selectedInfo;
 
-    private bool IsMouseOverViewerGui()
+    public bool IsMouseOverViewerGui()
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 
