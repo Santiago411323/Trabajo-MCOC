@@ -41,6 +41,10 @@ REINFORCED_CONCRETE = "HORMIGON_ARMADO"
 # Altura repetida informada por el usuario: 396 cm = 3.96 m.
 FLOOR_HEIGHT = 3.96
 
+# Nivel subterraneo adicional (CIELO_0S), un piso mas abajo que CIELO_1S.
+# En el ensamble unificado (OFFSET_Z = +4.17) se ubica en Z ~ -4.0, para que
+# las columnas del edificio 2 calcen con el subterraneo del edificio 1.
+CIELO_0S_Z = -8.17
 CIELO_1S_Z = -4.01
 CIELO_1_Z = -0.05
 CIELO_2_Z = 3.91
@@ -49,6 +53,7 @@ CIELO_4_Z = 11.83
 
 levels = {
     "FOUNDATION": CIELO_1S_Z - RADIER_THICKNESS,
+    "CIELO_0S": CIELO_0S_Z,
     "CIELO_1S": CIELO_1S_Z,
     "CIELO_1": CIELO_1_Z,
     "CIELO_2": CIELO_2_Z,
@@ -58,6 +63,7 @@ levels = {
 
 LEVEL_NODE_BASE = {
     "FOUNDATION": 1000,
+    "CIELO_0S": 7500,
     "CIELO_1S": 2000,
     "CIELO_1": 3000,
     "CIELO_2": 4000,
@@ -66,6 +72,8 @@ LEVEL_NODE_BASE = {
 }
 
 VERTICAL_LEVEL_SEQUENCE = ["FOUNDATION", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+COLUMN_VERTICAL_LEVEL_SEQUENCE = ["CIELO_0S", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
+WALL_VERTICAL_LEVEL_SEQUENCE = ["CIELO_0S", "CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 FLOOR_BEAM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 DIAPHRAGM_LEVELS = ["CIELO_1S", "CIELO_1", "CIELO_2", "CIELO_3", "CIELO_4"]
 DIAPHRAGM_DISPLAY_THICKNESS = 0.03
@@ -330,7 +338,7 @@ def structural_node(node_id, grid_x_name, grid_y_name, level):
 
 
 def add_wall_for_each_storey(walls, wall_id, gx1, gy1, gx2, gy2, x1, y1, x2, y2, thickness):
-    for level_index, (bottom_level, top_level) in enumerate(zip(VERTICAL_LEVEL_SEQUENCE, VERTICAL_LEVEL_SEQUENCE[1:]), start=1):
+    for level_index, (bottom_level, top_level) in enumerate(zip(WALL_VERTICAL_LEVEL_SEQUENCE, WALL_VERTICAL_LEVEL_SEQUENCE[1:]), start=1):
         walls.append(StructuralWall(
             id=f"{wall_id}_L{level_index}",
             grid_x1=gx1,
@@ -647,11 +655,11 @@ def create_geometry():
     for idx, (position_id, gx, gy) in enumerate(STRUCTURAL_POSITIONS, start=1):
         position_to_nodes[position_id] = {}
 
-        for level in VERTICAL_LEVEL_SEQUENCE:
+        for level in COLUMN_VERTICAL_LEVEL_SEQUENCE:
             position_to_nodes[position_id][level] = get_or_create_node(gx, gy, level)
 
-        n_foundation = structural_node(position_to_nodes[position_id]["FOUNDATION"], gx, gy, "FOUNDATION")
-        for level_index, (bottom_level, top_level) in enumerate(zip(VERTICAL_LEVEL_SEQUENCE, VERTICAL_LEVEL_SEQUENCE[1:]), start=1):
+        n_foundation = structural_node(position_to_nodes[position_id]["CIELO_0S"], gx, gy, "CIELO_0S")
+        for level_index, (bottom_level, top_level) in enumerate(zip(COLUMN_VERTICAL_LEVEL_SEQUENCE, COLUMN_VERTICAL_LEVEL_SEQUENCE[1:]), start=1):
             columns.append(Column(
                 id=f"C{level_index}{idx:03d}",
                 grid_x=gx,
@@ -904,7 +912,7 @@ def create_geometry():
 
     supports = []
     for node in nodes:
-        if node.level != "FOUNDATION" or None in [node.x, node.y, node.z]:
+        if node.level != "CIELO_0S" or None in [node.x, node.y, node.z]:
             continue
         supports.append({
             "node": node.id,
@@ -931,6 +939,7 @@ def create_geometry():
             "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
             "plant_levels": {
                 "FOUNDATION": "Planta de fundaciones",
+                "CIELO_0S": "Planta cielo sub-subterraneo",
                 "CIELO_1S": "Planta cielo 1 subterraneo",
                 "CIELO_1": "Planta cielo piso 1",
                 "CIELO_2": "Planta cielo piso 2",

@@ -79,12 +79,12 @@ def build_opensees_model(data):
             continue
         ops.fix(
             node_id,
-            support.get("ux", 0),
-            support.get("uy", 0),
-            support.get("uz", 0),
-            support.get("rx", 0),
-            support.get("ry", 0),
-            support.get("rz", 0),
+            support.get("ux", 1),
+            support.get("uy", 1),
+            support.get("uz", 1),
+            support.get("rx", 1),
+            support.get("ry", 1),
+            support.get("rz", 1),
         )
         fixed_supports.append(node_id)
 

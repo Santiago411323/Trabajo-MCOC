@@ -13,6 +13,7 @@
     "exterior_extension_note": "Exterior radier and foundation walls are modeled; staircase dimensions remain pending.",
     "plant_levels": {
       "FOUNDATION": "Planta de fundaciones",
+      "CIELO_0S": "Planta cielo sub-subterraneo",
       "CIELO_1S": "Planta cielo 1 subterraneo",
       "CIELO_1": "Planta cielo piso 1",
       "CIELO_2": "Planta cielo piso 2",
@@ -22,6 +23,7 @@
   },
   "levels": {
     "FOUNDATION": -4.16,
+    "CIELO_0S": -8.17,
     "CIELO_1S": -4.01,
     "CIELO_1": -0.05,
     "CIELO_2": 3.91,
@@ -173,13 +175,13 @@
   },
   "nodes": [
     {
-      "id": 1001,
+      "id": 7501,
       "grid_x": "B",
       "grid_y": "1",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 11.25,
       "y": 0.0,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -233,13 +235,13 @@
       "type": "NODE"
     },
     {
-      "id": 1002,
+      "id": 7502,
       "grid_x": "C",
       "grid_y": "1",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 21.25,
       "y": 0.0,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -293,13 +295,13 @@
       "type": "NODE"
     },
     {
-      "id": 1003,
+      "id": 7503,
       "grid_x": "D_PRIME",
       "grid_y": "1",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 31.475,
       "y": 0.0,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -353,13 +355,13 @@
       "type": "NODE"
     },
     {
-      "id": 1004,
+      "id": 7504,
       "grid_x": "A",
       "grid_y": "2",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 3.75,
       "y": 8.9,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -413,13 +415,13 @@
       "type": "NODE"
     },
     {
-      "id": 1005,
+      "id": 7505,
       "grid_x": "B",
       "grid_y": "2",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 11.25,
       "y": 8.9,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -473,13 +475,13 @@
       "type": "NODE"
     },
     {
-      "id": 1006,
+      "id": 7506,
       "grid_x": "C",
       "grid_y": "2",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 21.25,
       "y": 8.9,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -533,13 +535,13 @@
       "type": "NODE"
     },
     {
-      "id": 1007,
+      "id": 7507,
       "grid_x": "B",
       "grid_y": "3",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 11.25,
       "y": 16.15,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -593,13 +595,13 @@
       "type": "NODE"
     },
     {
-      "id": 1008,
+      "id": 7508,
       "grid_x": "C",
       "grid_y": "3",
-      "level": "FOUNDATION",
+      "level": "CIELO_0S",
       "x": 21.25,
       "y": 16.15,
-      "z": -4.16,
+      "z": -8.17,
       "type": "NODE"
     },
     {
@@ -653,7 +655,7 @@
       "type": "NODE"
     },
     {
-      "id": 1009,
+      "id": 1001,
       "grid_x": "B_PRIME",
       "grid_y": "8B",
       "level": "FOUNDATION",
@@ -713,7 +715,7 @@
       "type": "NODE"
     },
     {
-      "id": 1010,
+      "id": 1002,
       "grid_x": "B_PRIME",
       "grid_y": "8A",
       "level": "FOUNDATION",
@@ -773,7 +775,7 @@
       "type": "NODE"
     },
     {
-      "id": 1011,
+      "id": 1003,
       "grid_x": "E1",
       "grid_y": "8B",
       "level": "FOUNDATION",
@@ -833,7 +835,7 @@
       "type": "NODE"
     },
     {
-      "id": 1012,
+      "id": 1004,
       "grid_x": "E1",
       "grid_y": "8A",
       "level": "FOUNDATION",
@@ -1702,9 +1704,9 @@
       "y_center": 0.0,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1001,
+      "node_i": 7501,
       "node_j": 2001,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -1777,9 +1779,9 @@
       "y_center": 0.0,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1002,
+      "node_i": 7502,
       "node_j": 2002,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -1852,9 +1854,9 @@
       "y_center": 0.0,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1003,
+      "node_i": 7503,
       "node_j": 2003,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -1927,9 +1929,9 @@
       "y_center": 8.9,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1004,
+      "node_i": 7504,
       "node_j": 2004,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -2002,9 +2004,9 @@
       "y_center": 8.9,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1005,
+      "node_i": 7505,
       "node_j": 2005,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -2077,9 +2079,9 @@
       "y_center": 8.9,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1006,
+      "node_i": 7506,
       "node_j": 2006,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -2152,9 +2154,9 @@
       "y_center": 16.15,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1007,
+      "node_i": 7507,
       "node_j": 2007,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -2227,9 +2229,9 @@
       "y_center": 16.15,
       "bx": 0.7,
       "by": 0.7,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
-      "node_i": 1008,
+      "node_i": 7508,
       "node_j": 2008,
       "status": "ACTIVE",
       "type": "COLUMN"
@@ -5362,7 +5364,7 @@
       "x2": 28.83,
       "y2": 3.205,
       "thickness": 0.3,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5442,7 +5444,7 @@
       "x2": 28.83,
       "y2": 6.15,
       "thickness": 0.25,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5522,7 +5524,7 @@
       "x2": 31.475,
       "y2": 6.15,
       "thickness": 0.25,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5602,7 +5604,7 @@
       "x2": 31.475,
       "y2": 3.205,
       "thickness": 0.25,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5682,7 +5684,7 @@
       "x2": 31.475,
       "y2": 16.15,
       "thickness": 0.25,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5826,7 +5828,7 @@
       "x2": 0.0,
       "y2": 1.825,
       "thickness": 0.6,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5906,7 +5908,7 @@
       "x2": 1.45,
       "y2": 0.0,
       "thickness": 0.3,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -5986,7 +5988,7 @@
       "x2": 0.0,
       "y2": 17.24,
       "thickness": 0.6,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -6066,7 +6068,7 @@
       "x2": 1.85,
       "y2": 16.15,
       "thickness": 0.3,
-      "z_bottom": -4.16,
+      "z_bottom": -8.17,
       "z_top": -4.01,
       "status": "ACTIVE",
       "type": "STRUCTURAL_WALL"
@@ -6841,7 +6843,7 @@
   ],
   "supports": [
     {
-      "node": 1001,
+      "node": 7501,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6851,7 +6853,7 @@
       "rz": 1
     },
     {
-      "node": 1002,
+      "node": 7502,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6861,7 +6863,7 @@
       "rz": 1
     },
     {
-      "node": 1003,
+      "node": 7503,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6871,7 +6873,7 @@
       "rz": 1
     },
     {
-      "node": 1004,
+      "node": 7504,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6881,7 +6883,7 @@
       "rz": 1
     },
     {
-      "node": 1005,
+      "node": 7505,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6891,7 +6893,7 @@
       "rz": 1
     },
     {
-      "node": 1006,
+      "node": 7506,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6901,7 +6903,7 @@
       "rz": 1
     },
     {
-      "node": 1007,
+      "node": 7507,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -6911,47 +6913,7 @@
       "rz": 1
     },
     {
-      "node": 1008,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1009,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1010,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1011,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1012,
+      "node": 7508,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -23304,73 +23266,73 @@
   },
   "opensees_status": {
     "created_nodes": [
-      1001,
+      7501,
       2001,
       3001,
       4001,
       5001,
       6001,
-      1002,
+      7502,
       2002,
       3002,
       4002,
       5002,
       6002,
-      1003,
+      7503,
       2003,
       3003,
       4003,
       5003,
       6003,
-      1004,
+      7504,
       2004,
       3004,
       4004,
       5004,
       6004,
-      1005,
+      7505,
       2005,
       3005,
       4005,
       5005,
       6005,
-      1006,
+      7506,
       2006,
       3006,
       4006,
       5006,
       6006,
-      1007,
+      7507,
       2007,
       3007,
       4007,
       5007,
       6007,
-      1008,
+      7508,
       2008,
       3008,
       4008,
       5008,
       6008,
-      1009,
+      1001,
       2009,
       3009,
       4009,
       5009,
       6009,
-      1010,
+      1002,
       2010,
       3010,
       4010,
       5010,
       6010,
-      1011,
+      1003,
       2011,
       3011,
       4011,
       5011,
       6011,
-      1012,
+      1004,
       2012,
       3012,
       4012,
@@ -23459,18 +23421,14 @@
     ],
     "skipped_nodes_missing_coordinates": [],
     "fixed_supports": [
-      1001,
-      1002,
-      1003,
-      1004,
-      1005,
-      1006,
-      1007,
-      1008,
-      1009,
-      1010,
-      1011,
-      1012
+      7501,
+      7502,
+      7503,
+      7504,
+      7505,
+      7506,
+      7507,
+      7508
     ],
     "elements_created": 0,
     "note": "Foundation-level nodes are fixed. Elements are not created until E, A, G, J, Iy and Iz are explicitly provided."

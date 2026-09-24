@@ -2,10 +2,10 @@
   "units": "m, kN, kN*m",
   "nodes": [
     {
-      "id": 1001,
+      "id": 7501,
       "x": 11.25,
       "y": 0.0,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2001,
@@ -38,10 +38,10 @@
       "z": 11.83
     },
     {
-      "id": 1002,
+      "id": 7502,
       "x": 21.25,
       "y": 0.0,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2002,
@@ -74,10 +74,10 @@
       "z": 11.83
     },
     {
-      "id": 1003,
+      "id": 7503,
       "x": 31.475,
       "y": 0.0,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2003,
@@ -110,10 +110,10 @@
       "z": 11.83
     },
     {
-      "id": 1004,
+      "id": 7504,
       "x": 3.75,
       "y": 8.9,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2004,
@@ -146,10 +146,10 @@
       "z": 11.83
     },
     {
-      "id": 1005,
+      "id": 7505,
       "x": 11.25,
       "y": 8.9,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2005,
@@ -182,10 +182,10 @@
       "z": 11.83
     },
     {
-      "id": 1006,
+      "id": 7506,
       "x": 21.25,
       "y": 8.9,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2006,
@@ -218,10 +218,10 @@
       "z": 11.83
     },
     {
-      "id": 1007,
+      "id": 7507,
       "x": 11.25,
       "y": 16.15,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2007,
@@ -254,10 +254,10 @@
       "z": 11.83
     },
     {
-      "id": 1008,
+      "id": 7508,
       "x": 21.25,
       "y": 16.15,
-      "z": -4.16
+      "z": -8.17
     },
     {
       "id": 2008,
@@ -288,30 +288,6 @@
       "x": 21.25,
       "y": 16.15,
       "z": 11.83
-    },
-    {
-      "id": 1009,
-      "x": 24.474,
-      "y": -10.719999999999999,
-      "z": -4.16
-    },
-    {
-      "id": 1010,
-      "x": 24.474,
-      "y": -6.42,
-      "z": -4.16
-    },
-    {
-      "id": 1011,
-      "x": 31.524,
-      "y": -10.719999999999999,
-      "z": -4.16
-    },
-    {
-      "id": 1012,
-      "x": 31.524,
-      "y": -6.42,
-      "z": -4.16
     },
     {
       "id": 2013,
@@ -802,7 +778,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1001,
+      "nodeI": 7501,
       "nodeJ": 2001,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -912,7 +888,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1002,
+      "nodeI": 7502,
       "nodeJ": 2002,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1022,7 +998,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1003,
+      "nodeI": 7503,
       "nodeJ": 2003,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1132,7 +1108,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1004,
+      "nodeI": 7504,
       "nodeJ": 2004,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1242,7 +1218,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1005,
+      "nodeI": 7505,
       "nodeJ": 2005,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1352,7 +1328,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1006,
+      "nodeI": 7506,
       "nodeJ": 2006,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1462,7 +1438,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1007,
+      "nodeI": 7507,
       "nodeJ": 2007,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -1572,7 +1548,7 @@
       "sectionId": "COL70/70",
       "materialId": "HORMIGON_ARMADO",
       "type": "columna",
-      "nodeI": 1008,
+      "nodeI": 7508,
       "nodeJ": 2008,
       "uniformLoad": 0.0,
       "tributaryArea": 0.0,
@@ -3989,7 +3965,7 @@
   "pointLoads": [],
   "supports": [
     {
-      "node": 1001,
+      "node": 7501,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -3999,7 +3975,7 @@
       "rz": 1
     },
     {
-      "node": 1002,
+      "node": 7502,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4009,7 +3985,7 @@
       "rz": 1
     },
     {
-      "node": 1003,
+      "node": 7503,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4019,7 +3995,7 @@
       "rz": 1
     },
     {
-      "node": 1004,
+      "node": 7504,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4029,7 +4005,7 @@
       "rz": 1
     },
     {
-      "node": 1005,
+      "node": 7505,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4039,7 +4015,7 @@
       "rz": 1
     },
     {
-      "node": 1006,
+      "node": 7506,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4049,7 +4025,7 @@
       "rz": 1
     },
     {
-      "node": 1007,
+      "node": 7507,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
@@ -4059,47 +4035,7 @@
       "rz": 1
     },
     {
-      "node": 1008,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1009,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1010,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1011,
-      "type": "fixed",
-      "ux": 1,
-      "uy": 1,
-      "uz": 1,
-      "rx": 1,
-      "ry": 1,
-      "rz": 1
-    },
-    {
-      "node": 1012,
+      "node": 7508,
       "type": "fixed",
       "ux": 1,
       "uy": 1,
