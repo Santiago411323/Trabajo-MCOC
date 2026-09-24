@@ -1,0 +1,7642 @@
+{
+  "slabs": [
+    {
+      "id": "L1",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L1"
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [
+            225
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L2",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [
+            223
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L2"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L2"
+        },
+        {
+          "side": "left",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L2"
+        }
+      ]
+    },
+    {
+      "id": "L3",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de L3"
+        },
+        {
+          "side": "right",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L3"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [
+            222
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L3"
+        }
+      ]
+    },
+    {
+      "id": "L4",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [
+            227
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L4"
+        }
+      ]
+    },
+    {
+      "id": "L5",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L5"
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [
+            226
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L6",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.59024375,
+          "beams": [
+            224
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L6"
+        },
+        {
+          "side": "top",
+          "area": 2.59024375,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L6"
+        },
+        {
+          "side": "left",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L6"
+        }
+      ]
+    },
+    {
+      "id": "L7",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [
+            228
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L7"
+        }
+      ]
+    },
+    {
+      "id": "L8",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L8"
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [
+            47
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L9",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [
+            26
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L9"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L9"
+        },
+        {
+          "side": "left",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L9"
+        }
+      ]
+    },
+    {
+      "id": "L10",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de L10"
+        },
+        {
+          "side": "right",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L10"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [
+            25
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L10"
+        }
+      ]
+    },
+    {
+      "id": "L11",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [
+            28
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L11"
+        }
+      ]
+    },
+    {
+      "id": "L12",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            8
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            29
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            1
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            28
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L13",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            9
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            30
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            2
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            29
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L14",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            11
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            31
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            3
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            30
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L15",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            12
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            32
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            4
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            31
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L16",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            13
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            33
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            5
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            32
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L17",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            14
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            34
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            6
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            33
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L18",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            15
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            35
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            7
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            34
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L19",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L19"
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [
+            48
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L20",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.59024375,
+          "beams": [
+            27
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L20"
+        },
+        {
+          "side": "top",
+          "area": 2.59024375,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L20"
+        },
+        {
+          "side": "left",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L20"
+        }
+      ]
+    },
+    {
+      "id": "L21",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [
+            36
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L21"
+        }
+      ]
+    },
+    {
+      "id": "L22",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            16
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            37
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            8
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            36
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L23",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.098749999999999,
+          "beams": [
+            38
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.098749999999999,
+          "beams": [
+            37
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L24",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.026250000000001,
+          "beams": [
+            39
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.026250000000001,
+          "beams": [
+            38
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L25",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            19
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            40
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            11
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            39
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L26",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            20
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            41
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            12
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            40
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L27",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            21
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            42
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            13
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            41
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L28",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            22
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            43
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            14
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            42
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L29",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            23
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            44
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            15
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            43
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L30",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L30"
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [
+            95
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L31",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [
+            74
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L31"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L31"
+        },
+        {
+          "side": "left",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L31"
+        }
+      ]
+    },
+    {
+      "id": "L32",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de L32"
+        },
+        {
+          "side": "right",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L32"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [
+            73
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L32"
+        }
+      ]
+    },
+    {
+      "id": "L33",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [
+            76
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L33"
+        }
+      ]
+    },
+    {
+      "id": "L34",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            56
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            77
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            49
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            76
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L35",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            57
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            78
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            50
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            77
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L36",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            59
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            79
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            51
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            78
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L37",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            60
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            80
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            52
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            79
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L38",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            61
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            81
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            53
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            80
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L39",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            62
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            82
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            54
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            81
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L40",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            63
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            83
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            55
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            82
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L41",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L41"
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [
+            96
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L42",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.59024375,
+          "beams": [
+            75
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L42"
+        },
+        {
+          "side": "top",
+          "area": 2.59024375,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L42"
+        },
+        {
+          "side": "left",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L42"
+        }
+      ]
+    },
+    {
+      "id": "L43",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [
+            84
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L43"
+        }
+      ]
+    },
+    {
+      "id": "L44",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            64
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            85
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            56
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            84
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L45",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.098749999999999,
+          "beams": [
+            86
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.098749999999999,
+          "beams": [
+            85
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L46",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.026250000000001,
+          "beams": [
+            87
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.026250000000001,
+          "beams": [
+            86
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L47",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            67
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            88
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            59
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            87
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L48",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            68
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            89
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            60
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            88
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L49",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            69
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            90
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            61
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            89
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L50",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            70
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            91
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            62
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            90
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L51",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            71
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            92
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            63
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            91
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L52",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L52"
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [
+            139
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L53",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [
+            121
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L53"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L53"
+        },
+        {
+          "side": "left",
+          "area": 2.9325,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L53"
+        }
+      ]
+    },
+    {
+      "id": "L54",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.8900000000000006,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de L54"
+        },
+        {
+          "side": "right",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L54"
+        },
+        {
+          "side": "top",
+          "area": 2.8900000000000006,
+          "beams": [
+            120
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.740000000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L54"
+        }
+      ]
+    },
+    {
+      "id": "L55",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 14.685,
+          "beams": [
+            123
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 14.685,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L55"
+        }
+      ]
+    },
+    {
+      "id": "L56",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            104
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            124
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            97
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            123
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L57",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            105
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            125
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            98
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            124
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L58",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            107
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            126
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            99
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            125
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L59",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            108
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            127
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            100
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            126
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L60",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            109
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            128
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            101
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            127
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L61",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            110
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            129
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            102
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            128
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L62",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            111
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            130
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            103
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            129
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L63",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L63"
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [
+            140
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L64",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 2.59024375,
+          "beams": [
+            122
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L64"
+        },
+        {
+          "side": "top",
+          "area": 2.59024375,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de L64"
+        },
+        {
+          "side": "left",
+          "area": 1.3282562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L64"
+        }
+      ]
+    },
+    {
+      "id": "L65",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 11.962499999999999,
+          "beams": [
+            131
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.962499999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L65"
+        }
+      ]
+    },
+    {
+      "id": "L66",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            112
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            132
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            104
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            131
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L67",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.098749999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L67"
+        },
+        {
+          "side": "left",
+          "area": 9.098749999999999,
+          "beams": [
+            132
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L68",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.026250000000001,
+          "beams": [
+            133
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.026250000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L68"
+        }
+      ]
+    },
+    {
+      "id": "L69",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            115
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            134
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            107
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            133
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L70",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            116
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            135
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            108
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            134
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L71",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            117
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            136
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            109
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            135
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L72",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            118
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            137
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            110
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            136
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L73",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            119
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            138
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            111
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            137
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L74",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 24.697499999999998,
+          "beams": [
+            165
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 19.802500000000002,
+          "beams": [
+            167
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 24.697499999999998,
+          "beams": [
+            164
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 19.802500000000002,
+          "beams": [
+            183
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L75",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            148
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            168
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            141
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            167
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L76",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            149
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            169
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            142
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            168
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L77",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            151
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            170
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            143
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            169
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L78",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            152
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            171
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            144
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            170
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L79",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            153
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            172
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            145
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            171
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L80",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            154
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            173
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            146
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            172
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L81",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            155
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 16.0,
+          "beams": [
+            174
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            147
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 16.0,
+          "beams": [
+            173
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L82",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 23.109375,
+          "beams": [
+            166
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 13.140625,
+          "beams": [
+            175
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 23.109375,
+          "beams": [
+            165
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 13.140625,
+          "beams": [
+            184
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L83",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            156
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            176
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            148
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            175
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L84",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.098749999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de L84"
+        },
+        {
+          "side": "left",
+          "area": 9.098749999999999,
+          "beams": [
+            176
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L85",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 9.026250000000001,
+          "beams": [
+            177
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 9.026250000000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de L85"
+        }
+      ]
+    },
+    {
+      "id": "L86",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            159
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            178
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            151
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            177
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L87",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            160
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            179
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            152
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            178
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L88",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            161
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            180
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            153
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            179
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L89",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            162
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            181
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            154
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            180
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L90",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.25,
+          "beams": [
+            163
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 11.875,
+          "beams": [
+            182
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.25,
+          "beams": [
+            155
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 11.875,
+          "beams": [
+            181
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L91",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 20.591249999999974,
+          "beams": [
+            191
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 20.591249999999974,
+          "beams": [
+            130
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L92",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 19.783750000000023,
+          "beams": [
+            193
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 19.783750000000023,
+          "beams": [
+            191
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L93",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 20.591249999999974,
+          "beams": [
+            201
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 20.591249999999974,
+          "beams": [
+            174
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L94",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 19.783750000000023,
+          "beams": [
+            203
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 19.783750000000023,
+          "beams": [
+            201
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L95",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.227,
+          "beams": [
+            24
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.243599999999998,
+          "beams": [
+            46
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.227,
+          "beams": [
+            16
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.243599999999998,
+          "beams": [
+            45
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L96",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.227,
+          "beams": [
+            72
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.243599999999998,
+          "beams": [
+            94
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.227,
+          "beams": [
+            64
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.243599999999998,
+          "beams": [
+            93,
+            210
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L97",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 20.599999999999994,
+          "beams": [
+            212
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 20.599999999999994,
+          "beams": [
+            115,
+            116
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L98",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 20.599999999999994,
+          "beams": [
+            215
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 20.599999999999994,
+          "beams": [
+            159,
+            160
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L99",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.2100000000000002,
+          "beams": [
+            206
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 1.6609999999999994,
+          "beams": [
+            207
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.2100000000000002,
+          "beams": [
+            112,
+            205
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 1.6609999999999994,
+          "beams": [
+            208
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L100",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.150000000000002,
+          "beams": [
+            221
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.150000000000002,
+          "beams": [
+            67
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "L101",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.150000000000002,
+          "beams": [
+            221
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 6.150000000000002,
+          "beams": [
+            68
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS01",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            359
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            365
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            374
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            358
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS02",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            359
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            368
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            374
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            365
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS03",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [
+            360
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS03"
+        }
+      ]
+    },
+    {
+      "id": "DS04",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [
+            361
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS04"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS04"
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            371
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS05",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            361
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS05"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS05"
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS05"
+        }
+      ]
+    },
+    {
+      "id": "DS06",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS06"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS06"
+        }
+      ]
+    },
+    {
+      "id": "DS07",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 5.2143749999999995,
+          "beams": [
+            365
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.2143749999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS07"
+        }
+      ]
+    },
+    {
+      "id": "DS08",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.010443749999999,
+          "beams": [
+            374
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [
+            368
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 12.010443749999999,
+          "beams": [
+            375
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            365
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS09",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 23.174999999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS09"
+        },
+        {
+          "side": "top",
+          "area": 23.174999999999997,
+          "beams": [
+            376
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS10",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.195843750000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS10"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS10"
+        },
+        {
+          "side": "top",
+          "area": 12.195843750000003,
+          "beams": [
+            377
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            371
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS11",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.265625,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS11"
+        },
+        {
+          "side": "right",
+          "area": 2.0925,
+          "beams": [
+            366
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.265625,
+          "beams": [
+            378
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.0925,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS11"
+        }
+      ]
+    },
+    {
+      "id": "DS12",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.19375,
+          "beams": [
+            375
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.19375,
+          "beams": [
+            378
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS13",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 14.924999999999999,
+          "beams": [
+            376
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 14.924999999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS13"
+        }
+      ]
+    },
+    {
+      "id": "DS14",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.313150000000002,
+          "beams": [
+            377
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.313150000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS14"
+        }
+      ]
+    },
+    {
+      "id": "DS15",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            377
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS15"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de DS15"
+        },
+        {
+          "side": "left",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS15"
+        }
+      ]
+    },
+    {
+      "id": "DS16",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS16"
+        },
+        {
+          "side": "left",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS16"
+        }
+      ]
+    },
+    {
+      "id": "DS17",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            378
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            366
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            362
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            358
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS18",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            378
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            369
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            362
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            366
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS19",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS19"
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [
+            363
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS20",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS20"
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS20"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [
+            364
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            372
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "DS21",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de DS21"
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS21"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            364
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS21"
+        }
+      ]
+    },
+    {
+      "id": "DS22",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de DS22"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de DS22"
+        }
+      ]
+    },
+    {
+      "id": "D101",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            380
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            386
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            395
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            379
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D102",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            380
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            389
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            395
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            386
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D103",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [
+            381
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D103"
+        }
+      ]
+    },
+    {
+      "id": "D104",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [
+            382
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D104"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D104"
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            392
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D105",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            382
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D105"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D105"
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D105"
+        }
+      ]
+    },
+    {
+      "id": "D106",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D106"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D106"
+        }
+      ]
+    },
+    {
+      "id": "D107",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 5.2143749999999995,
+          "beams": [
+            386
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.2143749999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D107"
+        }
+      ]
+    },
+    {
+      "id": "D108",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.010443749999999,
+          "beams": [
+            395
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [
+            389
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 12.010443749999999,
+          "beams": [
+            396
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            386
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D109",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 23.174999999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D109"
+        },
+        {
+          "side": "top",
+          "area": 23.174999999999997,
+          "beams": [
+            397
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D110",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.195843750000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D110"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D110"
+        },
+        {
+          "side": "top",
+          "area": 12.195843750000003,
+          "beams": [
+            398
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            392
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D111",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.265625,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D111"
+        },
+        {
+          "side": "right",
+          "area": 2.0925,
+          "beams": [
+            387
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.265625,
+          "beams": [
+            399
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.0925,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D111"
+        }
+      ]
+    },
+    {
+      "id": "D112",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.19375,
+          "beams": [
+            396
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.19375,
+          "beams": [
+            399
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D113",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 14.924999999999999,
+          "beams": [
+            397
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 14.924999999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D113"
+        }
+      ]
+    },
+    {
+      "id": "D114",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.313150000000002,
+          "beams": [
+            398
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.313150000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D114"
+        }
+      ]
+    },
+    {
+      "id": "D115",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            398
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D115"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D115"
+        },
+        {
+          "side": "left",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D115"
+        }
+      ]
+    },
+    {
+      "id": "D116",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D116"
+        },
+        {
+          "side": "left",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D116"
+        }
+      ]
+    },
+    {
+      "id": "D117",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            399
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            387
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            383
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            379
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D118",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            399
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            390
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            383
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            387
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D119",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D119"
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [
+            384
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D120",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D120"
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D120"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [
+            385
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            393
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D121",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D121"
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D121"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            385
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D121"
+        }
+      ]
+    },
+    {
+      "id": "D122",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D122"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D122"
+        }
+      ]
+    },
+    {
+      "id": "D201",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            401
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            407
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            416
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            400
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D202",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            401
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            410
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            416
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            407
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D203",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [
+            402
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D203"
+        }
+      ]
+    },
+    {
+      "id": "D204",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [
+            403
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D204"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D204"
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            413
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D205",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            403
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D205"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D205"
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D205"
+        }
+      ]
+    },
+    {
+      "id": "D206",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D206"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D206"
+        }
+      ]
+    },
+    {
+      "id": "D207",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 5.2143749999999995,
+          "beams": [
+            407
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.2143749999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D207"
+        }
+      ]
+    },
+    {
+      "id": "D208",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.010443749999999,
+          "beams": [
+            416
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [
+            410
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 12.010443749999999,
+          "beams": [
+            417
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            407
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D209",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 23.174999999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D209"
+        },
+        {
+          "side": "top",
+          "area": 23.174999999999997,
+          "beams": [
+            418
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D210",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.195843750000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D210"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D210"
+        },
+        {
+          "side": "top",
+          "area": 12.195843750000003,
+          "beams": [
+            419
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            413
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D211",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.265625,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D211"
+        },
+        {
+          "side": "right",
+          "area": 2.0925,
+          "beams": [
+            408
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.265625,
+          "beams": [
+            420
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.0925,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D211"
+        }
+      ]
+    },
+    {
+      "id": "D212",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.19375,
+          "beams": [
+            417
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.19375,
+          "beams": [
+            420
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D213",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 14.924999999999999,
+          "beams": [
+            418
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 14.924999999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D213"
+        }
+      ]
+    },
+    {
+      "id": "D214",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.313150000000002,
+          "beams": [
+            419
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.313150000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D214"
+        }
+      ]
+    },
+    {
+      "id": "D215",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            419
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D215"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D215"
+        },
+        {
+          "side": "left",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D215"
+        }
+      ]
+    },
+    {
+      "id": "D216",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D216"
+        },
+        {
+          "side": "left",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D216"
+        }
+      ]
+    },
+    {
+      "id": "D217",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            420
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            408
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            404
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            400
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D218",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            420
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            411
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            404
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            408
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D219",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D219"
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [
+            405
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D220",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D220"
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D220"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [
+            406
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            414
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D221",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D221"
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D221"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            406
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D221"
+        }
+      ]
+    },
+    {
+      "id": "D222",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D222"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D222"
+        }
+      ]
+    },
+    {
+      "id": "D301",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            422
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            428
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            437
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            421
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D302",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            422
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            431
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            437
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            428
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D303",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [
+            423
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D303"
+        }
+      ]
+    },
+    {
+      "id": "D304",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [
+            424
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D304"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D304"
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            434
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D305",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            424
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D305"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D305"
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D305"
+        }
+      ]
+    },
+    {
+      "id": "D306",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D306"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D306"
+        }
+      ]
+    },
+    {
+      "id": "D307",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 5.2143749999999995,
+          "beams": [
+            428
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.2143749999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D307"
+        }
+      ]
+    },
+    {
+      "id": "D308",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.010443749999999,
+          "beams": [
+            437
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [
+            431
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 12.010443749999999,
+          "beams": [
+            438
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            428
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D309",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 23.174999999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D309"
+        },
+        {
+          "side": "top",
+          "area": 23.174999999999997,
+          "beams": [
+            439
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D310",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 12.195843750000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D310"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D310"
+        },
+        {
+          "side": "top",
+          "area": 12.195843750000003,
+          "beams": [
+            440
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            434
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D311",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.265625,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D311"
+        },
+        {
+          "side": "right",
+          "area": 2.0925,
+          "beams": [
+            429
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.265625,
+          "beams": [
+            441
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.0925,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D311"
+        }
+      ]
+    },
+    {
+      "id": "D312",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.19375,
+          "beams": [
+            438
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.19375,
+          "beams": [
+            441
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D313",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 14.924999999999999,
+          "beams": [
+            439
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 14.924999999999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D313"
+        }
+      ]
+    },
+    {
+      "id": "D314",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.313150000000002,
+          "beams": [
+            440
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.313150000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D314"
+        }
+      ]
+    },
+    {
+      "id": "D315",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            440
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D315"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D315"
+        },
+        {
+          "side": "left",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D315"
+        }
+      ]
+    },
+    {
+      "id": "D316",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D316"
+        },
+        {
+          "side": "left",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D316"
+        }
+      ]
+    },
+    {
+      "id": "D317",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            441
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            429
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            425
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            421
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D318",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            441
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            432
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            425
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            429
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D319",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D319"
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [
+            426
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D320",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D320"
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D320"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [
+            427
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            435
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D321",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D321"
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D321"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            427
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D321"
+        }
+      ]
+    },
+    {
+      "id": "D322",
+      "profile": "FLOOR",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 2.549729,
+      "qG": 6.22722275,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D322"
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D322"
+        }
+      ]
+    },
+    {
+      "id": "D401",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            443
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            449
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            458
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            442
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D402",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            443
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            452
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            458
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            449
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D403",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [
+            444
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D403"
+        }
+      ]
+    },
+    {
+      "id": "D404",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [
+            445
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D404"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D404"
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            455
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D405",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            445
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D405"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D405"
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D405"
+        }
+      ]
+    },
+    {
+      "id": "D406",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [
+            184
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D406"
+        }
+      ]
+    },
+    {
+      "id": "D407",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 5.2143749999999995,
+          "beams": [
+            449
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.2143749999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D407"
+        }
+      ]
+    },
+    {
+      "id": "D408_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 7.236393750000012,
+          "beams": [
+            458
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D408_1"
+        },
+        {
+          "side": "top",
+          "area": 7.236393750000012,
+          "beams": [
+            459
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            449
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D408_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.798249999999998,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D408_2"
+        },
+        {
+          "side": "top",
+          "area": 0.798249999999998,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D408_2"
+        }
+      ]
+    },
+    {
+      "id": "D408_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.060899999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D408_3"
+        },
+        {
+          "side": "right",
+          "area": 1.0845899999999997,
+          "beams": [
+            452
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.060899999999995,
+          "beams": [
+            459
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 1.0845899999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D408_3"
+        }
+      ]
+    },
+    {
+      "id": "D409_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 13.030143749999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D409_1"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [
+            455
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 13.030143749999995,
+          "beams": [
+            460
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D409_1"
+        }
+      ]
+    },
+    {
+      "id": "D409_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.7982500000000008,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D409_2"
+        },
+        {
+          "side": "top",
+          "area": 0.7982500000000008,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D409_2"
+        }
+      ]
+    },
+    {
+      "id": "D409_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.0609000000000024,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D409_3"
+        },
+        {
+          "side": "right",
+          "area": 1.0845899999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D409_3"
+        },
+        {
+          "side": "top",
+          "area": 1.0609000000000024,
+          "beams": [
+            460
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 1.0845899999999995,
+          "beams": [
+            452
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D410_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 6.603716250000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D410_1"
+        },
+        {
+          "side": "right",
+          "area": 5.370806249999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D410_1"
+        },
+        {
+          "side": "top",
+          "area": 6.603716250000003,
+          "beams": [
+            461
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 5.370806249999999,
+          "beams": [
+            455
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D410_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.8180774999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D410_2"
+        },
+        {
+          "side": "left",
+          "area": 0.8180774999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D410_2"
+        }
+      ]
+    },
+    {
+      "id": "D410_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.8219400000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D410_3"
+        },
+        {
+          "side": "top",
+          "area": 0.8219400000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D410_3"
+        }
+      ]
+    },
+    {
+      "id": "D410_4",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.0609000000000004,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D410_4"
+        },
+        {
+          "side": "right",
+          "area": 1.0609,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D410_4"
+        },
+        {
+          "side": "top",
+          "area": 1.0609000000000004,
+          "beams": [
+            461
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 1.0609,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D410_4"
+        }
+      ]
+    },
+    {
+      "id": "D411",
+      "profile": "ELEVATOR_ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 14.709975,
+      "qG": 18.38746875,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D411"
+        },
+        {
+          "side": "right",
+          "area": 4.1442499999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D411"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            461
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.1442499999999995,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D411"
+        }
+      ]
+    },
+    {
+      "id": "D412",
+      "profile": "ELEVATOR_ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 14.709975,
+      "qG": 18.38746875,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.5214374999999991,
+          "beams": [
+            184
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 0.5214374999999991,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D412"
+        }
+      ]
+    },
+    {
+      "id": "D413",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.265625,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D413"
+        },
+        {
+          "side": "right",
+          "area": 2.0925,
+          "beams": [
+            450
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 1.265625,
+          "beams": [
+            462
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.0925,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D413"
+        }
+      ]
+    },
+    {
+      "id": "D414_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 5.891643750000007,
+          "beams": [
+            459
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.2275562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D414_1"
+        },
+        {
+          "side": "top",
+          "area": 5.891643750000007,
+          "beams": [
+            462
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 2.2275562499999997,
+          "beams": [
+            450
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D414_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.017510000000000088,
+          "beams": [
+            459
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 0.017510000000000088,
+          "beams": [
+            459
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D414_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.872109749999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D414_3"
+        },
+        {
+          "side": "right",
+          "area": 0.3546202499999999,
+          "beams": [
+            453
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 0.872109749999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D414_3"
+        },
+        {
+          "side": "left",
+          "area": 0.3546202499999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D414_3"
+        }
+      ]
+    },
+    {
+      "id": "D415_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.850449999999997,
+          "beams": [
+            460
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.850449999999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D415_1"
+        }
+      ]
+    },
+    {
+      "id": "D415_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.01751000000000015,
+          "beams": [
+            460
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 0.01751000000000015,
+          "beams": [
+            460
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D415_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.8721097500000012,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D415_3"
+        },
+        {
+          "side": "right",
+          "area": 0.3546202499999999,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D415_3"
+        },
+        {
+          "side": "top",
+          "area": 0.8721097500000012,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D415_3"
+        },
+        {
+          "side": "left",
+          "area": 0.3546202499999999,
+          "beams": [
+            453
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D416_1",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 5.484191250000002,
+          "beams": [
+            461
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.2275562499999997,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D416_1"
+        },
+        {
+          "side": "top",
+          "area": 5.484191250000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D416_1"
+        },
+        {
+          "side": "left",
+          "area": 2.2275562499999997,
+          "beams": [
+            456
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D416_2",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.5268524999999996,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D416_2"
+        },
+        {
+          "side": "left",
+          "area": 0.5268524999999996,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D416_2"
+        }
+      ]
+    },
+    {
+      "id": "D416_3",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 0.8794240000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D416_3"
+        },
+        {
+          "side": "right",
+          "area": 0.36481599999999986,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D416_3"
+        },
+        {
+          "side": "top",
+          "area": 0.8794240000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D416_3"
+        },
+        {
+          "side": "left",
+          "area": 0.36481599999999986,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D416_3"
+        }
+      ]
+    },
+    {
+      "id": "D417",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [
+            461
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D417"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde top de D417"
+        },
+        {
+          "side": "left",
+          "area": 2.1477499999999994,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D417"
+        }
+      ]
+    },
+    {
+      "id": "D418",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.33581249999999946,
+          "beams": [
+            183
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 0.33581249999999946,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D418"
+        }
+      ]
+    },
+    {
+      "id": "D419",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 3.515625,
+          "beams": [
+            462
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.481250000000001,
+          "beams": [
+            450
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 3.515625,
+          "beams": [
+            446
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.481250000000001,
+          "beams": [
+            442
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D420",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.44619375,
+          "beams": [
+            462
+          ],
+          "message": ""
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [
+            453
+          ],
+          "message": ""
+        },
+        {
+          "side": "top",
+          "area": 11.44619375,
+          "beams": [
+            446
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            450
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D421",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 21.325000000000003,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D421"
+        },
+        {
+          "side": "top",
+          "area": 21.325000000000003,
+          "beams": [
+            447
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D422",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 11.616793750000005,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D422"
+        },
+        {
+          "side": "right",
+          "area": 4.547556250000001,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D422"
+        },
+        {
+          "side": "top",
+          "area": 11.616793750000005,
+          "beams": [
+            448
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 4.547556250000001,
+          "beams": [
+            456
+          ],
+          "message": ""
+        }
+      ]
+    },
+    {
+      "id": "D423",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "bottom",
+          "area": 1.4641,
+          "beams": [],
+          "message": "Sin viga receptora en borde bottom de D423"
+        },
+        {
+          "side": "right",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde right de D423"
+        },
+        {
+          "side": "top",
+          "area": 1.4641,
+          "beams": [
+            448
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 3.6965500000000002,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D423"
+        }
+      ]
+    },
+    {
+      "id": "D424",
+      "profile": "ROOF",
+      "thickness": 0.15,
+      "unitWeight": 24.516625,
+      "finishes": 1.96133,
+      "qG": 5.63882375,
+      "edges": [
+        {
+          "side": "right",
+          "area": 0.4798124999999993,
+          "beams": [
+            183
+          ],
+          "message": ""
+        },
+        {
+          "side": "left",
+          "area": 0.4798124999999993,
+          "beams": [],
+          "message": "Sin viga receptora en borde left de D424"
+        }
+      ]
+    }
+  ]
+}

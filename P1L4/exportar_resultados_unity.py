@@ -520,6 +520,8 @@ def main():
 
     # ── Guardar ──────────────────────────────────────────────────────
     write_json(JSON_OUT, output)
+    from exportar_superficies_carga import export as export_surfaces
+    export_surfaces(output)
     n_nodes = len(data.get("nodes", []))
     n_elements = len(data.get("elements", []))
     n_combos = len(combos_list)

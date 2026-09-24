@@ -5,13 +5,12 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 {
     private static int nextWindowId = 41050;
     private readonly int windowId = nextWindowId++;
-    private readonly float[,] samples = new float[5, 61];
-    private readonly float[] baseSamples = new float[61];
-    private readonly string[] names = { "My", "Mz", "Vy", "Vz", "Axial N" };
+    private readonly float[,] samples = new float[6, 61];
+    private readonly string[] names = { "My", "Mz", "Vy", "Vz", "N", "T" };
     private readonly Color[] colors = {
         new Color(1f, 0.45f, 0.85f), new Color(0.7f, 0.6f, 1f),
         new Color(1f, 0.7f, 0.25f), new Color(0.3f, 0.85f, 1f),
-        new Color(0.5f, 1f, 0.6f)
+        new Color(0.5f, 1f, 0.6f), Color.cyan
     };
     private ElementPicker picker;
     private DiagramController diagrams;
@@ -116,7 +115,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
                 MobileLoadController.Instance.IsActiveFor(selected);
             GUI.Label(new Rect(0f, 36f, width, 38f),
                 "Eje I → J | N: tracción+ | escala propia\n" +
-                (includesMobile ? "Color: OpenSees + persona | gris: solo OpenSees (My, Vz)" :
+                (includesMobile ? "OpenSees + carga móvil de losa (respuesta global)" :
                     "Combinación OpenSees; carga móvil inactiva"), textStyle);
             if (diagrams != null && diagrams.TryGetSelectedDiagramSamples(selected, samples))
             {
@@ -132,7 +131,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 
     private void DrawChart(Rect rect, int row)
     {
-        string unit = row < 2 ? "kN·m" : "kN";
+        string unit = row < 2 || row == 5 ? "kN·m" : "kN";
         int count = samples.GetLength(1);
         float min = samples[row, 0];
         float max = min;
@@ -141,44 +140,13 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
             min = Mathf.Min(min, samples[row, i]);
             max = Mathf.Max(max, samples[row, i]);
         }
-        float totalMin = min, totalMax = max;
-        // Curva solo OpenSees (sin la persona) para ver el efecto de la carga movil.
-        bool showBase = false;
-        float maxDelta = 0f;
-        MobileLoadController mobile = MobileLoadController.Instance;
-        if ((row == 0 || row == 3) && mobile != null && mobile.IsActiveFor(selected))
-        {
-            for (int i = 0; i < count; i++)
-            {
-                float t = i / (float)(count - 1);
-                mobile.TryGetLocalBeamContribution(selected, t, out float dVz, out float dMy);
-                float delta = row == 0 ? dMy : dVz;
-                baseSamples[i] = samples[row, i] - delta;
-                maxDelta = Mathf.Abs(delta) > Mathf.Abs(maxDelta) ? delta : maxDelta;
-                min = Mathf.Min(min, baseSamples[i]);
-                max = Mathf.Max(max, baseSamples[i]);
-            }
-            showBase = true;
-        }
         GUI.Label(new Rect(rect.x, rect.y, rect.width, 19f),
-            $"{names[row]} [{unit}]   mín {totalMin:0.##} / máx {totalMax:0.##}" +
-            (showBase ? $"   | persona: {maxDelta:+0.#;-0.#;0} {unit}" : ""), titleStyle);
+            $"{names[row]} [{unit}]   mín {min:0.##} / máx {max:0.##}", titleStyle);
         Rect plot = new Rect(rect.x + 12f, rect.y + 23f, rect.width - 24f, 48f);
         float bound = Mathf.Max(Mathf.Abs(min), Mathf.Abs(max), 0.000001f);
         float zero = plot.center.y;
         DrawLine(new Vector2(plot.x, zero), new Vector2(plot.xMax, zero), Color.gray, 1f);
         Vector2 previous = Vector2.zero;
-        if (showBase)
-        {
-            Color baseColor = new Color(0.75f, 0.75f, 0.75f, 0.8f);
-            for (int i = 0; i < count; i++)
-            {
-                Vector2 point = new Vector2(plot.x + plot.width * i / (count - 1),
-                    zero - baseSamples[i] / bound * (plot.height * 0.45f));
-                if (i > 0) DrawLine(previous, point, baseColor, 1f);
-                previous = point;
-            }
-        }
         for (int i = 0; i < count; i++)
         {
             Vector2 point = new Vector2(plot.x + plot.width * i / (count - 1),

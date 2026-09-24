@@ -34,6 +34,7 @@ public class ElementPicker : MonoBehaviour
 
     void Update()
     {
+        if(MobileLoadController.CapturesPointer || Input.GetKey(KeyCode.LeftShift)) return;
         if (cam == null)
         {
             cam = Camera.main;
@@ -51,31 +52,19 @@ public class ElementPicker : MonoBehaviour
             RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-            // Con la carga movil activa manda lo que esta MAS CERCA de la camara: si es
-            // una losa, el click solo ubica a la persona. Antes se buscaba primero un
-            // elemento en todo el rayo, y el rayo atraviesa la losa: se seleccionaba una
-            // viga o columna del piso de abajo y la viga que se estaba mirando cambiaba.
-            MobileLoadController mobileActive = FindObjectOfType<MobileLoadController>();
-            if (mobileActive != null && mobileActive.IsPanelVisible())
+            // La superficie mas cercana manda. Asi el rayo no atraviesa la losa para
+            // seleccionar accidentalmente una viga o columna del piso inferior.
+            if (hits.Length > 0 && hits[0].collider.name.StartsWith("Losa_"))
             {
-                foreach (RaycastHit candidate in hits)
+                var info = hits[0].collider.GetComponentInParent<InfoSelectable>();
+                if (info != null)
                 {
-                    bool isSlab = candidate.collider.name.StartsWith("Losa_");
-                    ElementSelectable el = candidate.collider.GetComponentInParent<ElementSelectable>();
-                    if (!isSlab && el == null) continue;
-                    if (isSlab)
-                    {
-                        mobileActive.SetLoadOnSlabPanel(candidate.collider.gameObject, candidate.point);
-                        return;
-                    }
-                    if (el == Selected && el.data != null && el.data.type == "viga")
-                    {
-                        // Click sobre la viga ya seleccionada: la persona se para ahi.
-                        mobileActive.PlaceLoadAt(candidate.point, el);
-                        return;
-                    }
-                    break; // el primer objeto es otro elemento: se selecciona abajo
+                    SetElementSelection(null);
+                    selectedInfo = info;
+                    scroll = Vector2.zero;
                 }
+                MobileLoadController.Instance?.SetLoadOnSlabPanel(hits[0].collider.gameObject, hits[0].point);
+                return;
             }
 
             ElementSelectable selectable = null;
@@ -225,7 +214,7 @@ foreach (RaycastHit candidate in hits)
     private ElementSelectable selectedElement;
     private InfoSelectable selectedInfo;
 
-    private bool IsMouseOverViewerGui()
+    public bool IsMouseOverViewerGui()
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 

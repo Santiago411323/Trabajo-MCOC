@@ -141,18 +141,9 @@ public class ElementSelectable : MonoBehaviour
                   $"Mz = {mz:0.###} kN*m\n";
 
         MobileLoadController mobile = MobileLoadController.Instance;
-        if (mobile != null && mobile.TryGetLocalBeamContribution(this, t, out float mobileVz, out float mobileMy))
-        {
-            result += $"\n--- Carga movil local adicional ---\n" +
-                      $"Delta Vz = {mobileVz:0.###} kN\n" +
-                      $"Delta My = {mobileMy:0.###} kN*m\n" +
-                      $"Total Vz = {vz + mobileVz:0.###} kN\n" +
-                      $"Total My = {my + mobileMy:0.###} kN*m\n";
-        }
-        else
-        {
-            result += "Carga movil local inactiva para este elemento.\n";
-        }
+        result += mobile != null && mobile.IsActiveFor(this)
+            ? "Incluye incremento global OpenSees por carga movil sobre losa.\n"
+            : "Carga movil sin respuesta activa.\n";
 
         if (data.type == "viga" && data.areaTributaria > 0f)
         {

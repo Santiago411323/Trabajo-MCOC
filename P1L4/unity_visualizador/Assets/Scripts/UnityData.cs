@@ -10,6 +10,8 @@ public static class UnityData
     public static float FactorQ = 0f;
     public static float FactorEX = 0f;
     public static float FactorEY = 0f;
+    public static readonly Dictionary<int,float[]> MobileForces = new Dictionary<int,float[]>();
+    public static readonly Dictionary<int,Vector3> MobileDisplacements = new Dictionary<int,Vector3>();
 
     public static Dictionary<string, List<DisplacementRecord>> DisplacementsByCombo;
     public static Dictionary<string, List<ElementForceRecord>> ElementForcesByCombo;
@@ -24,6 +26,7 @@ public static class UnityData
     public static void LoadData(StructureData data)
     {
         Structure = data;
+        MobileForces.Clear(); MobileDisplacements.Clear();
         ActiveCombo = null;
         UseBaseCaseFactors = false;
         BuildModelGeometry(data);
@@ -114,6 +117,12 @@ public static class UnityData
 
     public static Vector3 GetNodeDisplacement(string combo, int nodeId)
     {
+        return GetBaseNodeDisplacement(combo,nodeId) +
+            (MobileDisplacements.TryGetValue(nodeId,out var increment) ? increment : Vector3.zero);
+    }
+
+    private static Vector3 GetBaseNodeDisplacement(string combo, int nodeId)
+    {
         if (UseBaseCaseFactors)
         {
             return GetNodeDisplacementForCombo("G", nodeId) * FactorG +
@@ -144,6 +153,17 @@ public static class UnityData
     }
 
     public static float[] GetElementForces(string combo, int elementId)
+    {
+        float[] source=GetBaseElementForces(combo,elementId);
+        if(source==null) return null;
+        float[] extra=MobileForces.TryGetValue(elementId,out var increment) ? increment : null;
+        if(extra==null) return source;
+        float[] total=(float[])source.Clone();
+        for(int i=0;i<12;i++) total[i]+=extra[i];
+        return total;
+    }
+
+    private static float[] GetBaseElementForces(string combo, int elementId)
     {
         if (UseBaseCaseFactors)
         {
