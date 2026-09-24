@@ -7,6 +7,9 @@ using UnityEngine.InputSystem;
 [ExecuteAlways]
 public class DiagramController : MonoBehaviour
 {
+    private const string AuditElementTag = "B3003_V60/80";
+    private const string AuditCombo = "C1";
+
     private enum DiagramMode
     {
         None,
@@ -23,11 +26,14 @@ public class DiagramController : MonoBehaviour
     public float diagramBaseOffset = 0.06f;
     public float deformedMultiplier = 120f;
     public float deformedTargetPct = 0.06f;
+    public bool auditSingleElementDiagrams = false;
+    public bool drawGlobalForceDiagrams = true;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<ElementSelectable> structuralElements = new List<ElementSelectable>();
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
     private DiagramMode currentMode = DiagramMode.None;
+    private MobileLoadController mobileLoad;
     private readonly Dictionary<string, float> deformedScaleByBuilding = new Dictionary<string, float>();
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
     private GUIStyle tableBoxStyle;
@@ -83,6 +89,11 @@ public class DiagramController : MonoBehaviour
     {
         if (!Application.isPlaying) return;
 
+        if (mobileLoad == null)
+        {
+            mobileLoad = FindObjectOfType<MobileLoadController>();
+        }
+
         if (PressedKey(KeyCode.Alpha0)) ShowDiagram(DiagramMode.None);
         if (PressedKey(KeyCode.Alpha1)) ShowDiagram(DiagramMode.Axial);
         if (PressedKey(KeyCode.Alpha2)) ShowDiagram(DiagramMode.Shear);
@@ -112,6 +123,12 @@ public class DiagramController : MonoBehaviour
         modeToRedraw = mode;
         ClearDiagram();
 
+        if (auditSingleElementDiagrams && mode != DiagramMode.None && mode != DiagramMode.Deformed)
+        {
+            CreateAuditDiagramForSingleElement(mode);
+            return;
+        }
+
         if (mode == DiagramMode.None)
         {
             return;
@@ -122,6 +139,12 @@ public class DiagramController : MonoBehaviour
             deformedScaleByBuilding.Clear();
             CreateDeformedDiagram();
             Debug.Log("[DiagramController] modo Deformada activado (escala por edificio)");
+            return;
+        }
+
+        if (!drawGlobalForceDiagrams)
+        {
+            Debug.Log("[DiagramController] Diagramas globales desactivados. Usa el panel 'Diagrama seleccionado'.");
             return;
         }
 
@@ -141,6 +164,110 @@ public class DiagramController : MonoBehaviour
         }
 
         Debug.Log($"[DiagramController] modo {mode}: {created} diagramas, max por edificio {FormatMaxByBuilding()}");
+    }
+
+    public void RefreshDiagramForElement(ElementSelectable element)
+    {
+        if (element == null || element.data == null)
+        {
+            return;
+        }
+        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed)
+        {
+            return;
+        }
+        if (auditSingleElementDiagrams || !drawGlobalForceDiagrams)
+        {
+            return;
+        }
+
+        string prefix = $"Diagrama_{currentMode}_E{element.data.id}";
+        for (int i = diagramObjects.Count - 1; i >= 0; i--)
+        {
+            if (diagramObjects[i] == null)
+            {
+                diagramObjects.RemoveAt(i);
+                continue;
+            }
+            GameObject go = diagramObjects[i];
+            if (go.name == prefix || go.name.StartsWith(prefix, System.StringComparison.Ordinal))
+            {
+                Destroy(go);
+                diagramObjects.RemoveAt(i);
+            }
+        }
+
+        string building = string.IsNullOrEmpty(element.data.sourceBuilding) ? "?" : element.data.sourceBuilding;
+        currentMaxByBuilding[building] = ComputeBuildingMax(building, currentMode);
+        CreateElementDiagram(element, currentMode);
+    }
+
+    private float ComputeBuildingMax(string building, DiagramMode mode)
+    {
+        float max = 0.001f;
+        foreach (ElementSelectable e in structuralElements)
+        {
+            if (e == null || e.data == null) continue;
+            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && e.data.type != "viga") continue;
+            string eb = string.IsNullOrEmpty(e.data.sourceBuilding) ? "?" : e.data.sourceBuilding;
+            if (eb != building) continue;
+            int segments = 24;
+            float length = (e.endPoint - e.startPoint).magnitude;
+            for (int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                max = Mathf.Max(max, Mathf.Abs(GetValue(e, mode, t, length)));
+            }
+        }
+        return max;
+    }
+
+    private void CreateAuditDiagramForSingleElement(DiagramMode mode)
+    {
+        ElementSelectable element = FindAuditElement();
+        if (element == null || element.data == null)
+        {
+            Debug.LogWarning($"[DiagramController] No se encontro elemento de auditoria {AuditElementTag}.");
+            return;
+        }
+
+        InternalDiagramForces internalForces = ConvertOpenSeesEndForcesToInternalForces(element, AuditCombo, true);
+        bool ok = CheckInternalDiagramEquilibrium(element, internalForces, true);
+        if (!ok)
+        {
+            Debug.LogWarning($"WARNING: {AuditElementTag} falla chequeo de equilibrio. No usar este diagrama como validado.");
+        }
+
+        CreateAuditLocalAxes(element, internalForces);
+        if (mode == DiagramMode.Axial)
+        {
+            CreateAuditComponentDiagram(element, internalForces, "N", new Color(1f, 0.15f, 0.15f), internalForces.localY, 0);
+        }
+        else if (mode == DiagramMode.Shear)
+        {
+            CreateAuditComponentDiagram(element, internalForces, "Vy", new Color(1f, 0.55f, 0f), internalForces.localY, 1);
+            CreateAuditComponentDiagram(element, internalForces, "Vz", new Color(1f, 0.85f, 0.1f), internalForces.localZ, 2);
+        }
+        else if (mode == DiagramMode.Moment)
+        {
+            CreateAuditComponentDiagram(element, internalForces, "My", Color.magenta, internalForces.localY, 4);
+            CreateAuditComponentDiagram(element, internalForces, "Mz", new Color(0.65f, 0.25f, 1f), internalForces.localZ, 5);
+        }
+
+        Debug.Log($"[DiagramController] AUDIT DEBUG: mostrando solo {AuditElementTag}, modo={mode}, equilibrio={(ok ? "PASS" : "FAIL")}");
+    }
+
+    private ElementSelectable FindAuditElement()
+    {
+        foreach (ElementSelectable e in structuralElements)
+        {
+            if (e == null || e.data == null) continue;
+            if (e.data.elementTag == AuditElementTag || e.data.sourceId == AuditElementTag)
+            {
+                return e;
+            }
+        }
+        return null;
     }
 
     private string FormatMaxByBuilding()
@@ -298,13 +425,14 @@ public class DiagramController : MonoBehaviour
         Vector3 offsetDirection = GetOffsetDirection(axis, mode);
         float length = axis.magnitude;
 
+        float drawSign = (mode == DiagramMode.Moment) ? -1f : 1f;
         for (int i = 0; i <= segments; i++)
         {
             float t = i / (float)segments;
             Vector3 basePoint = Vector3.Lerp(element.startPoint, element.endPoint, t);
             float value = GetValue(element, mode, t, length);
             float maxValue = MaxForElement(element);
-            points[i] = basePoint + offsetDirection * (diagramBaseOffset + value / maxValue * ScaleFor(mode));
+            points[i] = basePoint + offsetDirection * (diagramBaseOffset + drawSign * value / maxValue * ScaleFor(mode));
         }
 
         GameObject lineObject = new GameObject($"Diagrama_{mode}_E{element.data.id}");
@@ -324,6 +452,224 @@ public class DiagramController : MonoBehaviour
         CreateLabel(points[segments], GetValue(element, mode, 1f, length), UnitFor(mode), lineObject.transform);
     }
 
+    private struct InternalDiagramForces
+    {
+        public float length;
+        public Vector3 localX;
+        public Vector3 localY;
+        public Vector3 localZ;
+        public float Ni;
+        public float VyI;
+        public float VzI;
+        public float Ti;
+        public float MyI;
+        public float MzI;
+        public float Nj;
+        public float VyJ;
+        public float VzJ;
+        public float Tj;
+        public float MyJ;
+        public float MzJ;
+        public float qLocalY;
+        public float qLocalZ;
+    }
+
+    private InternalDiagramForces ConvertOpenSeesEndForcesToInternalForces(ElementSelectable element, string combo, bool printLog)
+    {
+        ElementData data = element.data;
+        float[] raw = UnityData.GetElementForcesForCase(combo, data.id);
+        if (raw == null || raw.Length < 12)
+        {
+            raw = UnityData.GetElementForces(combo, data.id);
+        }
+        if (raw == null || raw.Length < 12)
+        {
+            Debug.LogWarning($"[DiagramController] Sin fuerzas OpenSees para {data.elementTag} combo {combo}.");
+            return new InternalDiagramForces();
+        }
+
+        Vector3 axis = element.endPoint - element.startPoint;
+        float length = Mathf.Max(axis.magnitude, 0.001f);
+        Vector3 localX = axis.normalized;
+        Vector3 localZ = Vector3.Cross(localX, Vector3.up).normalized;
+        if (localZ.sqrMagnitude < 0.0001f)
+        {
+            localZ = Vector3.forward;
+        }
+        Vector3 localY = Vector3.Cross(localZ, localX).normalized;
+
+        InternalDiagramForces f = new InternalDiagramForces();
+        f.length = length;
+        f.localX = localX;
+        f.localY = localY;
+        f.localZ = localZ;
+
+        // OpenSees entrega acciones nodales resistentes de extremo.
+        // Para dibujar esfuerzos internos fisicos, el extremo j se compara con signo opuesto:
+        // Vj_internal = -Vj_raw, Tj_internal = -Tj_raw, Mj_internal = -Mj_raw.
+        // Axial: si OpenSees devuelve Ni=-N y Nj=+N, el axial interno constante es N=-Ni=Nj.
+        f.Ni = -raw[0];
+        f.VyI = raw[1];
+        f.VzI = raw[2];
+        f.Ti = raw[3];
+        f.MyI = raw[4];
+        f.MzI = raw[5];
+        f.Nj = raw[6];
+        f.VyJ = -raw[7];
+        f.VzJ = -raw[8];
+        f.Tj = -raw[9];
+        f.MyJ = -raw[10];
+        f.MzJ = -raw[11];
+        f.qLocalY = (f.VyI - f.VyJ) / length;
+        f.qLocalZ = (f.VzI - f.VzJ) / length;
+
+        if (printLog)
+        {
+            Debug.Log(
+                $"RAW OPENSEES RESULTS\n" +
+                $"Element: {data.elementTag}\n" +
+                $"Combo: {combo}\n" +
+                $"N_i={raw[0]:0.######}\nVy_i={raw[1]:0.######}\nVz_i={raw[2]:0.######}\nT_i={raw[3]:0.######}\nMy_i={raw[4]:0.######}\nMz_i={raw[5]:0.######}\n\n" +
+                $"N_j={raw[6]:0.######}\nVy_j={raw[7]:0.######}\nVz_j={raw[8]:0.######}\nT_j={raw[9]:0.######}\nMy_j={raw[10]:0.######}\nMz_j={raw[11]:0.######}\n\n" +
+                $"localX={FormatStructuralVector(localX)}\nlocalY={FormatStructuralVector(localY)}\nlocalZ={FormatStructuralVector(localZ)}\n" +
+                $"length={length:0.######}\nq_local_y={f.qLocalY:0.######}\nq_local_z={f.qLocalZ:0.######}\n\n" +
+                $"INTERNAL DIAGRAM VALUES\n" +
+                $"N_i_internal={f.Ni:0.######}\nVy_i_internal={f.VyI:0.######}\nVz_i_internal={f.VzI:0.######}\nT_i_internal={f.Ti:0.######}\nMy_i_internal={f.MyI:0.######}\nMz_i_internal={f.MzI:0.######}\n\n" +
+                $"N_j_internal={f.Nj:0.######}\nVy_j_internal={f.VyJ:0.######}\nVz_j_internal={f.VzJ:0.######}\nT_j_internal={f.Tj:0.######}\nMy_j_internal={f.MyJ:0.######}\nMz_j_internal={f.MzJ:0.######}");
+        }
+
+        return f;
+    }
+
+    private bool CheckInternalDiagramEquilibrium(ElementSelectable element, InternalDiagramForces f, bool printLog)
+    {
+        float tolForce = 0.05f;
+        float tolMoment = 0.25f;
+        float nError = Mathf.Abs(f.Ni - f.Nj);
+        float vyEnd = f.VyI - f.qLocalY * f.length;
+        float vzEnd = f.VzI - f.qLocalZ * f.length;
+        float myEnd = f.MyI + f.VzI * f.length - 0.5f * f.qLocalZ * f.length * f.length;
+        float mzEnd = f.MzI - f.VyI * f.length + 0.5f * f.qLocalY * f.length * f.length;
+
+        bool axialOk = nError <= tolForce;
+        bool shearYOk = Mathf.Abs(vyEnd - f.VyJ) <= tolForce;
+        bool shearZOk = Mathf.Abs(vzEnd - f.VzJ) <= tolForce;
+        bool momentYOk = Mathf.Abs(myEnd - f.MyJ) <= tolMoment;
+        bool momentZOk = Mathf.Abs(mzEnd - f.MzJ) <= tolMoment;
+
+        if (printLog)
+        {
+            Debug.Log(
+                $"ELEMENT DIAGRAM CHECK\n" +
+                $"Element: {element.data.elementTag}\n" +
+                $"Length: {f.length:0.######}\n\n" +
+                $"Axial equilibrium: {(axialOk ? "PASS" : "FAIL")} error={nError:0.######}\n" +
+                $"Shear equilibrium Y: {(shearYOk ? "PASS" : "FAIL")} V(L)={vyEnd:0.######} target={f.VyJ:0.######}\n" +
+                $"Shear equilibrium Z: {(shearZOk ? "PASS" : "FAIL")} V(L)={vzEnd:0.######} target={f.VzJ:0.######}\n" +
+                $"Moment equilibrium Y: {(momentYOk ? "PASS" : "FAIL")} M(L)={myEnd:0.######} target={f.MyJ:0.######}\n" +
+                $"Moment equilibrium Z: {(momentZOk ? "PASS" : "FAIL")} M(L)={mzEnd:0.######} target={f.MzJ:0.######}\n\n" +
+                BuildPointTable(f));
+        }
+
+        return axialOk && shearYOk && shearZOk && momentYOk && momentZOk;
+    }
+
+    private string BuildPointTable(InternalDiagramForces f)
+    {
+        string text = "21 INTERNAL POINTS\nx,N,Vy,Vz,My,Mz\n";
+        for (int i = 0; i <= 20; i++)
+        {
+            float x = f.length * i / 20f;
+            text += $"{x:0.###},{EvaluateInternalValue(f, 0, x):0.###},{EvaluateInternalValue(f, 1, x):0.###},{EvaluateInternalValue(f, 2, x):0.###},{EvaluateInternalValue(f, 4, x):0.###},{EvaluateInternalValue(f, 5, x):0.###}\n";
+        }
+        return text;
+    }
+
+    private float EvaluateInternalValue(InternalDiagramForces f, int component, float x)
+    {
+        if (component == 0) return f.Ni;
+        if (component == 1) return f.VyI - f.qLocalY * x;
+        if (component == 2) return f.VzI - f.qLocalZ * x;
+        if (component == 4) return f.MyI + f.VzI * x - 0.5f * f.qLocalZ * x * x;
+        if (component == 5) return f.MzI - f.VyI * x + 0.5f * f.qLocalY * x * x;
+        return 0f;
+    }
+
+    private string FormatStructuralVector(Vector3 v)
+    {
+        return $"({v.x:0.###},{v.z:0.###},{v.y:0.###})";
+    }
+
+    private void CreateAuditLocalAxes(ElementSelectable element, InternalDiagramForces f)
+    {
+        Vector3 origin = element.startPoint;
+        CreateLine(element.startPoint, element.endPoint, Color.white, 0.10f, "AUDIT_B3003_ElementAxis");
+        CreateAuditAxis("AUDIT_B3003_localX", origin, f.localX, Color.red, "localX");
+        CreateAuditAxis("AUDIT_B3003_localY", origin, f.localY, Color.green, "localY");
+        CreateAuditAxis("AUDIT_B3003_localZ", origin, f.localZ, Color.blue, "localZ");
+    }
+
+    private void CreateAuditAxis(string name, Vector3 origin, Vector3 direction, Color color, string label)
+    {
+        Vector3 end = origin + direction.normalized * 2.2f;
+        CreateLine(origin, end, color, 0.07f, name);
+        CreateAuditText(end + Vector3.up * 0.15f, label, color);
+    }
+
+    private void CreateAuditText(Vector3 position, string label, Color color)
+    {
+        GameObject labelObject = new GameObject("AUDIT_Label_" + label);
+        labelObject.transform.SetParent(transform);
+        labelObject.hideFlags = HideFlags.DontSave;
+        labelObject.transform.position = position;
+        TextMesh text = labelObject.AddComponent<TextMesh>();
+        text.text = label;
+        text.characterSize = 0.26f;
+        text.anchor = TextAnchor.MiddleCenter;
+        text.color = color;
+        diagramObjects.Add(labelObject);
+    }
+
+    private void CreateAuditComponentDiagram(ElementSelectable element, InternalDiagramForces f, string componentName, Color color, Vector3 offsetDirection, int component)
+    {
+        int pointCount = 21;
+        Vector3[] points = new Vector3[pointCount];
+        float maxAbs = 0.001f;
+        for (int i = 0; i < pointCount; i++)
+        {
+            float x = f.length * i / (pointCount - 1);
+            maxAbs = Mathf.Max(maxAbs, Mathf.Abs(EvaluateInternalValue(f, component, x)));
+        }
+
+        float visualScale = 1.4f / maxAbs;
+        for (int i = 0; i < pointCount; i++)
+        {
+            float x = f.length * i / (pointCount - 1);
+            float value = EvaluateInternalValue(f, component, x);
+            Vector3 basePoint = element.startPoint + f.localX * x;
+            points[i] = basePoint + offsetDirection.normalized * (0.25f + value * visualScale);
+        }
+
+        GameObject lineObject = new GameObject($"AUDIT_B3003_{componentName}");
+        lineObject.transform.SetParent(transform);
+        lineObject.hideFlags = HideFlags.DontSave;
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        line.positionCount = points.Length;
+        line.SetPositions(points);
+        line.startWidth = 0.075f;
+        line.endWidth = 0.075f;
+        line.useWorldSpace = true;
+        line.material = CreateMaterial(color);
+        diagramObjects.Add(lineObject);
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            float x = f.length * i / (pointCount - 1);
+            float value = EvaluateInternalValue(f, component, x);
+            CreateLabel(points[i], value, " " + componentName, lineObject.transform);
+        }
+    }
+
     private float MaxForElement(ElementSelectable element)
     {
         if (element == null || element.data == null) return 1f;
@@ -332,6 +678,15 @@ public class DiagramController : MonoBehaviour
     }
 
     private float GetValue(ElementSelectable element, DiagramMode mode, float t, float length)
+    {
+        if (element == null || element.data == null)
+        {
+            return 0f;
+        }
+        return GetBaseValue(element, mode, t, length) + MobileExtraFor(element, mode, t, length);
+    }
+
+    private float GetBaseValue(ElementSelectable element, DiagramMode mode, float t, float length)
     {
         ElementData data = element.data;
         if (data == null)
@@ -360,6 +715,38 @@ public class DiagramController : MonoBehaviour
         }
         float momentSign = Mathf.Abs(my) >= Mathf.Abs(mz) ? Mathf.Sign(my) : Mathf.Sign(mz);
         return momentSign * Mathf.Sqrt(my * my + mz * mz);
+    }
+
+    public float ValueAt(ElementSelectable element, string modeName, float t, float length)
+    {
+        DiagramMode mode;
+        if (modeName == "Axial") mode = DiagramMode.Axial;
+        else if (modeName == "Shear") mode = DiagramMode.Shear;
+        else if (modeName == "Moment") mode = DiagramMode.Moment;
+        else return 0f;
+        return GetBaseValue(element, mode, t, length);
+    }
+
+    private string ModeName(DiagramMode mode)
+    {
+        if (mode == DiagramMode.Axial) return "Axial";
+        if (mode == DiagramMode.Shear) return "Shear";
+        if (mode == DiagramMode.Moment) return "Moment";
+        return "";
+    }
+
+    private float MobileExtraFor(ElementSelectable element, DiagramMode mode, float t, float length)
+    {
+        if (mobileLoad == null || !mobileLoad.IsPanelReady() || !mobileLoad.SameElement(element))
+        {
+            return 0f;
+        }
+        string modeName = ModeName(mode);
+        if (string.IsNullOrEmpty(modeName))
+        {
+            return 0f;
+        }
+        return mobileLoad.ExtraAt(element, modeName, t, length);
     }
 
     private float GetForceGradient(ElementData data, float t, int iIndex, int jIndex)
@@ -498,16 +885,16 @@ public class DiagramController : MonoBehaviour
 
         ElementData data = selected.data;
         float length = (selected.endPoint - selected.startPoint).magnitude;
-        float vi = GetValue(selected, currentMode, 0f, length);
-        float vm = GetValue(selected, currentMode, 0.5f, length);
-        float vj = GetValue(selected, currentMode, 1f, length);
+        float vi = GetBaseValue(selected, currentMode, 0f, length);
+        float vm = GetBaseValue(selected, currentMode, 0.5f, length);
+        float vj = GetBaseValue(selected, currentMode, 1f, length);
 
         float vmax = vi;
         int segments = 24;
         for (int i = 0; i <= segments; i++)
         {
             float t = i / (float)segments;
-            float v = GetValue(selected, currentMode, t, length);
+            float v = GetBaseValue(selected, currentMode, t, length);
             if (Mathf.Abs(v) > Mathf.Abs(vmax))
             {
                 vmax = v;
@@ -522,7 +909,7 @@ public class DiagramController : MonoBehaviour
         string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
         string unit = UnitFor(currentMode).Trim();
         string title = $"Valores {currentMode} - {tag}";
-        string body = $"Combo: {UnityData.GetComboLabel(UnityData.ActiveCombo)}\n" +
+        string body = $"Combo: {UnityData.GetActiveLoadLabel()}\n" +
                       $"I = {vi:0.##} {unit} | centro = {vm:0.##} {unit} | J = {vj:0.##} {unit}\n" +
                       $"Max abs = {vmax:0.##} {unit}\n";
 
@@ -546,6 +933,9 @@ public class DiagramController : MonoBehaviour
         float h = 132f;
         float x = Mathf.Max(16f, (Screen.width - w) * 0.5f);
         float y = Screen.height - h - 18f;
+        Rect tableRect = PanelLayout.Apply("DiagramValues", new Rect(x, y, w, h));
+        x = tableRect.x;
+        y = tableRect.y;
         GUI.Box(new Rect(x, y, w, h), GUIContent.none, tableBoxStyle);
         GUI.Label(new Rect(x + 12f, y + 8f, w - 24f, 22f), title, tableTitleStyle);
         GUI.Label(new Rect(x + 12f, y + 32f, w - 24f, h - 40f), body, tableTextStyle);
@@ -579,7 +969,7 @@ public class DiagramController : MonoBehaviour
             detail = $"My/Mz demanda P-M = {demand.M_kN_m:0.##} kN*m";
         }
 
-        string body = $"Combo: {UnityData.GetComboLabel(demand.combo)}\n" +
+        string body = $"Combo: {UnityData.GetActiveLoadLabel()}\n" +
                       $"I = {value:0.##} {unit} | centro = {value:0.##} {unit} | J = {value:0.##} {unit}\n" +
                       $"Max abs = {value:0.##} {unit}\n" +
                       detail;
@@ -588,6 +978,9 @@ public class DiagramController : MonoBehaviour
         float h = 118f;
         float x = Mathf.Max(16f, (Screen.width - w) * 0.5f);
         float y = Screen.height - h - 18f;
+        Rect tableRect = PanelLayout.Apply("DiagramWallValues", new Rect(x, y, w, h));
+        x = tableRect.x;
+        y = tableRect.y;
         GUI.Box(new Rect(x, y, w, h), GUIContent.none, tableBoxStyle);
         GUI.Label(new Rect(x + 12f, y + 8f, w - 24f, 22f), $"Valores {currentMode} - Muro {selected.wallId}", tableTitleStyle);
         GUI.Label(new Rect(x + 12f, y + 32f, w - 24f, h - 40f), body, tableTextStyle);

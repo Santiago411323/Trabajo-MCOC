@@ -48,53 +48,148 @@ public class ElementPicker : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, selectableLayer))
+            RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            ElementSelectable selectable = null;
+            RaycastHit selectableHit = default(RaycastHit);
+            foreach (RaycastHit candidate in hits)
             {
-                var selectable = hit.collider.GetComponent<ElementSelectable>();
+                selectable = candidate.collider.GetComponent<ElementSelectable>();
+                if (selectable == null)
+                {
+                    selectable = candidate.collider.GetComponentInParent<ElementSelectable>();
+                }
                 if (selectable != null)
                 {
-                    Selected = selectable;
-                    lastHitPoint = hit.point;
-                    scroll = Vector2.zero;
-
-                    if (selectedElement != null)
-                    {
-                        selectedElement.OnDeselected();
-                    }
-                    selectedElement = selectable;
-                    selectable.OnSelected();
-
-                    SetInfoSelection(null);
-
-                    if (!string.IsNullOrEmpty(selectedElement.pmSectionId))
-                    {
-                        var pmPanel = FindObjectOfType<PMPanel>();
-                        if (pmPanel != null)
-                        {
-                            pmPanel.ShowPMForElement(selectedElement);
-                        }
-                    }
-                    var mobileLoad = FindObjectOfType<MobileLoadController>();
-                    if (mobileLoad != null)
-                    {
-                        mobileLoad.SetSelectedElement(selectedElement);
-                    }
-                    return;
+                    selectableHit = candidate;
+                    break;
                 }
+            }
 
-                var info = hit.collider.GetComponent<InfoSelectable>();
+            if (selectable != null)
+            {
+                Selected = selectable;
+                lastHitPoint = selectableHit.point;
+                scroll = Vector2.zero;
+
+                if (selectedElement != null)
+                {
+                    selectedElement.OnDeselected();
+                }
+                selectedElement = selectable;
+                selectable.OnSelected();
+
+                SetInfoSelection(null);
+
+                if (!string.IsNullOrEmpty(selectedElement.pmSectionId))
+                {
+                    var pmPanel = FindObjectOfType<PMPanel>();
+                    if (pmPanel != null)
+                    {
+                        pmPanel.ShowPMForElement(selectedElement);
+                    }
+                }
+                var mobileLoad = FindObjectOfType<MobileLoadController>();
+                if (mobileLoad != null)
+                {
+                    mobileLoad.SetSelectedElement(selectedElement);
+                }
+                return;
+            }
+
+foreach (RaycastHit candidate in hits)
+            {
+                var info = candidate.collider.GetComponent<InfoSelectable>();
+                if (info == null)
+                {
+                    info = candidate.collider.GetComponentInParent<InfoSelectable>();
+                }
                 if (info != null)
                 {
                     SetElementSelection(null);
                     selectedInfo = info;
                     scroll = Vector2.zero;
+                    if (candidate.collider.name.StartsWith("Losa_"))
+                    {
+                        var mobileLoad = FindObjectOfType<MobileLoadController>();
+                        if (mobileLoad != null)
+                        {
+                            mobileLoad.SetLoadOnSlabPanel(candidate.collider.gameObject, candidate.point);
+                        }
+                    }
                     return;
                 }
+            }
+
+            Vector3 screenHit;
+            ElementSelectable nearby = FindSelectableNearScreen(Input.mousePosition, out screenHit);
+            if (nearby != null)
+            {
+                lastHitPoint = screenHit;
+                scroll = Vector2.zero;
+                SetInfoSelection(null);
+                SetElementSelection(nearby);
+                nearby.OnSelected();
+
+                var pmPanel = FindObjectOfType<PMPanel>();
+                if (pmPanel != null && !string.IsNullOrEmpty(nearby.pmSectionId))
+                {
+                    pmPanel.ShowPMForElement(nearby);
+                }
+                var mobileLoad = FindObjectOfType<MobileLoadController>();
+                if (mobileLoad != null)
+                {
+                    mobileLoad.SetSelectedElement(nearby);
+                }
+                return;
             }
 
             SetElementSelection(null);
             SetInfoSelection(null);
         }
+    }
+
+    private ElementSelectable FindSelectableNearScreen(Vector3 mousePosition, out Vector3 worldPoint)
+    {
+        worldPoint = Vector3.zero;
+        ElementSelectable best = null;
+        float bestDistance = 22f;
+        Vector2 mouse = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
+
+        foreach (ElementSelectable candidate in FindObjectsOfType<ElementSelectable>())
+        {
+            if (candidate == null || !candidate.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            Vector3 a = cam.WorldToScreenPoint(candidate.startPoint);
+            Vector3 b = cam.WorldToScreenPoint(candidate.endPoint);
+            if (a.z <= 0f && b.z <= 0f)
+            {
+                continue;
+            }
+
+            Vector2 av = new Vector2(a.x, Screen.height - a.y);
+            Vector2 bv = new Vector2(b.x, Screen.height - b.y);
+            Vector2 ab = bv - av;
+            float denominator = ab.sqrMagnitude;
+            float t = denominator > 0.0001f
+                ? Mathf.Clamp01(Vector2.Dot(mouse - av, ab) / denominator)
+                : 0.5f;
+            float distance = Vector2.Distance(mouse, Vector2.Lerp(av, bv, t));
+            if (distance >= bestDistance)
+            {
+                continue;
+            }
+
+            best = candidate;
+            worldPoint = Vector3.Lerp(candidate.startPoint, candidate.endPoint, t);
+            bestDistance = distance;
+        }
+
+        return best;
     }
 
     private ElementSelectable selectedElement;
@@ -103,15 +198,25 @@ public class ElementPicker : MonoBehaviour
     private bool IsMouseOverViewerGui()
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
-        if (guiMouse.y <= 90f)
+
+StructureViewer viewer = FindObjectOfType<StructureViewer>();
+        if (viewer != null && viewer.IsTopBarVisible() && viewer.GetTopBarRect().Contains(guiMouse))
         {
             return true;
         }
-        if (guiMouse.x <= 350f && guiMouse.y <= Mathf.Min(Screen.height - 20f, 620f))
+        if (viewer != null && viewer.IsLeftPanelVisible() && viewer.GetLeftPanelRect().Contains(guiMouse))
         {
             return true;
         }
-        if (MobileLoadController.PanelRect().Contains(guiMouse))
+
+        MobileLoadController mobileLoad = FindObjectOfType<MobileLoadController>();
+        if (mobileLoad != null && mobileLoad.IsPanelVisible() && MobileLoadController.PanelRect().Contains(guiMouse))
+        {
+            return true;
+        }
+
+        PMPanel pmPanel = FindObjectOfType<PMPanel>();
+        if (pmPanel != null && pmPanel.IsPanelVisible() && pmPanel.GetPanelRect().Contains(guiMouse))
         {
             return true;
         }

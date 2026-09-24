@@ -14,6 +14,7 @@ public class PMPanel : MonoBehaviour
     private bool visible;
     private ElementSelectable[] allElements;
     private DemandRecord[] currentDemands;
+    private Rect currentPanelRect;
 
     private GUIStyle boxStyle;
     private GUIStyle labelStyle;
@@ -50,6 +51,16 @@ public class PMPanel : MonoBehaviour
         currentElement = null;
         currentCurve = null;
         currentDemands = null;
+    }
+
+    public bool IsPanelVisible()
+    {
+        return visible;
+    }
+
+    public Rect GetPanelRect()
+    {
+        return currentPanelRect;
     }
 
     private DemandRecord[] BuildDemandsForElement(ElementSelectable element)
@@ -107,8 +118,14 @@ public class PMPanel : MonoBehaviour
 
         float pw = Mathf.Min(panelSize.x, Screen.width * 0.42f);
         float ph = Mathf.Min(panelSize.y, Mathf.Max(300f, Screen.height * 0.48f));
-        float px = Screen.width > 840f ? 370f : panelOffset.x;
+        float px = Screen.width > 840f
+            ? (AreAuxiliaryTablesVisible() ? 370f : 24f)
+            : panelOffset.x;
         float py = Screen.height - panelOffset.y - ph;
+        Rect panelRect = PanelLayout.Apply("PMPanel", new Rect(px, py, pw, ph));
+        px = panelRect.x;
+        py = panelRect.y;
+        currentPanelRect = panelRect;
 
         GUI.Box(new Rect(px - 2, py - 2, pw + 4, ph + 4), GUIContent.none, boxStyle);
 
@@ -140,7 +157,7 @@ public class PMPanel : MonoBehaviour
         DrawDiagram(px + padding, y, diagSize, diagSize);
         y += diagSize + 10f;
 
-        string loadLabel = "Demanda mostrada desde: " + UnityData.GetComboLabel(UnityData.ActiveCombo);
+        string loadLabel = "Demanda mostrada desde: " + UnityData.GetActiveLoadLabel();
         GUI.Label(new Rect(px + padding, y, innerW, lineH), loadLabel, labelStyle);
         y += lineH;
 
@@ -172,10 +189,21 @@ public class PMPanel : MonoBehaviour
         }
     }
 
+private bool AreAuxiliaryTablesVisible()
+    {
+        MobileLoadController mobileLoad = FindObjectOfType<MobileLoadController>();
+        if (mobileLoad != null && mobileLoad.IsPanelVisible())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private string GetActiveDemandInfo()
     {
         string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
-        string comboLabel = UnityData.GetComboLabel(combo);
+        string comboLabel = UnityData.GetActiveLoadLabel();
 
         if (currentElement != null && currentElement.data == null)
         {
@@ -303,6 +331,15 @@ public class PMPanel : MonoBehaviour
         float pMin, float pMax, float mMin, float mMax,
         float rangeP, float rangeM)
     {
+        if (UnityData.UseBaseCaseFactors)
+        {
+            DemandRecord demand = GetActiveDemandRecord();
+            if (demand == null) return;
+            DrawSingleDemandPoint(x, y, w, h, pMin, pMax, mMin, mMax, rangeP, rangeM, demand);
+            GUI.color = Color.white;
+            return;
+        }
+
         if (currentDemands == null || currentDemands.Length == 0) return;
         string active = string.IsNullOrEmpty(UnityData.ActiveCombo) ? currentDemands[0].combo : UnityData.ActiveCombo;
 
@@ -310,20 +347,27 @@ public class PMPanel : MonoBehaviour
         {
             if (demand == null) continue;
             if (demand.combo != active) continue;
-            float p = demand.P_kN;
-            float m = demand.M_kN_m;
-            if (p <= pMin || p >= pMax || m <= mMin || m >= mMax) continue;
-
-            float dx = x + ((m - mMin) / rangeM) * w;
-            float dy = y + h - ((p - pMin) / rangeP) * h;
-
-            GUI.color = demandColor;
-            float r = 6f;
-            GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
-            DrawDemandLabel(dx, dy, demand.combo, p, m, true);
+            DrawSingleDemandPoint(x, y, w, h, pMin, pMax, mMin, mMax, rangeP, rangeM, demand);
         }
 
         GUI.color = Color.white;
+    }
+
+    private void DrawSingleDemandPoint(float x, float y, float w, float h,
+        float pMin, float pMax, float mMin, float mMax,
+        float rangeP, float rangeM, DemandRecord demand)
+    {
+        float p = demand.P_kN;
+        float m = demand.M_kN_m;
+        if (p <= pMin || p >= pMax || m <= mMin || m >= mMax) return;
+
+        float dx = x + ((m - mMin) / rangeM) * w;
+        float dy = y + h - ((p - pMin) / rangeP) * h;
+
+        GUI.color = demandColor;
+        float r = 6f;
+        GUI.DrawTexture(new Rect(dx - r, dy - r, r * 2f, r * 2f), whiteTex);
+        DrawDemandLabel(dx, dy, demand.combo, p, m, true);
     }
 
     private Vector2 GetSelectedDemandPoint()
@@ -345,6 +389,19 @@ public class PMPanel : MonoBehaviour
 
     private DemandRecord GetActiveDemandRecord()
     {
+        if (UnityData.UseBaseCaseFactors && currentElement != null && currentElement.data != null)
+        {
+            float[] forces = UnityData.GetElementForces(UnityData.ActiveCombo, currentElement.data.id);
+            if (forces == null || forces.Length < 6)
+            {
+                return null;
+            }
+
+            float pComp = -forces[0];
+            float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
+            return new DemandRecord { combo = "SUPER", P_kN = pComp, M_kN_m = mTotal, note = UnityData.GetActiveLoadLabel() };
+        }
+
         if (currentDemands == null || currentDemands.Length == 0)
         {
             return null;
