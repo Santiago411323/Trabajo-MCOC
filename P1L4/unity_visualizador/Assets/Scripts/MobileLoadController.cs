@@ -157,7 +157,7 @@ public class MobileLoadController : MonoBehaviour
 
     private void UpdateManualDiagramButtonsFromMouse()
     {
-        if (!Input.GetMouseButtonDown(0))
+        if (!Input.GetMouseButtonDown(0) || SelectedBeamDiagramPanel.BlocksPointer())
         {
             return;
         }
@@ -202,7 +202,7 @@ public class MobileLoadController : MonoBehaviour
 
     private void UpdateManualPositionFromMouse()
     {
-        if (!Input.GetMouseButton(0))
+        if (!Input.GetMouseButton(0) || SelectedBeamDiagramPanel.BlocksPointer())
         {
             return;
         }
@@ -705,7 +705,8 @@ public class MobileLoadController : MonoBehaviour
 
         Vector3 a = element.startPoint;
         Vector3 b = element.endPoint;
-        float beamLength = Mathf.Max(length, 0.001f);
+        float beamLength = UnityData.TryGetFrameGeometry(element.data.id, out var frame)
+            ? (float)frame.Length : Mathf.Max(length, 0.001f);
         Vector2 loadPlan = LoadPlanPos();
         Vector2 beamI = new Vector2(a.x, a.z);
         Vector2 beamJ = new Vector2(b.x, b.z);
@@ -726,7 +727,7 @@ public class MobileLoadController : MonoBehaviour
 
         if (modeName == "Axial")
         {
-            return isColumna ? ColumnExtraAxial() : 0f;
+            return isColumna ? -ColumnExtraAxial() : 0f; // N is tension-positive.
         }
         if (modeName == "Shear")
         {
@@ -855,7 +856,7 @@ public class MobileLoadController : MonoBehaviour
         GUI.Label(new Rect(x + 12f, iy, w - 24f, 20f), "Nivel: " + levelLabel, labelStyle);
         iy += 22f;
 
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "Click en una losa o elemento para ubicar la persona; se reparte a columnas.", labelStyle);
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "Viga: simulacion local empotrada-empotrada (Vz/My). Click en losa/elemento para ubicar la persona.", labelStyle);
         iy += 34f;
 
         if (boundsReady)
@@ -875,8 +876,8 @@ public class MobileLoadController : MonoBehaviour
             GUI.Label(new Rect(x + 12f, iy, 70f, 20f), "Diagramas", labelStyle);
             bool esViga = selectedElement.data.type == "viga";
             GUI.Label(new Rect(x + 82f, iy, 62f, 20f), (showAxial ? "[x] " : "[ ] ") + "Axial", labelStyle);
-            GUI.Label(new Rect(x + 146f, iy, 62f, 20f), (showShear ? "[x] " : "[ ] ") + "Corte", labelStyle);
-            GUI.Label(new Rect(x + 210f, iy, 82f, 20f), (showMoment ? "[x] " : "[ ] ") + "Momento", labelStyle);
+            GUI.Label(new Rect(x + 146f, iy, 62f, 20f), (showShear ? "[x] " : "[ ] ") + "Vz", labelStyle);
+            GUI.Label(new Rect(x + 210f, iy, 82f, 20f), (showMoment ? "[x] " : "[ ] ") + "My", labelStyle);
             if (!esViga)
             {
                 showShear = false;

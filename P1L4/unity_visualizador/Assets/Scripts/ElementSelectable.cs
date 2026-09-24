@@ -81,7 +81,7 @@ public class ElementSelectable : MonoBehaviour
         float t = axis.sqrMagnitude > 0.0001f
             ? Mathf.Clamp01(Vector3.Dot(hitPoint - startPoint, axis) / axis.sqrMagnitude)
             : 0.5f;
-        float length = axis.magnitude;
+        float length = UnityData.TryGetFrameGeometry(data.id, out var frame) ? (float)frame.Length : axis.magnitude;
         float localS = t * length;
 
         string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
@@ -124,30 +124,23 @@ public class ElementSelectable : MonoBehaviour
         result += FormatSupport("Nodo J", nodeJSupport);
 
         result += $"\n--- Ejes Locales ---\n";
-        Vector3 localX = axis.normalized;
-        Vector3 localZ = Vector3.Cross(localX, Vector3.up).normalized;
-        if (localZ.sqrMagnitude < 0.0001f)
-        {
-            localZ = Vector3.forward;
-        }
-        Vector3 localY = Vector3.Cross(localZ, localX).normalized;
+        Vector3 localX = frame != null ? UnityData.AxisToUnity(frame.X) : Vector3.zero;
+        Vector3 localY = frame != null ? UnityData.AxisToUnity(frame.Y) : Vector3.zero;
+        Vector3 localZ = frame != null ? UnityData.AxisToUnity(frame.Z) : Vector3.zero;
         result += $"X' (axial): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n" +
                   $"Y': {localY.x:0.000}, {localY.z:0.000}, {localY.y:0.000} (global)\n" +
                   $"Z': {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
 
+        if (float.IsNaN(n)) return result + "\n--- Fuerzas ---\nSin fuerzas disponibles para esta combinacion.\n";
         result += $"\n--- Fuerzas en {t * 100f:0.0}% ({localS:0.00} m de {length:0.00} m) ---\n" +
-                  $"N  = {n:0.###} kN\n" +
+                  $"N  = {n:0.###} kN (traccion+)\n" +
                   $"Vy = {vy:0.###} kN\n" +
                   $"Vz = {vz:0.###} kN\n" +
                   $"T  = {torsion:0.###} kN*m\n" +
                   $"My = {my:0.###} kN*m\n" +
                   $"Mz = {mz:0.###} kN*m\n";
 
-        MobileLoadController mobile = MobileLoadController.Instance;
-        if (mobile != null && mobile.IsPanelReady() && mobile.SameElement(this))
-        {
-            result += $"P = {mobile.loadKN:0.###} kN | incluye carga movil\n";
-        }
+        result += "Combinacion OpenSees; carga movil separada en su panel.\n";
 
         if (data.type == "viga" && data.areaTributaria > 0f)
         {
@@ -270,7 +263,7 @@ public class ElementSelectable : MonoBehaviour
         {
             return Vector2.zero;
         }
-        float pComp = -forces[0];
+        float pComp = forces[0];
         float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
         return new Vector2(pComp, mTotal);
     }
@@ -357,59 +350,10 @@ public class ElementSelectable : MonoBehaviour
 
     private void GetForces(float t, float length, out float n, out float vy, out float vz, out float my, out float mz, out float torsion)
     {
-        n = 0f; vy = 0f; vz = 0f; my = 0f; mz = 0f; torsion = 0f;
-
-        if (!string.IsNullOrEmpty(UnityData.ActiveCombo) && UnityData.ElementForcesByCombo != null)
-        {
-            var forces = UnityData.GetElementForces(UnityData.ActiveCombo, data.id);
-            if (forces != null && forces.Length >= 12)
-            {
-                float nI = forces[0], nJ = forces[6];
-                float vyI = forces[1], vyJ = forces[7];
-                float vzI = forces[2], vzJ = forces[8];
-                float tI = forces[3], tJ = forces[9];
-                float myI = forces[4], myJ = forces[10];
-                float mzI = forces[5], mzJ = forces[11];
-
-                n = Mathf.Lerp(nI, nJ, t);
-                vy = Mathf.Lerp(vyI, vyJ, t);
-                vz = Mathf.Lerp(vzI, vzJ, t);
-                torsion = Mathf.Lerp(tI, tJ, t);
-                my = Mathf.Lerp(myI, myJ, t);
-                mz = Mathf.Lerp(mzI, mzJ, t);
-
-                ApplyMobileExtra(t, length, ref n, ref vy, ref mz);
-                return;
-            }
-        }
-
-        n = Mathf.Lerp(data.axialI, data.axialJ, t);
-        vz = Mathf.Lerp(data.shearI, data.shearJ, t);
-        my = Mathf.Lerp(data.momentI, data.momentJ, t);
-        ApplyMobileExtra(t, length, ref n, ref vy, ref mz);
-    }
-
-    private void ApplyMobileExtra(float t, float length, ref float n, ref float vy, ref float mz)
-    {
-        MobileLoadController mobile = MobileLoadController.Instance;
-        if (mobile == null || !mobile.IsPanelReady() || !mobile.SameElement(this))
-        {
-            return;
-        }
-        if (data == null)
-        {
-            return;
-        }
-        if (data.type == "viga")
-        {
-            n += mobile.ExtraAt(this, "Axial", t, length);
-            vy += mobile.ExtraAt(this, "Shear", t, length);
-            mz += mobile.ExtraAt(this, "Moment", t, length);
-        }
-        else if (data.type == "columna")
-        {
-            n += mobile.ExtraAt(this, "Axial", t, length);
-        }
+        bool available = UnityData.TryGetSectionForces(data.id, UnityData.ActiveCombo, t, out var f);
+        n = available ? f.N : float.NaN; vy = available ? f.Vy : float.NaN;
+        vz = available ? f.Vz : float.NaN; my = available ? f.My : float.NaN;
+        mz = available ? f.Mz : float.NaN; torsion = available ? f.T : float.NaN;
     }
 
     public Vector3 GetDemandPoint()
@@ -431,7 +375,7 @@ public class ElementSelectable : MonoBehaviour
             return Vector3.zero;
         }
 
-        float pComp = -forces[0];
+        float pComp = forces[0];
         float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
         return new Vector2(pComp, mTotal);
     }
@@ -457,12 +401,14 @@ public class ElementSelectable : MonoBehaviour
     {
         if (support == null)
         {
-            return $"{label}: sin apoyo registrado\n";
+            return $"{label}: sin restriccion al suelo registrada (no implica articulacion)\n";
         }
 
-        bool fixedAll = support.ux == 1 && support.uy == 1 && support.uz == 1;
-        string type = !string.IsNullOrEmpty(support.type) ? support.type :
-                      (fixedAll ? "Empotrado" : $"ux={support.ux} uy={support.uy} uz={support.uz}");
-        return $"{label} (N{support.node}): {type}\n";
+        bool fixedAll = support.ux == 1 && support.uy == 1 && support.uz == 1 &&
+            support.rx == 1 && support.ry == 1 && support.rz == 1;
+        string type = support.type != null && support.type.Contains("inferido") ? support.type :
+            fixedAll ? "Empotrado registrado" : "Restricciones registradas";
+        return $"{label} (N{support.node}): {type}\n" +
+            $"ux={support.ux} uy={support.uy} uz={support.uz} rx={support.rx} ry={support.ry} rz={support.rz}\n";
     }
 }

@@ -17,12 +17,17 @@ public static class UnityData
     private static Dictionary<string, PMCurveData> pmCurveLookup;
     private static Dictionary<string, SectionMaterialData> materialLookup;
     private static Dictionary<string, ComboInfo> comboLookup;
+    private static readonly Dictionary<int, FrameGeometry> frames = new Dictionary<int, FrameGeometry>();
+    private static readonly Dictionary<string, Dictionary<int, float[]>> localForces = new Dictionary<string, Dictionary<int, float[]>>();
+    private static readonly Dictionary<int, SupportData> nodeSupports = new Dictionary<int, SupportData>();
 
     public static void LoadData(StructureData data)
     {
         Structure = data;
         ActiveCombo = null;
         UseBaseCaseFactors = false;
+        BuildModelGeometry(data);
+        localForces.Clear();
 
         if (data.p1l4 == null)
         {
@@ -71,6 +76,14 @@ public static class UnityData
                     ElementForcesByCombo[f.combo] = new List<ElementForceRecord>();
                 }
                 ElementForcesByCombo[f.combo].Add(f);
+                if (!FrameForces.IsValid(f.f) || !frames.TryGetValue(f.id, out var frame)) continue;
+                string coordinates = data.p1l4.elementForceCoordinates;
+                float[] local = string.IsNullOrEmpty(coordinates) || coordinates == "global"
+                    ? frame.ToLocal(f.f)
+                    : coordinates == "local" ? (float[])f.f.Clone() : null;
+                if (local == null) continue; // Unknown coordinate contracts must not display fabricated values.
+                if (!localForces.ContainsKey(f.combo)) localForces[f.combo] = new Dictionary<int, float[]>();
+                localForces[f.combo][f.id] = local;
             }
         }
 
@@ -134,11 +147,12 @@ public static class UnityData
     {
         if (UseBaseCaseFactors)
         {
+            if (!frames.ContainsKey(elementId)) return null;
             float[] result = new float[12];
-            AddScaledForces(result, GetElementForcesForCombo("G", elementId), FactorG);
-            AddScaledForces(result, GetElementForcesForCombo("Q", elementId), FactorQ);
-            AddScaledForces(result, GetElementForcesForCombo("EX", elementId), FactorEX);
-            AddScaledForces(result, GetElementForcesForCombo("EY", elementId), FactorEY);
+            if (!AddScaledForces(result, GetElementForcesForCombo("G", elementId), FactorG) ||
+                !AddScaledForces(result, GetElementForcesForCombo("Q", elementId), FactorQ) ||
+                !AddScaledForces(result, GetElementForcesForCombo("EX", elementId), FactorEX) ||
+                !AddScaledForces(result, GetElementForcesForCombo("EY", elementId), FactorEY)) return null;
             return result;
         }
 
@@ -147,20 +161,12 @@ public static class UnityData
 
     private static float[] GetElementForcesForCombo(string combo, int elementId)
     {
-        if (string.IsNullOrEmpty(combo) || ElementForcesByCombo == null || !ElementForcesByCombo.TryGetValue(combo, out var list) || list == null)
+        if (string.IsNullOrEmpty(combo) || !localForces.TryGetValue(combo, out var byElement))
         {
             return null;
         }
 
-        foreach (ElementForceRecord f in list)
-        {
-            if (f != null && f.id == elementId)
-            {
-                return f.f;
-            }
-        }
-
-        return null;
+        return byElement.TryGetValue(elementId, out var forces) ? forces : null;
     }
 
     public static float[] GetElementForcesForCase(string combo, int elementId)
@@ -168,18 +174,95 @@ public static class UnityData
         return GetElementForcesForCombo(combo, elementId);
     }
 
-    private static void AddScaledForces(float[] target, float[] source, float factor)
+    private static bool AddScaledForces(float[] target, float[] source, float factor)
     {
-        if (target == null || source == null || Mathf.Abs(factor) < 1e-9f)
-        {
-            return;
-        }
+        if (factor == 0f) return true;
+        if (!FrameForces.IsValid(source) || float.IsNaN(factor) || float.IsInfinity(factor)) return false;
 
         int count = Mathf.Min(target.Length, source.Length);
         for (int i = 0; i < count; i++)
         {
             target[i] += source[i] * factor;
         }
+        return FrameForces.IsValid(target);
+    }
+
+    // Both accessors above return LOCAL resisting end actions. Raw JSON records
+    // remain untouched in Structure/ElementForcesByCombo for traceability.
+    public static bool TryGetFrameGeometry(int elementId, out FrameGeometry frame)
+    {
+        return frames.TryGetValue(elementId, out frame);
+    }
+
+    public static bool TryGetSectionForces(int elementId, string combo, float t, out FrameSectionForces values)
+    {
+        values = default(FrameSectionForces);
+        float[] local = GetElementForces(combo, elementId);
+        if (!FrameForces.IsValid(local) || !frames.TryGetValue(elementId, out var frame)) return false;
+        values = FrameForces.Evaluate(local, frame.Length, t);
+        return true;
+    }
+
+    public static Vector3 AxisToUnity(double[] axis)
+    {
+        return new Vector3((float)axis[0], (float)axis[2], (float)axis[1]);
+    }
+
+    public static SupportData GetNodeSupport(int nodeId)
+    {
+        return nodeSupports.TryGetValue(nodeId, out var support) ? support : null;
+    }
+
+    private static void BuildModelGeometry(StructureData data)
+    {
+        frames.Clear();
+        nodeSupports.Clear();
+        var nodes = new Dictionary<int, NodeData>();
+        var graph = new Dictionary<int, HashSet<int>>();
+        foreach (NodeData node in data.nodes ?? new NodeData[0]) nodes[node.id] = node;
+        foreach (SupportData support in data.supports ?? new SupportData[0])
+            if (nodes.ContainsKey(support.node)) nodeSupports[support.node] = support;
+        foreach (ElementData element in data.elements ?? new ElementData[0])
+        {
+            if (!nodes.TryGetValue(element.nodeI, out var ni) || !nodes.TryGetValue(element.nodeJ, out var nj)) continue;
+            if (FrameGeometry.TryCreate(ni, nj, out var frame)) frames[element.id] = frame;
+            if (!graph.ContainsKey(ni.id)) graph[ni.id] = new HashSet<int>();
+            if (!graph.ContainsKey(nj.id)) graph[nj.id] = new HashSet<int>();
+            graph[ni.id].Add(nj.id);
+            graph[nj.id].Add(ni.id);
+        }
+
+        // The legacy P1L3 model adds constraints not listed in the JSON.
+        // Reproduce only their description; do not change the source model/data.
+        // Explicit future coordinate contracts must provide their own constraints.
+        if (data.p1l4 == null || !string.IsNullOrEmpty(data.p1l4.elementForceCoordinates)) return;
+        foreach (int nodeId in nodes.Keys)
+            if (!graph.ContainsKey(nodeId) && !nodeSupports.ContainsKey(nodeId))
+                nodeSupports[nodeId] = InferredSupport(nodeId, "Nodo aislado fijado por P1L3 (inferido)");
+        var visited = new HashSet<int>();
+        var orderedNodes = new List<int>(graph.Keys);
+        orderedNodes.Sort();
+        foreach (int seed in orderedNodes)
+        {
+            if (!visited.Add(seed)) continue;
+            int anchor = seed;
+            bool supported = false;
+            var stack = new Stack<int>();
+            stack.Push(seed);
+            while (stack.Count > 0)
+            {
+                int nodeId = stack.Pop();
+                supported |= nodeSupports.ContainsKey(nodeId);
+                if (nodes[nodeId].z < nodes[anchor].z || (nodes[nodeId].z == nodes[anchor].z && nodeId < anchor)) anchor = nodeId;
+                foreach (int next in graph[nodeId]) if (visited.Add(next)) stack.Push(next);
+            }
+            if (!supported) nodeSupports[anchor] = InferredSupport(anchor, "Empotramiento automatico P1L3: componente desconectada (inferido)");
+        }
+    }
+
+    private static SupportData InferredSupport(int nodeId, string description)
+    {
+        return new SupportData { node = nodeId, type = description, ux = 1, uy = 1, uz = 1, rx = 1, ry = 1, rz = 1 };
     }
 
     public static string GetActiveLoadLabel()

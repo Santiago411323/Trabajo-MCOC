@@ -319,8 +319,8 @@ public class StructureViewer : MonoBehaviour
             selectable.visualFloor = ResolveElementFloor(element, start, end, isColumn);
             selectable.nodeIId = element.nodeI;
             selectable.nodeJId = element.nodeJ;
-            selectable.nodeISupport = CreateFixedSupport(element.nodeI);
-            selectable.nodeJSupport = CreateFixedSupport(element.nodeJ);
+            selectable.nodeISupport = UnityData.GetNodeSupport(element.nodeI);
+            selectable.nodeJSupport = UnityData.GetNodeSupport(element.nodeJ);
 
             if (isColumn)
             {
@@ -346,21 +346,6 @@ public class StructureViewer : MonoBehaviour
             }
         }
         return null;
-    }
-
-    private SupportData CreateFixedSupport(int nodeId)
-    {
-        return new SupportData
-        {
-            node = nodeId,
-            type = "fixed",
-            ux = 1,
-            uy = 1,
-            uz = 1,
-            rx = 1,
-            ry = 1,
-            rz = 1
-        };
     }
 
     private string ResolveElementFloor(ElementData element, Vector3 start, Vector3 end, bool isColumn)
@@ -505,8 +490,8 @@ public class StructureViewer : MonoBehaviour
             selectable.data = null;
             selectable.nodeIId = wall.nodeI;
             selectable.nodeJId = wall.nodeJ;
-            selectable.nodeISupport = CreateFixedSupport(wall.nodeI);
-            selectable.nodeJSupport = CreateFixedSupport(wall.nodeJ);
+            selectable.nodeISupport = UnityData.GetNodeSupport(wall.nodeI);
+            selectable.nodeJSupport = UnityData.GetNodeSupport(wall.nodeJ);
 
             string pmSec = ResolveWallPMSection(data, wall.id, wall.nodeI, wall.nodeJ);
             selectable.pmSectionId = pmSec;
@@ -831,6 +816,8 @@ public class StructureViewer : MonoBehaviour
         }
         diagramController = gameObject.AddComponent<DiagramController>();
         diagramController.Initialize(selectables);
+        if (GetComponent<SelectedBeamDiagramPanel>() == null)
+            gameObject.AddComponent<SelectedBeamDiagramPanel>();
     }
 
     private void CreatePMPanel()

@@ -199,6 +199,12 @@ foreach (RaycastHit candidate in hits)
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 
+        SelectedBeamDiagramPanel beamDiagrams = FindObjectOfType<SelectedBeamDiagramPanel>();
+        if (beamDiagrams != null && beamDiagrams.ContainsMouse(guiMouse))
+        {
+            return true;
+        }
+
 StructureViewer viewer = FindObjectOfType<StructureViewer>();
         if (viewer != null && viewer.IsTopBarVisible() && viewer.GetTopBarRect().Contains(guiMouse))
         {

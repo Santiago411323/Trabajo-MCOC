@@ -79,14 +79,14 @@ public class PMPanel : MonoBehaviour
         DemandRecord[] demands = new DemandRecord[combos.Length];
         for (int i = 0; i < combos.Length; i++)
         {
-            float[] forces = UnityData.GetElementForces(combos[i], element.data.id);
+            float[] forces = UnityData.GetElementForcesForCase(combos[i], element.data.id);
             if (forces == null || forces.Length < 6)
             {
                 demands[i] = new DemandRecord { combo = combos[i], P_kN = 0f, M_kN_m = 0f, note = "sin fuerzas" };
                 continue;
             }
 
-            float pComp = -forces[0];
+            float pComp = forces[0];
             float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
             demands[i] = new DemandRecord { combo = combos[i], P_kN = pComp, M_kN_m = mTotal, note = "fuerzas OpenSees por combinacion" };
         }
@@ -397,7 +397,7 @@ private bool AreAuxiliaryTablesVisible()
                 return null;
             }
 
-            float pComp = -forces[0];
+            float pComp = forces[0];
             float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
             return new DemandRecord { combo = "SUPER", P_kN = pComp, M_kN_m = mTotal, note = UnityData.GetActiveLoadLabel() };
         }

@@ -27,13 +27,12 @@ public class DiagramController : MonoBehaviour
     public float deformedMultiplier = 120f;
     public float deformedTargetPct = 0.06f;
     public bool auditSingleElementDiagrams = false;
-    public bool drawGlobalForceDiagrams = true;
+    public bool drawGlobalForceDiagrams = false;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<ElementSelectable> structuralElements = new List<ElementSelectable>();
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
     private DiagramMode currentMode = DiagramMode.None;
-    private MobileLoadController mobileLoad;
     private readonly Dictionary<string, float> deformedScaleByBuilding = new Dictionary<string, float>();
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
     private GUIStyle tableBoxStyle;
@@ -88,11 +87,6 @@ public class DiagramController : MonoBehaviour
     private void Update()
     {
         if (!Application.isPlaying) return;
-
-        if (mobileLoad == null)
-        {
-            mobileLoad = FindObjectOfType<MobileLoadController>();
-        }
 
         if (PressedKey(KeyCode.Alpha0)) ShowDiagram(DiagramMode.None);
         if (PressedKey(KeyCode.Alpha1)) ShowDiagram(DiagramMode.Axial);
@@ -454,6 +448,7 @@ public class DiagramController : MonoBehaviour
 
     private struct InternalDiagramForces
     {
+        public float[] localActions;
         public float length;
         public Vector3 localX;
         public Vector3 localY;
@@ -474,10 +469,36 @@ public class DiagramController : MonoBehaviour
         public float qLocalZ;
     }
 
-    private InternalDiagramForces ConvertOpenSeesEndForcesToInternalForces(ElementSelectable element, string combo, bool printLog)
+    // The selected panel uses the active combination, including the factor sliders.
+    public bool TryGetSelectedDiagramSamples(ElementSelectable element, float[,] samples)
+    {
+        if (element == null || element.data == null || element.data.type != "viga" ||
+            samples == null || samples.GetLength(0) != 5 || samples.GetLength(1) < 2 ||
+            (element.endPoint - element.startPoint).sqrMagnitude < 0.000001f)
+            return false;
+
+        float[] raw = UnityData.GetElementForces(UnityData.ActiveCombo, element.data.id);
+        if (raw == null || raw.Length < 12) return false;
+        foreach (float value in raw)
+            if (float.IsNaN(value) || float.IsInfinity(value)) return false;
+
+        if (!UnityData.TryGetFrameGeometry(element.data.id, out var frame)) return false;
+        for (int i = 0; i < samples.GetLength(1); i++)
+        {
+            var f = FrameForces.Evaluate(raw, frame.Length, i / (float)(samples.GetLength(1) - 1));
+            samples[0, i] = f.My;
+            samples[1, i] = f.Mz;
+            samples[2, i] = f.Vy;
+            samples[3, i] = f.Vz;
+            samples[4, i] = f.N;
+        }
+        return true;
+    }
+
+    private InternalDiagramForces ConvertOpenSeesEndForcesToInternalForces(ElementSelectable element, string combo, bool printLog, float[] activeForces = null)
     {
         ElementData data = element.data;
-        float[] raw = UnityData.GetElementForcesForCase(combo, data.id);
+        float[] raw = activeForces ?? UnityData.GetElementForcesForCase(combo, data.id);
         if (raw == null || raw.Length < 12)
         {
             raw = UnityData.GetElementForces(combo, data.id);
@@ -488,17 +509,14 @@ public class DiagramController : MonoBehaviour
             return new InternalDiagramForces();
         }
 
-        Vector3 axis = element.endPoint - element.startPoint;
-        float length = Mathf.Max(axis.magnitude, 0.001f);
-        Vector3 localX = axis.normalized;
-        Vector3 localZ = Vector3.Cross(localX, Vector3.up).normalized;
-        if (localZ.sqrMagnitude < 0.0001f)
-        {
-            localZ = Vector3.forward;
-        }
-        Vector3 localY = Vector3.Cross(localZ, localX).normalized;
+        if (!UnityData.TryGetFrameGeometry(data.id, out var frame)) return new InternalDiagramForces();
+        float length = (float)frame.Length;
+        Vector3 localX = UnityData.AxisToUnity(frame.X);
+        Vector3 localY = UnityData.AxisToUnity(frame.Y);
+        Vector3 localZ = UnityData.AxisToUnity(frame.Z);
 
         InternalDiagramForces f = new InternalDiagramForces();
+        f.localActions = raw;
         f.length = length;
         f.localX = localX;
         f.localY = localY;
@@ -526,7 +544,7 @@ public class DiagramController : MonoBehaviour
         if (printLog)
         {
             Debug.Log(
-                $"RAW OPENSEES RESULTS\n" +
+                $"OPENSEES LOCAL END ACTIONS (global JSON transformed at load)\n" +
                 $"Element: {data.elementTag}\n" +
                 $"Combo: {combo}\n" +
                 $"N_i={raw[0]:0.######}\nVy_i={raw[1]:0.######}\nVz_i={raw[2]:0.######}\nT_i={raw[3]:0.######}\nMy_i={raw[4]:0.######}\nMz_i={raw[5]:0.######}\n\n" +
@@ -587,12 +605,8 @@ public class DiagramController : MonoBehaviour
 
     private float EvaluateInternalValue(InternalDiagramForces f, int component, float x)
     {
-        if (component == 0) return f.Ni;
-        if (component == 1) return f.VyI - f.qLocalY * x;
-        if (component == 2) return f.VzI - f.qLocalZ * x;
-        if (component == 4) return f.MyI + f.VzI * x - 0.5f * f.qLocalZ * x * x;
-        if (component == 5) return f.MzI - f.VyI * x + 0.5f * f.qLocalY * x * x;
-        return 0f;
+        if (f.length <= 0f || !FrameForces.IsValid(f.localActions)) return 0f;
+        return FrameForces.Evaluate(f.localActions, f.length, x / f.length).Component(component);
     }
 
     private string FormatStructuralVector(Vector3 v)
@@ -683,92 +697,46 @@ public class DiagramController : MonoBehaviour
         {
             return 0f;
         }
-        return GetBaseValue(element, mode, t, length) + MobileExtraFor(element, mode, t, length);
+        return GetBaseValue(element, mode, t, length);
     }
 
     private float GetBaseValue(ElementSelectable element, DiagramMode mode, float t, float length)
     {
-        ElementData data = element.data;
-        if (data == null)
+        if (element == null || element.data == null ||
+            !UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, t, out var f))
         {
             return 0f;
         }
 
         if (mode == DiagramMode.Axial)
         {
-            return GetForceGradient(data, t, 0, 6);
+            return f.N;
         }
 
         if (mode == DiagramMode.Shear)
         {
-            float vy = GetForceGradient(data, t, 1, 7);
-            float vz = GetForceGradient(data, t, 2, 8);
+            float vy = f.Vy;
+            float vz = f.Vz;
             float sign = Mathf.Abs(vy) >= Mathf.Abs(vz) ? Mathf.Sign(vy) : Mathf.Sign(vz);
             return sign * Mathf.Sqrt(vy * vy + vz * vz);
         }
 
-        float my = GetForceGradient(data, t, 4, 10);
-        float mz = GetForceGradient(data, t, 5, 11);
-        if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
-        {
-            mz += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
-        }
+        float my = f.My;
+        float mz = f.Mz;
         float momentSign = Mathf.Abs(my) >= Mathf.Abs(mz) ? Mathf.Sign(my) : Mathf.Sign(mz);
         return momentSign * Mathf.Sqrt(my * my + mz * mz);
     }
 
     public float ValueAt(ElementSelectable element, string modeName, float t, float length)
     {
-        DiagramMode mode;
-        if (modeName == "Axial") mode = DiagramMode.Axial;
-        else if (modeName == "Shear") mode = DiagramMode.Shear;
-        else if (modeName == "Moment") mode = DiagramMode.Moment;
-        else return 0f;
-        return GetBaseValue(element, mode, t, length);
-    }
-
-    private string ModeName(DiagramMode mode)
-    {
-        if (mode == DiagramMode.Axial) return "Axial";
-        if (mode == DiagramMode.Shear) return "Shear";
-        if (mode == DiagramMode.Moment) return "Moment";
-        return "";
-    }
-
-    private float MobileExtraFor(ElementSelectable element, DiagramMode mode, float t, float length)
-    {
-        if (mobileLoad == null || !mobileLoad.IsPanelReady() || !mobileLoad.SameElement(element))
-        {
-            return 0f;
-        }
-        string modeName = ModeName(mode);
-        if (string.IsNullOrEmpty(modeName))
-        {
-            return 0f;
-        }
-        return mobileLoad.ExtraAt(element, modeName, t, length);
-    }
-
-    private float GetForceGradient(ElementData data, float t, int iIndex, int jIndex)
-    {
-        if (!string.IsNullOrEmpty(UnityData.ActiveCombo) && UnityData.ElementForcesByCombo != null)
-        {
-            float[] f = UnityData.GetElementForces(UnityData.ActiveCombo, data.id);
-            if (f != null && f.Length >= 12 && iIndex < 12 && jIndex < 12)
-            {
-                return Mathf.Lerp(f[iIndex], f[jIndex], t);
-            }
-        }
-
-        if (iIndex == 0)
-        {
-            return Mathf.Lerp(data.axialI, data.axialJ, t);
-        }
-        if (iIndex == 1)
-        {
-            return Mathf.Lerp(data.shearI, data.shearJ, t);
-        }
-        return Mathf.Lerp(data.momentI, data.momentJ, t);
+        // Base curves for the separate vertical mobile-load simulation.
+        // Do not add a scalar load effect to a biaxial resultant.
+        if (element == null || element.data == null ||
+            !UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, t, out var f)) return 0f;
+        if (modeName == "Axial") return f.N;
+        if (modeName == "Shear") return f.Vz;
+        if (modeName == "Moment") return f.My;
+        return 0f;
     }
 
     private float ScaleFor(DiagramMode mode)
@@ -884,6 +852,7 @@ public class DiagramController : MonoBehaviour
         }
 
         ElementData data = selected.data;
+        if (!UnityData.TryGetSectionForces(data.id, UnityData.ActiveCombo, 0f, out var availableForces)) return;
         float length = (selected.endPoint - selected.startPoint).magnitude;
         float vi = GetBaseValue(selected, currentMode, 0f, length);
         float vm = GetBaseValue(selected, currentMode, 0.5f, length);
@@ -989,17 +958,8 @@ public class DiagramController : MonoBehaviour
     private void GetForcesAt(ElementSelectable element, float t, float length,
         out float n, out float vy, out float vz, out float torsion, out float my, out float mz)
     {
-        ElementData data = element.data;
-        n = GetForceGradient(data, t, 0, 6);
-        vy = GetForceGradient(data, t, 1, 7);
-        vz = GetForceGradient(data, t, 2, 8);
-        torsion = GetForceGradient(data, t, 3, 9);
-        my = GetForceGradient(data, t, 4, 10);
-        mz = GetForceGradient(data, t, 5, 11);
-        if (data.type == "viga" && Mathf.Abs(data.uniformLoad) > 1e-9f)
-        {
-            mz += Mathf.Abs(data.uniformLoad) * length * length * t * (1f - t) / 2f;
-        }
+        UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, t, out var f);
+        n = f.N; vy = f.Vy; vz = f.Vz; torsion = f.T; my = f.My; mz = f.Mz;
     }
 
     private void EnsureTableStyles()

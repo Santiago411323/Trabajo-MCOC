@@ -87,6 +87,7 @@ public class OrbitCamera : MonoBehaviour
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
 #endif
+        if (scroll != 0f && SelectedBeamDiagramPanel.BlocksPointer()) scroll = 0f;
         distance = Mathf.Clamp(distance - scroll * zoomSpeed, 5f, 120f);
 
         UpdatePosition();

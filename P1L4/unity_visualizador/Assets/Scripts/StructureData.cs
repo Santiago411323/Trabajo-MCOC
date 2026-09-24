@@ -45,6 +45,9 @@ public class DiaphragmData
 [Serializable]
 public class P1L4Extras
 {
+    // Missing in legacy exports: eleForce in GLOBAL structural coordinates.
+    // A future exporter may explicitly set this to "local" for localForce.
+    public string elementForceCoordinates;
     public ComboInfo[] combinations;
     public DisplacementRecord[] displacements;
     public ElementForceRecord[] elementForces;
