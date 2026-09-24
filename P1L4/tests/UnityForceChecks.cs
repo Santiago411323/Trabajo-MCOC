@@ -143,6 +143,16 @@ public static class UnityForceChecks
         Near(FrameForces.Evaluate(fixedBeam, 6, 1).My, -30, "fixed J");
         Near(FrameForces.Evaluate(fixedBeam, 6, 1).Vz, -30, "shear J sign");
 
+        // Moving point load used by the Unity table: P=100 kN at midspan, L=10 m.
+        var mobileI = FrameForces.EvaluateFixedFixedPointLoad(100, 10, .5f, 0);
+        var mobileCenter = FrameForces.EvaluateFixedFixedPointLoad(100, 10, .5f, .5f);
+        var mobileJ = FrameForces.EvaluateFixedFixedPointLoad(100, 10, .5f, 1);
+        Near(mobileI.Vz, 50, "mobile reaction I");
+        Near(mobileI.My, -125, "mobile fixed moment I");
+        Near(mobileCenter.Vz, -50, "mobile shear after point load");
+        Near(mobileCenter.My, 125, "mobile center moment");
+        Near(mobileJ.My, -125, "mobile fixed moment J");
+
         // Invalid or absent forces must not be replaced with legacy approximate data.
         data.p1l4.elementForces = data.p1l4.elementForces.Where(r => !(r.combo=="Q" && r.id==84)).ToArray();
         UnityData.LoadData(data);

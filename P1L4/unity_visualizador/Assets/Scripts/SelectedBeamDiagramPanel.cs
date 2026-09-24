@@ -97,8 +97,12 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
             scroll = GUI.BeginScrollView(new Rect(10f, 96f, panel.width - 20f, panel.height - 106f),
                 scroll, new Rect(0f, 0f, width, 80f + chartHeight));
             GUI.Label(new Rect(0f, 0f, width, 36f), UnityData.GetActiveLoadLabel(), textStyle);
+            bool includesMobile = MobileLoadController.Instance != null &&
+                MobileLoadController.Instance.IsActiveFor(selected);
             GUI.Label(new Rect(0f, 36f, width, 38f),
-                "Eje I → J | N: tracción+ | escala propia\nCombinación OpenSees; carga móvil aparte", textStyle);
+                "Eje I → J | N: tracción+ | escala propia\n" +
+                (includesMobile ? "OpenSees + carga móvil local en Vz/My" :
+                    "Combinación OpenSees; carga móvil inactiva"), textStyle);
             if (diagrams != null && diagrams.TryGetSelectedDiagramSamples(selected, samples))
             {
                 DrawChart(new Rect(0f, 80f, width, chartHeight - 6f), selectedDiagram);

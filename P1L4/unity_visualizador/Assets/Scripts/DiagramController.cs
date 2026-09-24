@@ -483,13 +483,19 @@ public class DiagramController : MonoBehaviour
             if (float.IsNaN(value) || float.IsInfinity(value)) return false;
 
         if (!UnityData.TryGetFrameGeometry(element.data.id, out var frame)) return false;
+        MobileLoadController mobile = MobileLoadController.Instance;
         for (int i = 0; i < samples.GetLength(1); i++)
         {
-            var f = FrameForces.Evaluate(raw, frame.Length, i / (float)(samples.GetLength(1) - 1));
-            samples[0, i] = f.My;
+            float t = i / (float)(samples.GetLength(1) - 1);
+            var f = FrameForces.Evaluate(raw, frame.Length, t);
+            float extraVz = 0f;
+            float extraMy = 0f;
+            if (mobile != null)
+                mobile.TryGetLocalBeamContribution(element, t, out extraVz, out extraMy);
+            samples[0, i] = f.My + extraMy;
             samples[1, i] = f.Mz;
             samples[2, i] = f.Vy;
-            samples[3, i] = f.Vz;
+            samples[3, i] = f.Vz + extraVz;
             samples[4, i] = f.N;
         }
         return true;

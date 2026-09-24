@@ -112,6 +112,26 @@ public class MobileLoadController : MonoBehaviour
         return selectedElement != null && check != null && selectedElement == check;
     }
 
+    public bool IsActiveFor(ElementSelectable check)
+    {
+        return IsPanelReady() && SameElement(check);
+    }
+
+    public bool TryGetLocalBeamContribution(ElementSelectable element, float sectionPosition01,
+        out float extraVz, out float extraMy)
+    {
+        extraVz = 0f;
+        extraMy = 0f;
+        if (!IsActiveFor(element) || element.data == null || element.data.type != "viga")
+            return false;
+
+        float length = UnityData.TryGetFrameGeometry(element.data.id, out var frame)
+            ? (float)frame.Length : Mathf.Max((element.endPoint - element.startPoint).magnitude, 0.001f);
+        extraVz = ExtraAt(element, "Shear", sectionPosition01, length);
+        extraMy = ExtraAt(element, "Moment", sectionPosition01, length);
+        return true;
+    }
+
     public void SetSelectedElement(ElementSelectable element)
     {
         selectedElement = element;
@@ -716,33 +736,14 @@ public class MobileLoadController : MonoBehaviour
             ? Mathf.Clamp01(Vector2.Dot(loadPlan - beamI, ab) / denominator)
             : 0.5f;
 
-        // Carga movil como carga PUNTUAL ADICIONAL en una viga empotrada-empotrada.
-        // Reacciones y momentos de empotramiento para empotrado-empotrado:
-        float aPos = t * beamLength;
-        float bPos = Mathf.Max(beamLength - aPos, 0.001f);
-        float invL2 = 1f / (beamLength * beamLength);
-        float invL3 = invL2 / beamLength;
-        float ra = loadKN * bPos * bPos * (beamLength + 2f * aPos) * invL3;
-        float ma = -loadKN * aPos * bPos * bPos * invL2;
-
         if (modeName == "Axial")
         {
             return isColumna ? -ColumnExtraAxial() : 0f; // N is tension-positive.
         }
-        if (modeName == "Shear")
-        {
-            if (!isViga) return 0f;
-            float x = s * beamLength;
-            return x < aPos ? ra : ra - loadKN;
-        }
-        if (modeName == "Moment")
-        {
-            if (!isViga) return 0f;
-            float x = s * beamLength;
-            float m = ma + ra * x;
-            if (x >= aPos) m -= loadKN * (x - aPos);
-            return m;
-        }
+        if (!isViga) return 0f;
+        FrameSectionForces contribution = FrameForces.EvaluateFixedFixedPointLoad(loadKN, beamLength, t, s);
+        if (modeName == "Shear") return contribution.Vz;
+        if (modeName == "Moment") return contribution.My;
         return 0f;
     }
 

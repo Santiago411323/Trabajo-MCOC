@@ -99,4 +99,27 @@ public static class FrameForces
             Mz = (float)(f[5] - f[1]*x + .5*qy*x*x)
         };
     }
+
+    // Contribucion local de una carga puntual vertical P en una viga
+    // empotrada-empotrada. La carga actua en z local, por lo que produce Vz y My.
+    public static FrameSectionForces EvaluateFixedFixedPointLoad(
+        float loadKN, double length, float loadPosition01, float sectionPosition01)
+    {
+        if (length <= 0 || double.IsNaN(length) || double.IsInfinity(length) ||
+            float.IsNaN(loadKN) || float.IsInfinity(loadKN))
+            throw new ArgumentException("Se requieren carga finita y longitud analitica positiva.");
+
+        double loadT = Math.Max(0, Math.Min(1, loadPosition01));
+        double sectionT = Math.Max(0, Math.Min(1, sectionPosition01));
+        double a = loadT * length;
+        double b = length - a;
+        double reactionI = loadKN * b * b * (length + 2*a) / (length*length*length);
+        double momentI = -loadKN * a * b * b / (length*length);
+        double x = sectionT * length;
+        double shear = x < a ? reactionI : reactionI - loadKN;
+        double moment = momentI + reactionI*x;
+        if (x >= a) moment -= loadKN*(x-a);
+
+        return new FrameSectionForces { Vz = (float)shear, My = (float)moment };
+    }
 }
