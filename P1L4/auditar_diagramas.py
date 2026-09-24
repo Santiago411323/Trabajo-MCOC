@@ -242,6 +242,13 @@ def main():
     parser.add_argument('--reanalyze', action='store_true')
     args = parser.parse_args()
     data = json.loads(VIEWER.read_text(encoding='utf-8'))
+    if data.get('p1l4', {}).get('elementForceCoordinates') == 'local':
+        # Esta auditoria describe el JSON legado (eleForce global + cargas nodales).
+        # Para el modelo corregido usar P1L4/tests/verificar_modelo.py.
+        print('El JSON actual ya exporta localForce con cargas distribuidas y conectividad corregida.')
+        print('La auditoria legada no aplica; ejecute: python P1L4/tests/verificar_modelo.py')
+        print('Informe historico: reports/auditoria_diagramas.md')
+        return
     base = json.loads(BASE.read_text(encoding='utf-8'))
     audit = {'source_sha256': hashlib.sha256(VIEWER.read_bytes()).hexdigest(),
              'counts': {k: len(data[k]) for k in ('nodes','elements','supports','walls','diaphragmList')},

@@ -148,10 +148,7 @@ public class DiagramController : MonoBehaviour
 
         foreach (ElementSelectable element in structuralElements)
         {
-            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && element.data.type != "viga")
-            {
-                continue;
-            }
+            // Columnas y enlaces tambien tienen corte y momento (sismo): se dibujan todos.
 
             CreateElementDiagram(element, mode);
             created++;
@@ -202,7 +199,6 @@ public class DiagramController : MonoBehaviour
         foreach (ElementSelectable e in structuralElements)
         {
             if (e == null || e.data == null) continue;
-            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && e.data.type != "viga") continue;
             string eb = string.IsNullOrEmpty(e.data.sourceBuilding) ? "?" : e.data.sourceBuilding;
             if (eb != building) continue;
             int segments = 24;
@@ -386,10 +382,7 @@ public class DiagramController : MonoBehaviour
         foreach (ElementSelectable element in structuralElements)
         {
             if (element.data == null) continue;
-            if ((mode == DiagramMode.Moment || mode == DiagramMode.Shear) && element.data.type != "viga")
-            {
-                continue;
-            }
+            // Columnas y enlaces tambien tienen corte y momento (sismo): se dibujan todos.
 
             string building = string.IsNullOrEmpty(element.data.sourceBuilding) ? "?" : element.data.sourceBuilding;
             if (!result.ContainsKey(building))
@@ -416,10 +409,9 @@ public class DiagramController : MonoBehaviour
         int segments = 12;
         Vector3[] points = new Vector3[segments + 1];
         Vector3 axis = element.endPoint - element.startPoint;
-        Vector3 offsetDirection = GetOffsetDirection(axis, mode);
+        Vector3 offsetDirection = GetDiagramDirection(element, mode, axis, out float drawSign);
         float length = axis.magnitude;
 
-        float drawSign = (mode == DiagramMode.Moment) ? -1f : 1f;
         for (int i = 0; i <= segments; i++)
         {
             float t = i / (float)segments;
@@ -472,7 +464,8 @@ public class DiagramController : MonoBehaviour
     // The selected panel uses the active combination, including the factor sliders.
     public bool TryGetSelectedDiagramSamples(ElementSelectable element, float[,] samples)
     {
-        if (element == null || element.data == null || element.data.type != "viga" ||
+        if (element == null || element.data == null ||
+            (element.data.type != "viga" && element.data.type != "columna" && element.data.type != "enlace") ||
             samples == null || samples.GetLength(0) != 5 || samples.GetLength(1) < 2 ||
             (element.endPoint - element.startPoint).sqrMagnitude < 0.000001f)
             return false;
@@ -752,6 +745,48 @@ public class DiagramController : MonoBehaviour
         return diagramScale * momentMultiplier;
     }
 
+    // Dibuja V/M en el plano local donde actua la componente dominante del
+    // elemento (Vz/My -> z local, Vy/Mz -> y local). Para momentos el signo
+    // deja el diagrama del lado traccionado: My+ tracciona -z; Mz+ tracciona +y.
+    private Vector3 GetDiagramDirection(ElementSelectable element, DiagramMode mode, Vector3 axis, out float drawSign)
+    {
+        drawSign = mode == DiagramMode.Moment ? -1f : 1f;
+        if (mode == DiagramMode.Axial || element == null || element.data == null ||
+            !UnityData.TryGetFrameGeometry(element.data.id, out var frame))
+        {
+            return GetOffsetDirection(axis, mode);
+        }
+
+        float sumY = 0f;
+        float sumZ = 0f;
+        for (int i = 0; i <= 8; i++)
+        {
+            if (!UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, i / 8f, out var f)) continue;
+            if (mode == DiagramMode.Moment)
+            {
+                sumY += Mathf.Abs(f.Mz);
+                sumZ += Mathf.Abs(f.My);
+            }
+            else
+            {
+                sumY += Mathf.Abs(f.Vy);
+                sumZ += Mathf.Abs(f.Vz);
+            }
+        }
+
+        bool zPlane = sumZ >= sumY;
+        Vector3 direction = UnityData.AxisToUnity(zPlane ? frame.Z : frame.Y).normalized;
+        if (direction.sqrMagnitude < 0.01f)
+        {
+            return GetOffsetDirection(axis, mode);
+        }
+        if (mode == DiagramMode.Moment)
+        {
+            drawSign = zPlane ? -1f : 1f;
+        }
+        return direction;
+    }
+
     private Vector3 GetOffsetDirection(Vector3 axis, DiagramMode mode)
     {
         if (mode == DiagramMode.Moment && Mathf.Abs(axis.normalized.y) < 0.2f)
@@ -827,6 +862,8 @@ public class DiagramController : MonoBehaviour
         diagramObjects.Clear();
     }
 
+    private ElementPicker cachedPicker;
+
     private void OnGUI()
     {
         DrawSelectedValueTable();
@@ -839,7 +876,8 @@ public class DiagramController : MonoBehaviour
             return;
         }
 
-        ElementPicker picker = FindObjectOfType<ElementPicker>();
+        if (cachedPicker == null) cachedPicker = FindObjectOfType<ElementPicker>();
+        ElementPicker picker = cachedPicker;
         if (picker == null || picker.Selected == null)
         {
             return;

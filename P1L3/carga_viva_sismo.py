@@ -35,6 +35,12 @@ OUTPUT_PATH = BASE_DIR / "resultados" / "carga_viva_sismo.json"
 UNITY_RESULTS_PATH = ROOT_DIR / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / "semana3_resultados_unity.json"
 
 DEFAULT_Q_Q = 4.903325
+# Torsion accidental NCh433 (metodo estatico): momento en cada piso
+# M_k = F_k * e_k, e_k = 0.10 * b_k * Z_k / H, con b_k la dimension de la
+# planta perpendicular al sismo. Se aplica con signo + dentro de EX y EY
+# (las combinaciones C1-C3 cambian el signo junto con el sismo).
+TORSION_ACCIDENTAL = True
+TORSION_ACCIDENTAL_FACTOR = 0.10
 DEFAULT_SEISMIC_COEFF = 0.20
 FLOOR_GROUP_TOL_M = 0.25
 G_ACCEL = 9.80665
@@ -104,11 +110,20 @@ def element_length(element, nodes):
     return math.dist((ni["x"], ni["y"], ni["z"]), (nj["x"], nj["y"], nj["z"]))
 
 
+def torsion_constant_rect(width, height):
+    """Constante de torsion de Saint-Venant de un rectangulo (Roark):
+    J = a b^3 [1/3 - 0.21 (b/a)(1 - b^4/(12 a^4))], a >= b.
+    (Antes se usaba J = Iy + Iz, el momento polar, que sobreestima la rigidez
+    torsional de una viga 30x80 unas 2.5 veces.)"""
+    a, b = max(width, height), min(width, height)
+    return a * b**3 * (1.0 / 3.0 - 0.21 * (b / a) * (1.0 - b**4 / (12.0 * a**4)))
+
+
 def section_properties(width, height):
     area = width * height
     iy = width * height**3 / 12.0
     iz = height * width**3 / 12.0
-    j = iy + iz
+    j = torsion_constant_rect(width, height)
     return area, iy, iz, j
 
 
@@ -130,9 +145,698 @@ def id_matches(value, wanted):
     return normalize_id(value) == normalize_id(wanted)
 
 
+# ==================================================================
+# CORRECCION DE CONECTIVIDAD (vigas continuas que no se cortan)
+# ==================================================================
+# El JSON base trae vigas que pasan "de largo" por nodos donde llega otra
+# viga transversal (uniones en T) y pares de vigas que se cruzan en planta al
+# mismo nivel sin nodo comun (uniones en X). En OpenSees dos barras solo
+# comparten grados de libertad si comparten un nodo, asi que esas vigas
+# transversales quedaban desconectadas (P1L3 les ponia un empotramiento
+# automatico) o con un extremo libre. Aqui se parten las barras en esos puntos.
+TOL_CONECTIVIDAD_M = 0.02
+# Solo se parte con nodos del mismo edificio: edificio_1 y edificio_2 se
+# mantienen como estructuras independientes (niveles distintos en x=-10).
+CONECTIVIDAD_MISMO_EDIFICIO = True
+_CAMPOS_ESCALABLES = ("deadLoad", "liveLoad", "areaTributaria", "cargaTributaria",
+                      "factoredLoad14D", "factoredLoad12D16L")
+_CAMPOS_LEGADO_POR_BARRA = ("axialI", "axialJ", "shearI", "shearJ", "momentI", "momentJ")
+
+
+def _seg_param(p, a, b, tol):
+    """Parametro t en (0,L) si p cae dentro del segmento a-b (distancia < tol)."""
+    d = [b[k] - a[k] for k in range(3)]
+    length = math.sqrt(sum(v * v for v in d))
+    if length <= 2.0 * tol:
+        return None
+    u = [v / length for v in d]
+    w = [p[k] - a[k] for k in range(3)]
+    t = sum(w[k] * u[k] for k in range(3))
+    if t <= tol or t >= length - tol:
+        return None
+    perp = math.sqrt(sum((w[k] - t * u[k]) ** 2 for k in range(3)))
+    return t if perp < tol else None
+
+
+def corregir_conectividad(data, tol=TOL_CONECTIVIDAD_M):
+    """Devuelve (data_corregida, reporte). No modifica el dict original.
+
+    1) Cruces en X viga-viga del mismo nivel y edificio: crea un nodo en la
+       interseccion (o reutiliza uno existente a menos de tol).
+    2) Toda barra (viga o columna) que contenga en su interior un nodo usado
+       por otra barra del mismo edificio se parte en ese nodo.
+    Los tramos conservan seccion y propiedades; las cargas totales (D, L,
+    area tributaria) se reparten proporcionalmente a la longitud, por lo que
+    la carga total se conserva. El primer tramo conserva el id original.
+    """
+    import copy
+
+    data = copy.deepcopy(data)
+    levels_snap = alinear_niveles_edificio2(data) if ALINEAR_NIVELES_E2 else {}
+    duplicates = eliminar_columnas_duplicadas(data, tol)
+    nodes = node_map(data)
+    xyz = {nid: (float(n["x"]), float(n["y"]), float(n["z"])) for nid, n in nodes.items()}
+    elements = [e for e in data.get("elements", []) if e.get("nodeI") in nodes and e.get("nodeJ") in nodes]
+    building_of_node = {}
+    for e in elements:
+        for key in ("nodeI", "nodeJ"):
+            building_of_node.setdefault(e[key], set()).add(e.get("sourceBuilding"))
+    next_node = max(nodes) + 1
+    new_nodes = []
+
+    def near_node(p, building):
+        for nid, q in xyz.items():
+            if nid not in building_of_node:
+                continue
+            if CONECTIVIDAD_MISMO_EDIFICIO and building not in building_of_node[nid]:
+                continue
+            if math.dist(p, q) < tol:
+                return nid
+        return None
+
+    # 1) cruces en X
+    beams = [e for e in elements if e.get("type") == "viga"]
+    crossings = []
+    for i, b1 in enumerate(beams):
+        a1, c1 = xyz[b1["nodeI"]], xyz[b1["nodeJ"]]
+        if abs(a1[2] - c1[2]) > tol:
+            continue
+        for b2 in beams[i + 1:]:
+            if CONECTIVIDAD_MISMO_EDIFICIO and b1.get("sourceBuilding") != b2.get("sourceBuilding"):
+                continue
+            a2, c2 = xyz[b2["nodeI"]], xyz[b2["nodeJ"]]
+            if abs(a2[2] - c2[2]) > tol or abs(a1[2] - a2[2]) > tol:
+                continue
+            d1 = (c1[0] - a1[0], c1[1] - a1[1])
+            d2 = (c2[0] - a2[0], c2[1] - a2[1])
+            den = d1[0] * d2[1] - d1[1] * d2[0]
+            if abs(den) < 1e-9:
+                continue
+            r = (a2[0] - a1[0], a2[1] - a1[1])
+            t = (r[0] * d2[1] - r[1] * d2[0]) / den
+            s = (r[0] * d1[1] - r[1] * d1[0]) / den
+            l1 = math.hypot(*d1)
+            l2 = math.hypot(*d2)
+            if not (tol / l1 < t < 1 - tol / l1 and tol / l2 < s < 1 - tol / l2):
+                continue
+            p = (a1[0] + t * d1[0], a1[1] + t * d1[1], 0.5 * (a1[2] + a2[2]))
+            building = b1.get("sourceBuilding")
+            nid = near_node(p, building)
+            if nid is None:
+                nid = next_node
+                next_node += 1
+                xyz[nid] = p
+                node = {"id": nid, "x": round(p[0], 6), "y": round(p[1], 6), "z": round(p[2], 6),
+                        "origen": "cruce_vigas"}
+                data["nodes"].append(node)
+                new_nodes.append(node)
+            building_of_node.setdefault(nid, set()).add(building)
+            crossings.append({"vigas": [element_tag(b1), element_tag(b2)], "nodo": nid,
+                              "x": round(p[0], 3), "y": round(p[1], 3), "z": round(p[2], 3)})
+
+    # 2) partir barras en nodos interiores del mismo edificio
+    used = set(building_of_node)
+    splits = []
+
+    def auto_interior(e):
+        a, b = xyz[e["nodeI"]], xyz[e["nodeJ"]]
+        building = e.get("sourceBuilding")
+        found = []
+        for nid in used:
+            if nid in (e["nodeI"], e["nodeJ"]):
+                continue
+            if CONECTIVIDAD_MISMO_EDIFICIO and building not in building_of_node.get(nid, ()):
+                continue
+            if _seg_param(xyz[nid], a, b, tol) is not None:
+                found.append(nid)
+        return found
+
+    _split_elements(data, xyz, auto_interior, splits)
+
+    # 3) union entre edificios en x=-10 (extremos libres que apoyan en otro edificio)
+    junction = _unir_extremos_libres(data, xyz, tol, splits)
+
+    report = {
+        "tolerancia_m": tol,
+        "solo_mismo_edificio": CONECTIVIDAD_MISMO_EDIFICIO,
+        "nodos_nuevos_en_cruces": len(new_nodes),
+        "cruces_X": crossings,
+        "barras_partidas": len(splits),
+        "barras_resultantes": len(data["elements"]),
+        "union_entre_edificios": junction,
+        "columnas_duplicadas_eliminadas": duplicates,
+        "niveles_edificio2_alineados": levels_snap,
+        "detalle": splits,
+    }
+    data["connectivityFix"] = {k: v for k, v in report.items() if k != "detalle"}
+    return data, report
+
+
+
+# El edificio 2 real tiene pisos de 3.96 m (4.16 m el subterraneo) y el
+# edificio 1 parametrico de 4.00 m; la union alinea base (z=-4) y techo (z=16)
+# y deja los pisos intermedios desfasados 0.16/0.12/0.08/0.04 m. Con dos losas
+# a 4-16 cm una de otra unidas por barras muy cortas, el modelo transmitia
+# cortes artificiales enormes por esas barras (>16 000 kN) y OpenSees no admite
+# un diafragma con nodos a distinta cota. Se alinean los niveles del edificio 2
+# con los del edificio 1 (lo mismo que ya hace el visor Unity al dibujar).
+ALINEAR_NIVELES_E2 = True
+ALINEAR_NIVELES_TOL_M = 0.25
+
+
+def alinear_niveles_edificio2(data):
+    nodes = node_map(data)
+    e1_levels = sorted({round(nodes[e[k]]["z"], 6) for e in data.get("elements", [])
+                        if e.get("sourceBuilding") == "edificio_1" for k in ("nodeI", "nodeJ") if e.get(k) in nodes})
+    e2_nodes = {e[k] for e in data.get("elements", []) if e.get("sourceBuilding") == "edificio_2"
+                for k in ("nodeI", "nodeJ")}
+    e2_nodes |= {w[k] for w in data.get("walls", []) if w.get("sourceBuilding") == "edificio_2" for k in ("nodeI", "nodeJ")}
+    moved = {}
+    for nid in e2_nodes:
+        node = nodes.get(nid)
+        if node is None:
+            continue
+        z = float(node["z"])
+        target = min(e1_levels, key=lambda lv: abs(lv - z))
+        if 1e-9 < abs(target - z) <= ALINEAR_NIVELES_TOL_M:
+            moved[str(round(z, 3))] = target
+            node["z"] = target
+    # nodos sueltos del edificio 2 (esquinas de paneles de muro/losa) a esas mismas cotas
+    for node in nodes.values():
+        key = str(round(float(node["z"]), 3))
+        if key in moved:
+            node["z"] = moved[key]
+    for slab in data.get("slabs", []):
+        z = float(slab.get("z", 0.0))
+        target = min(e1_levels, key=lambda lv: abs(lv - z))
+        if 1e-9 < abs(target - z) <= ALINEAR_NIVELES_TOL_M:
+            slab["z"] = target
+    return dict(sorted(moved.items(), key=lambda kv: float(kv[0])))
+
+
+def eliminar_columnas_duplicadas(data, tol=TOL_CONECTIVIDAD_M):
+    """El script de union (P1L2/scripts/unificar_edificios.py) pega la columna
+    derecha del edificio 2 exactamente sobre el eje x=-10 del edificio 1. En
+    (-10, -7.25) ambos edificios tienen su propia pila de columnas en el mismo
+    lugar: es una sola columna fisica contada dos veces. Se conserva la del
+    edificio 1 y se eliminan las columnas del edificio 2 que se superponen
+    (misma planta, rango de z superpuesto). Las vigas del edificio 2 que
+    llegaban a ellas se unen luego a la columna del edificio 1."""
+    nodes = node_map(data)
+    cols = [e for e in data.get("elements", []) if e.get("type") == "columna"
+            and e.get("nodeI") in nodes and e.get("nodeJ") in nodes]
+
+    def plan_z(e):
+        a, b = nodes[e["nodeI"]], nodes[e["nodeJ"]]
+        return (a["x"], a["y"]), (min(a["z"], b["z"]), max(a["z"], b["z"]))
+
+    e1 = [(plan_z(c), c) for c in cols if c.get("sourceBuilding") == "edificio_1"]
+    removed = []
+    for c in cols:
+        if c.get("sourceBuilding") != "edificio_2":
+            continue
+        (p, (z0, z1)) = plan_z(c)
+        for (q, (w0, w1)), _ in e1:
+            if math.dist(p, q) < tol and min(z1, w1) - max(z0, w0) > tol:
+                removed.append(c)
+                break
+    removed_ids = {c["id"] for c in removed}
+    data["elements"] = [e for e in data["elements"] if e["id"] not in removed_ids]
+    used = {e[k] for e in data["elements"] for k in ("nodeI", "nodeJ")}
+    dropped_supports = [s["node"] for s in data.get("supports", []) if s["node"] not in used]
+    data["supports"] = [s for s in data.get("supports", []) if s["node"] in used]
+    return {"columnas": [element_tag(c) for c in removed], "apoyos_quitados": dropped_supports}
+
+
+def _split_elements(data, xyz, interior_fn, splits):
+    """Parte cada barra en los nodos que devuelve interior_fn(e)."""
+    next_elem = max(e["id"] for e in data.get("elements", [])) + 1
+    out_elements = []
+    for e in data.get("elements", []):
+        if e.get("nodeI") not in xyz or e.get("nodeJ") not in xyz:
+            out_elements.append(e)
+            continue
+        a, b = xyz[e["nodeI"]], xyz[e["nodeJ"]]
+        interior = []
+        for nid in set(interior_fn(e)):
+            t = _seg_param(xyz[nid], a, b, TOL_CONECTIVIDAD_M)
+            if t is not None:
+                interior.append((t, nid))
+        if not interior:
+            out_elements.append(e)
+            continue
+        interior.sort()
+        chain = [e["nodeI"]] + [nid for _, nid in interior] + [e["nodeJ"]]
+        total_len = math.dist(a, b)
+        parent_tag = e.get("parentTag") or element_tag(e)
+        parent_id = e.get("parentId", e["id"])
+        tag = element_tag(e)
+        pieces = []
+        for k in range(len(chain) - 1):
+            seg = dict(e)
+            seg_len = math.dist(xyz[chain[k]], xyz[chain[k + 1]])
+            frac = seg_len / total_len
+            seg["id"] = e["id"] if k == 0 else next_elem
+            if k > 0:
+                next_elem += 1
+            seg["nodeI"], seg["nodeJ"] = chain[k], chain[k + 1]
+            seg["elementTag"] = f"{tag}.{k + 1}"
+            seg["parentId"] = parent_id
+            seg["parentTag"] = parent_tag
+            for field in _CAMPOS_ESCALABLES:
+                if field in seg and seg[field] is not None:
+                    seg[field] = float(seg[field]) * frac
+            for field in _CAMPOS_LEGADO_POR_BARRA:
+                seg.pop(field, None)
+            out_elements.append(seg)
+            pieces.append({"id": seg["id"], "tag": seg["elementTag"], "nodeI": seg["nodeI"],
+                           "nodeJ": seg["nodeJ"], "L_m": round(seg_len, 4)})
+        splits.append({"original": tag, "id_original": e["id"], "tipo": e.get("type"),
+                       "edificio": e.get("sourceBuilding"), "tramos": pieces})
+    data["elements"] = out_elements
+
+
+# Desnivel maximo que se cubre con un enlace rigido entre edificios
+# (edificio_2 esta 0.16/0.12/0.08/0.04 m sobre los niveles de edificio_1).
+UNION_DESNIVEL_MAX_M = 0.25
+ENLACE_RIGIDO_FACTOR = 1.0  # seccion 70x70 de 0.04-0.16 m: ya es rigida frente a las vigas
+
+
+def _unir_extremos_libres(data, xyz, tol, splits):
+    """Conecta extremos libres de vigas (grado 1, sin apoyo) con la barra de
+    OTRO edificio sobre la que descansan:
+      a) nodo de otro edificio en el mismo punto -> se reutiliza ese nodo;
+      b) punto interior de una barra de otro edificio -> se parte esa barra;
+      c) barra horizontal de otro edificio a <= UNION_DESNIVEL_MAX_M en la
+         vertical -> nodo nuevo en esa barra + enlace rigido vertical.
+    """
+    degree = {}
+    building_of_node = {}
+    for e in data["elements"]:
+        for key in ("nodeI", "nodeJ"):
+            degree[e[key]] = degree.get(e[key], 0) + 1
+            building_of_node.setdefault(e[key], set()).add(e.get("sourceBuilding"))
+    supports = {s.get("node") for s in data.get("supports", [])}
+    free = sorted(n for n, d in degree.items() if d == 1 and n not in supports)
+    next_node = max(n["id"] for n in data["nodes"]) + 1
+    next_elem = max(e["id"] for e in data["elements"]) + 1
+    forced = {}
+    remap = {}
+    links = []
+    actions = []
+    unresolved = []
+    for nid in free:
+        p = xyz[nid]
+        own = building_of_node[nid]
+        owner = next(e for e in data["elements"] if nid in (e["nodeI"], e["nodeJ"]))
+        if owner.get("type") != "viga":
+            unresolved.append({"nodo": nid, "motivo": "extremo libre que no es de viga"})
+            continue
+        # a) nodo coincidente de otro edificio
+        target = None
+        for other, q in xyz.items():
+            if other == nid or other not in building_of_node or building_of_node[other] & own:
+                continue
+            if math.dist(p, q) < tol:
+                target = other
+                break
+        if target is not None:
+            remap[nid] = target
+            actions.append({"nodo": nid, "accion": "fusion con nodo de otro edificio", "nodo_destino": target,
+                            "viga": element_tag(owner)})
+            continue
+        # b) interior de barra de otro edificio
+        host = None
+        for e in data["elements"]:
+            if e.get("sourceBuilding") in own:
+                continue
+            if _seg_param(p, xyz[e["nodeI"]], xyz[e["nodeJ"]], tol) is not None:
+                host = e
+                break
+        if host is not None:
+            forced.setdefault(host["id"], set()).add(nid)
+            actions.append({"nodo": nid, "accion": "barra de otro edificio partida en el nodo",
+                            "barra": element_tag(host), "viga": element_tag(owner)})
+            continue
+        # c) viga horizontal de otro edificio justo arriba/abajo
+        best = None
+        for e in data["elements"]:
+            if e.get("sourceBuilding") in own or e.get("type") != "viga":
+                continue
+            a, b = xyz[e["nodeI"]], xyz[e["nodeJ"]]
+            if abs(a[2] - b[2]) > tol:
+                continue
+            dz = a[2] - p[2]
+            if abs(dz) > UNION_DESNIVEL_MAX_M or abs(dz) < tol:
+                continue
+            q = (p[0], p[1], a[2])
+            if math.dist(q, a) < tol:
+                cand = ("nodo", e["nodeI"], q, e)
+            elif math.dist(q, b) < tol:
+                cand = ("nodo", e["nodeJ"], q, e)
+            elif _seg_param(q, a, b, tol) is not None:
+                cand = ("interior", None, q, e)
+            else:
+                continue
+            if best is None or abs(dz) < abs(best[2][2] - p[2]):
+                best = cand
+        if best is None:
+            unresolved.append({"nodo": nid, "viga": element_tag(owner), "xyz": [round(v, 3) for v in p]})
+            continue
+        kind, host_node, q, host = best
+        if kind == "interior":
+            host_node = next_node
+            next_node += 1
+            xyz[host_node] = q
+            data["nodes"].append({"id": host_node, "x": round(q[0], 6), "y": round(q[1], 6), "z": round(q[2], 6),
+                                  "origen": "union_edificios"})
+            forced.setdefault(host["id"], set()).add(host_node)
+        link = {
+            "id": next_elem, "type": "enlace", "nodeI": host_node, "nodeJ": nid,
+            "sectionId": "ENLACE_RIGIDO", "width_m": 0.70, "height_m": 0.70,
+            "stiffnessFactor": ENLACE_RIGIDO_FACTOR,
+            "sourceBuilding": owner.get("sourceBuilding"), "sourceId": f"LINK_{nid}",
+            "elementTag": f"LINK_{element_tag(owner)}", "piso": owner.get("piso", ""),
+            "deadLoad": 0.0, "liveLoad": 0.0, "areaTributaria": 0.0,
+        }
+        next_elem += 1
+        data["elements"].append(link)
+        links.append(link["elementTag"])
+        actions.append({"nodo": nid, "accion": "enlace rigido vertical", "desnivel_m": round(p[2] - q[2], 3),
+                        "barra": element_tag(host), "viga": element_tag(owner), "enlace": link["elementTag"]})
+    if remap:
+        for e in data["elements"]:
+            for key in ("nodeI", "nodeJ"):
+                if e[key] in remap:
+                    e[key] = remap[e[key]]
+    if forced:
+        _split_elements(data, xyz, lambda e: forced.get(e["id"], ()), splits)
+    return {"extremos_libres_iniciales": len(free), "acciones": actions,
+            "enlaces_rigidos": links, "sin_resolver": unresolved}
+
+
+
+# ==================================================================
+# MUROS ESTRUCTURALES (columna ancha + brazos rigidos)
+# ==================================================================
+# Los 75 paneles del JSON son muros estructurales (StructuralWall), 6 muros en
+# edificio_1 y 9 en edificio_2, todos de Z=-4 a Z=16. Los tabiques no son
+# elementos: van como carga muerta de terminaciones. Cada muro se modela como
+# una columna ancha (seccion t x L, eje fuerte en el plano del muro) en el
+# centro del muro, con brazos rigidos horizontales en cada nivel hacia sus
+# extremos y hacia los nodos del portico que caen sobre el muro. La base del
+# muro queda empotrada.
+MODELAR_MUROS = True
+MURO_Z_BASE = -4.0
+MURO_Z_TOPE = 16.0
+BRAZO_RIGIDO_ALTO_M = 4.0      # brazo = franja de muro de un piso de alto
+BRAZO_RIGIDO_FACTOR = 1.0   # franja t x 4 m: ya muy rigida frente a las vigas
+PESO_ESPECIFICO_HA_KN_M3 = 25.0
+# Peso propio de columnas y muros (las vigas ya reciben q_G por area tributaria;
+# el peso propio de vigas no estaba en el modelo original y sigue sin agregarse).
+PESO_PROPIO_VERTICALES = True
+# Peso propio del alma de las vigas bajo la losa: b*(h - e_losa)*25 kN/m.
+# q_G (6.23 kN/m2 = 635 kg/m2) ya incluye la losa de 0.15 m y terminaciones.
+PESO_PROPIO_VIGAS = True
+LOSA_ESPESOR_M = 0.15
+
+
+def _wall_panel_range(wall, z_node):
+    """Rango [zb, zt] del panel: edificio_1 guarda el nodo en el TOPE del
+    panel (bottom FOUNDATION -> nodo z=0); edificio_2 lo guarda en la BASE
+    (rotulos E2_Z-8.17..E2_Z-4.01 = z -4.00..0.16 con offset +4.17)."""
+    return (z_node, None) if wall.get("sourceBuilding") == "edificio_2" else (None, z_node)
+
+
+def agregar_muros(data, tol=TOL_CONECTIVIDAD_M):
+    """Agrega los muros estructurales como barras. Devuelve (data, reporte)."""
+    import copy
+
+    data = copy.deepcopy(data)
+    nodes = node_map(data)
+    xyz = {nid: (float(n["x"]), float(n["y"]), float(n["z"])) for nid, n in nodes.items()}
+    frame_nodes = set()
+    for e in data["elements"]:
+        frame_nodes.update((e["nodeI"], e["nodeJ"]))
+    portico_nodes = set(frame_nodes)
+    next_node = max(nodes) + 1
+    next_elem = max(e["id"] for e in data["elements"]) + 1
+
+    def node_at(p):
+        nonlocal next_node
+        for nid in frame_nodes:
+            if math.dist(xyz[nid], p) < tol:
+                return nid
+        nid = next_node
+        next_node += 1
+        xyz[nid] = p
+        node = {"id": nid, "x": round(p[0], 6), "y": round(p[1], 6), "z": round(p[2], 6), "origen": "muro"}
+        data["nodes"].append(node)
+        nodes[nid] = node
+        frame_nodes.add(nid)
+        return nid
+
+    # agrupar paneles por muro (misma huella en planta)
+    stacks = {}
+    for index, wall in enumerate(data.get("walls", [])):
+        a, b = xyz[wall["nodeI"]], xyz[wall["nodeJ"]]
+        key = tuple(round(v, 3) for v in (a[0], a[1], b[0], b[1]))
+        stack = stacks.setdefault(key, {"a": a[:2], "b": b[:2], "t": float(wall["grosor"]),
+                                        "building": wall.get("sourceBuilding") or "edificio_1",
+                                        "name": (wall.get("sourceId") or f"MURO_E1_{len(stacks) + 1}").rsplit("_L", 1)[0],
+                                        "panels": [], "levels": {MURO_Z_BASE, MURO_Z_TOPE}})
+        stack["panels"].append((index, a[2]))
+        stack["levels"].add(round(a[2], 3))
+
+    report = {"muros": [], "elementos_muro": 0, "brazos": 0}
+    wall_elements = {}
+    for key, st in stacks.items():
+        (ax, ay), (bx, by) = st["a"], st["b"]
+        length = math.hypot(bx - ax, by - ay)
+        cx, cy = 0.5 * (ax + bx), 0.5 * (ay + by)
+        along_x = abs(bx - ax) >= abs(by - ay)
+        # niveles de nodos del portico que caen sobre el muro
+        on_wall = {}
+        for nid in list(frame_nodes):
+            px, py, pz = xyz[nid]
+            if pz < MURO_Z_BASE - tol or pz > MURO_Z_TOPE + tol:
+                continue
+            at_end = math.dist((px, py), (ax, ay)) < tol or math.dist((px, py), (bx, by)) < tol
+            inside = _seg_param((px, py, 0.0), (ax, ay, 0.0), (bx, by, 0.0), tol) is not None
+            if at_end or inside:
+                on_wall.setdefault(round(pz, 3), set()).add(nid)
+                st["levels"].add(round(pz, 3))
+        levels = sorted(st["levels"])
+        centers = []
+        for z in levels:
+            c = node_at((cx, cy, z))
+            centers.append(c)
+        # columna ancha: eje fuerte en el plano del muro. Para barras verticales
+        # (geomTransf vecxz=(1,0,0)) z local = X global, y local = -Y global:
+        # height_m es la dimension en X y width_m la dimension en Y.
+        width, height = (st["t"], length) if along_x else (length, st["t"])
+        elems = []
+        for k in range(len(levels) - 1):
+            e = {"id": next_elem, "type": "muro_eq", "nodeI": centers[k], "nodeJ": centers[k + 1],
+                 "sectionId": f"MURO_{st['t']:.2f}x{length:.2f}", "width_m": width, "height_m": height,
+                 "sourceBuilding": st["building"], "sourceId": st["name"], "wallName": st["name"],
+                 "elementTag": f"{st['name']}.{k + 1}", "wallLength_m": round(length, 4), "wallThickness_m": st["t"],
+                 "wallStrongAxis": "My" if along_x else "Mz", "deadLoad": 0.0, "liveLoad": 0.0, "areaTributaria": 0.0}
+            next_elem += 1
+            data["elements"].append(e)
+            elems.append(e)
+        # brazos rigidos en cada nivel (salvo la base, que va empotrada)
+        n_arms = 0
+        for k, z in enumerate(levels):
+            if z <= MURO_Z_BASE + tol:
+                continue
+            targets = {node_at((ax, ay, z)), node_at((bx, by, z))} | on_wall.get(z, set())
+            for target in sorted(targets):
+                if target == centers[k]:
+                    continue
+                data["elements"].append({
+                    "id": next_elem, "type": "brazo_rigido", "nodeI": centers[k], "nodeJ": target,
+                    "sectionId": "BRAZO_MURO", "width_m": st["t"], "height_m": BRAZO_RIGIDO_ALTO_M,
+                    "stiffnessFactor": BRAZO_RIGIDO_FACTOR, "sourceBuilding": st["building"],
+                    "sourceId": st["name"], "elementTag": f"BRAZO_{st['name']}_{k}_{target}",
+                    "deadLoad": 0.0, "liveLoad": 0.0, "areaTributaria": 0.0})
+                next_elem += 1
+                n_arms += 1
+        data["supports"].append({"node": centers[0], "type": f"empotrado base muro {st['name']}",
+                                 "ux": 1, "uy": 1, "uz": 1, "rx": 1, "ry": 1, "rz": 1})
+        # panel del JSON -> barras de muro que cubre (para la demanda P-M)
+        panel_levels = sorted({round(z, 3) for _, z in st["panels"]})
+        for index, z_node in st["panels"]:
+            zb, zt = _wall_panel_range(data["walls"][index], z_node)
+            if zb is None:
+                zb = max([z for z in panel_levels if z < z_node - tol] or [MURO_Z_BASE])
+            if zt is None:
+                zt = min([z for z in panel_levels if z > z_node + tol] or [MURO_Z_TOPE])
+            ids = [e["id"] for e in elems
+                   if xyz[e["nodeI"]][2] >= zb - tol and xyz[e["nodeJ"]][2] <= zt + tol]
+            data["walls"][index]["analysisElements"] = ids
+            data["walls"][index]["panelZ"] = [round(zb, 3), round(zt, 3)]
+            wall_elements[index] = ids
+        report["muros"].append({"muro": st["name"], "edificio": st["building"], "t_m": st["t"],
+                                "L_m": round(length, 3), "niveles": levels, "brazos": n_arms,
+                                "nodos_portico_conectados": sum(len(v & portico_nodes) for v in on_wall.values())})
+        report["elementos_muro"] += len(elems)
+        report["brazos"] += n_arms
+    data["wallModel"] = {k: v for k, v in report.items()}
+    return data, report
+
+
+def beam_self_weight_per_m(element):
+    if not PESO_PROPIO_VIGAS or element.get("type") != "viga":
+        return 0.0
+    b = float(element.get("width_m") or 0.6)
+    h = float(element.get("height_m") or 0.8)
+    return PESO_ESPECIFICO_HA_KN_M3 * b * max(h - LOSA_ESPESOR_M, 0.0)
+
+
+def seismic_self_weight_nodal(data):
+    """Peso propio para la masa sismica: columnas, muros y vigas (mitad a cada extremo)."""
+    out = dict(self_weight_nodal(data))
+    nodes = node_map(data)
+    for e in data.get("elements", []):
+        w = beam_self_weight_per_m(e)
+        if w <= 0.0:
+            continue
+        half = 0.5 * w * element_length(e, nodes)
+        for key in ("nodeI", "nodeJ"):
+            out[e[key]] = out.get(e[key], 0.0) + half
+    return out
+
+
+def self_weight_nodal(data):
+    """Peso propio de columnas y muros: mitad a cada extremo [kN]."""
+    nodes = node_map(data)
+    out = {}
+    if not PESO_PROPIO_VERTICALES:
+        return out
+    for e in data.get("elements", []):
+        if e.get("type") == "columna":
+            area = float(e.get("width_m") or 0.7) * float(e.get("height_m") or 0.7)
+        elif e.get("type") == "muro_eq":
+            area = float(e["wallLength_m"]) * float(e["wallThickness_m"])
+        else:
+            continue
+        w = PESO_ESPECIFICO_HA_KN_M3 * area * element_length(e, nodes)
+        for key in ("nodeI", "nodeJ"):
+            out[e[key]] = out.get(e[key], 0.0) + 0.5 * w
+    return out
+
+def load_model_data(path=None, fix_connectivity=True):
+    """Carga el JSON del edificio completo y (por defecto) corrige la conectividad."""
+    data = load_json(path or JSON_PATH)
+    if not fix_connectivity:
+        return data
+    fixed, _ = corregir_conectividad(data)
+    if MODELAR_MUROS:
+        fixed, _ = agregar_muros(fixed)
+    return fixed
+
+
+def structural_components(data):
+    """Componentes conexas de barras y si tienen apoyo declarado."""
+    nodes = node_map(data)
+    adjacency = {}
+    for e in data.get("elements", []):
+        ni, nj = e.get("nodeI"), e.get("nodeJ")
+        if ni in nodes and nj in nodes:
+            adjacency.setdefault(ni, set()).add(nj)
+            adjacency.setdefault(nj, set()).add(ni)
+    support_nodes = {s.get("node") for s in data.get("supports", [])}
+    seen = set()
+    comps = []
+    for seed in sorted(adjacency):
+        if seed in seen:
+            continue
+        seen.add(seed)
+        stack, comp = [seed], []
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for nxt in adjacency[cur]:
+                if nxt not in seen:
+                    seen.add(nxt)
+                    stack.append(nxt)
+        comps.append({"nodes": comp, "apoyado": any(n in support_nodes for n in comp)})
+    return comps
+
+
+# ==================================================================
+# CARGAS: nodales + distribuidas en barras
+# ==================================================================
+# True: la carga muerta D y la sobrecarga Q de cada viga se aplican como
+# carga uniforme (eleLoad -beamUniform) a lo largo de la viga, en vez de
+# repartir qL/2 a cada nodo. Asi los diagramas de vano son parabolicos y
+# los momentos de empotramiento aparecen en el analisis. Las cargas NO se
+# cuentan dos veces: en este modo no se generan cargas nodales de gravedad.
+CARGAS_GRAVEDAD_DISTRIBUIDAS = True
+
+
+class LoadSet(dict):
+    """dict nodo -> [Fx, Fy, Fz] con cargas distribuidas por barra.
+
+    element_loads: {id_elemento: [wx, wy, wz]} en coordenadas GLOBALES [kN/m].
+    """
+
+    def __init__(self, *args, element_loads=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.element_loads = dict(element_loads or {})
+
+
+def element_loads_of(loads):
+    return getattr(loads, "element_loads", {}) or {}
+
+
+def total_load_vector(loads, data):
+    """Suma global [Fx, Fy, Fz] de cargas nodales + distribuidas."""
+    total = [0.0, 0.0, 0.0]
+    for vec in loads.values():
+        for k in range(3):
+            total[k] += vec[k]
+    element_loads = element_loads_of(loads)
+    if element_loads:
+        nodes = node_map(data)
+        by_id = {e["id"]: e for e in data.get("elements", [])}
+        for eid, w in element_loads.items():
+            length = element_length(by_id[eid], nodes)
+            for k in range(3):
+                total[k] += w[k] * length
+    return total
+
+
+def beam_gravity_element_loads(data, field=None, per_beam_total=None):
+    """Carga uniforme vertical (hacia -Z) por viga: w = total / L."""
+    nodes = node_map(data)
+    out = {}
+    for element in data.get("elements", []):
+        if element.get("type") != "viga":
+            continue
+        if element.get("nodeI") not in nodes or element.get("nodeJ") not in nodes:
+            continue
+        total = per_beam_total(element) if per_beam_total else float(element.get(field) or 0.0)
+        length = element_length(element, nodes)
+        if total <= 0.0 or length <= 0.0:
+            continue
+        out[element["id"]] = [0.0, 0.0, -total / length]
+    return out
+
+
+def live_load_set(live_transfer):
+    """Caso Q listo para analizar (nodal o distribuido segun el modo)."""
+    loads = LoadSet(vector_loads_from_dict(live_transfer["cargas_nodales_Q"]))
+    for eid, w in (live_transfer.get("cargas_distribuidas_Q") or {}).items():
+        loads.element_loads[int(eid)] = list(w)
+    return loads
+
+
 def transfer_live_load(data, q_q):
     nodes = node_map(data)
     nodal_loads = {node_id: {"Fx": 0.0, "Fy": 0.0, "Fz": 0.0} for node_id in nodes}
+    distributed = {}
     beams = []
     by_floor = {}
     total_area = 0.0
@@ -153,8 +857,11 @@ def transfer_live_load(data, q_q):
         q_lineal = q_total / length if length > 0.0 else 0.0
         floor = element_mid_z(element, nodes)
 
-        nodal_loads[element["nodeI"]]["Fz"] -= 0.5 * q_total
-        nodal_loads[element["nodeJ"]]["Fz"] -= 0.5 * q_total
+        if CARGAS_GRAVEDAD_DISTRIBUIDAS and length > 0.0:
+            distributed[element["id"]] = [0.0, 0.0, -q_lineal]
+        else:
+            nodal_loads[element["nodeI"]]["Fz"] -= 0.5 * q_total
+            nodal_loads[element["nodeJ"]]["Fz"] -= 0.5 * q_total
 
         total_area += area
         total_q += q_total
@@ -175,6 +882,7 @@ def transfer_live_load(data, q_q):
             "nodeI": element["nodeI"],
             "nodeJ": element["nodeJ"],
             "nodal_Fz_each_kN": -0.5 * q_total,
+            "aplicacion": "distribuida (eleLoad -beamUniform)" if element["id"] in distributed else "nodal qL/2",
         })
 
     expected = q_q * total_area
@@ -188,6 +896,8 @@ def transfer_live_load(data, q_q):
         "por_piso": by_floor,
         "vigas": beams,
         "cargas_nodales_Q": {str(k): v for k, v in nodal_loads.items() if abs(v["Fz"]) > 1e-12},
+        "cargas_distribuidas_Q": {str(k): v for k, v in distributed.items()},
+        "modo_aplicacion": "distribuida" if CARGAS_GRAVEDAD_DISTRIBUIDAS else "nodal",
     }
 
 
@@ -222,8 +932,27 @@ def build_seismic_cases(data, live_transfer, seismic_coeff):
     live = {floor: values["Q_kN"] for floor, values in live_transfer["por_piso"].items()}
     floor_names = floor_name_by_z(data)
     floor_groups = group_close_floors(set(dead) | set(live), FLOOR_GROUP_TOL_M)
+    q_by_beam = {beam["id"]: beam["Q_total_kN"] for beam in live_transfer.get("vigas", [])}
+    node_weights = {}
+    node_building = {}
+    for element in data.get("elements", []):
+        if element.get("nodeI") not in nodes or element.get("nodeJ") not in nodes:
+            continue
+        for key in ("nodeI", "nodeJ"):
+            node_building.setdefault(element[key], set()).add(element.get("sourceBuilding") or "?")
+        if element.get("type") != "viga":
+            continue
+        w = float(element.get("deadLoad") or 0.0) + 0.5 * q_by_beam.get(element["id"], 0.0)
+        for key in ("nodeI", "nodeJ"):
+            node_weights[element[key]] = node_weights.get(element[key], 0.0) + 0.5 * w
+    self_weight = seismic_self_weight_nodal(data)
+    for nid, w in self_weight.items():
+        node_weights[nid] = node_weights.get(nid, 0.0) + w
     ex_nodal = {}
     ey_nodal = {}
+    all_z = [node["z"] for node in nodes.values() if node["id"] in connected_nodes]
+    base_z = min(all_z)
+    height_total = max(max(all_z) - base_z, 1e-6)
     floor_rows = []
 
     for floor_group in floor_groups:
@@ -234,21 +963,48 @@ def build_seismic_cases(data, live_transfer, seismic_coeff):
         if structural_floor_nodes:
             floor_nodes = structural_floor_nodes
         floor = weighted_floor_z(floor_group, dead, live)
-        cm_x = sum(node["x"] for node in floor_nodes) / len(floor_nodes)
-        cm_y = sum(node["y"] for node in floor_nodes) / len(floor_nodes)
-        application_node = closest_node_to_xy(floor_nodes, cm_x, cm_y)
         d = sum(dead.get(level, 0.0) for level in floor_group)
         q = sum(live.get(level, 0.0) for level in floor_group)
         seismic_weight = d + 0.5 * q
         lateral = seismic_coeff * seismic_weight
 
-        ex_nodal[str(application_node["id"])] = {"Fx": lateral, "Fy": 0.0, "Fz": 0.0}
-        ey_nodal[str(application_node["id"])] = {"Fx": 0.0, "Fy": lateral, "Fz": 0.0}
+        # Fuerza inercial de cada nodo proporcional a su peso sismico
+        # (D + 0.5Q concentrado en los extremos de cada viga). Reemplaza la
+        # version anterior que aplicaba TODO el corte del piso en un unico
+        # nodo cercano al CM (sin diafragma rigido eso concentraba el corte
+        # en una sola union y dejaba a edificio_2 sin carga sismica).
+        floor_ids = {node["id"] for node in floor_nodes}
+        weights = {nid: w for nid, w in node_weights.items() if nid in floor_ids and w > 0.0}
+        w_sum = sum(weights.values())
+        if w_sum <= 0.0:
+            weights = {nid: 1.0 for nid in floor_ids}
+            w_sum = float(len(weights))
+        # peso propio de columnas y muros concentrado en los nodos del piso
+        d_self = sum(self_weight.get(nid, 0.0) for nid in floor_ids)
+        d += d_self
+        seismic_weight = d + 0.5 * q
+        lateral = seismic_coeff * seismic_weight
+        cm_x = sum(nodes[nid]["x"] * w for nid, w in weights.items()) / w_sum
+        cm_y = sum(nodes[nid]["y"] * w for nid, w in weights.items()) / w_sum
+        application_node = closest_node_to_xy([nodes[nid] for nid in weights], cm_x, cm_y)
+        by_building = {}
+        xs = [nodes[nid]["x"] for nid in weights]
+        ys = [nodes[nid]["y"] for nid in weights]
+        z_rel = max(float(floor) - base_z, 0.0)
+        ecc_ex = TORSION_ACCIDENTAL_FACTOR * (max(ys) - min(ys)) * z_rel / height_total if TORSION_ACCIDENTAL else 0.0
+        ecc_ey = TORSION_ACCIDENTAL_FACTOR * (max(xs) - min(xs)) * z_rel / height_total if TORSION_ACCIDENTAL else 0.0
+        for nid, w in weights.items():
+            f = lateral * w / w_sum
+            ex_nodal[str(nid)] = {"Fx": f, "Fy": 0.0, "Fz": 0.0, "Mz": f * ecc_ex}
+            ey_nodal[str(nid)] = {"Fx": 0.0, "Fy": f, "Fz": 0.0, "Mz": f * ecc_ey}
+            for building in node_building.get(nid, {"?"}):
+                by_building[building] = by_building.get(building, 0.0) + f / len(node_building.get(nid, {"?"}))
         floor_rows.append({
             "piso": floor_label(floor_group, floor, floor_names),
             "floor_z_m": float(floor),
             "niveles_agrupados_z_m": [float(level) for level in floor_group],
             "D_kN": d,
+            "D_peso_propio_columnas_muros_vigas_kN": d_self,
             "Q_kN": q,
             "W_sismico_D_plus_0_5Q_kN": seismic_weight,
             "masa_equivalente_kN_s2_m": seismic_weight / G_ACCEL,
@@ -257,8 +1013,13 @@ def build_seismic_cases(data, live_transfer, seismic_coeff):
             "F_EY_kN": lateral,
             "centro_masa_estimado": {"x": cm_x, "y": cm_y, "z": float(floor)},
             "nodo_aplicacion": application_node["id"],
-            "torsion_EX_respecto_CM_kN_m": lateral * (application_node["y"] - cm_y),
-            "torsion_EY_respecto_CM_kN_m": -lateral * (application_node["x"] - cm_x),
+            "nodo_aplicacion_nota": "nodo de referencia mas cercano al CM; la fuerza se reparte en todos los nodos del piso",
+            "n_nodos_con_fuerza": len(weights),
+            "F_por_edificio_kN": {k: round(v, 6) for k, v in sorted(by_building.items())},
+            "excentricidad_accidental_EX_m": ecc_ex,
+            "excentricidad_accidental_EY_m": ecc_ey,
+            "torsion_EX_respecto_CM_kN_m": lateral * ecc_ex,
+            "torsion_EY_respecto_CM_kN_m": lateral * ecc_ey,
         })
 
     total_ex = sum(row["F_EX_kN"] for row in floor_rows)
@@ -278,7 +1039,8 @@ def build_seismic_cases(data, live_transfer, seismic_coeff):
             "carga_lateral_total_igual_corte_basal_EY": abs(total_ey - sum(v["Fy"] for v in ey_nodal.values())) < 1e-9,
             "sentido_deformada_esperado_EX": "+X para coeficiente positivo",
             "sentido_deformada_esperado_EY": "+Y para coeficiente positivo",
-            "torsion": "Se reporta como F por excentricidad del nodo de aplicacion respecto del CM estimado.",
+            "distribucion": "F_i = C * W_i en cada nodo del piso (W_i = D + 0.5Q tributario del nodo); resultante en el CM de masas.",
+            "torsion": "Torsion accidental NCh433: M_k = F_k * 0.10 b_k Z_k / H (signo +), repartida como Mz nodal proporcional a la masa; con diafragma rigido equivale a un momento en el piso.",
         },
     }
 
@@ -448,12 +1210,39 @@ def print_id_examples(data, live_transfer):
         print(f"  {slab.get('id')}  |  nivel={slab.get('nivel')}  z={slab.get('z')}")
 
 
+ELEMENT_AXES = {}
+AUTO_ANCHORS = []
+DIAPHRAGMS = []
+# Diafragma rigido por nivel (losas). Sin el, los muros del edificio 1 y del
+# ascensor (sin vigas que lleguen a ellos) no reciben carga lateral.
+DIAFRAGMA_RIGIDO = True
+DIAPHRAGM_MASTER_BASE = 1_000_000
+CONSTRAINT_HANDLER = "Plain"
+
+
+def local_axes(ni, nj, vecxz):
+    """Ejes locales (x, y, z) de geomTransf Linear en coordenadas globales."""
+    d = [nj["x"] - ni["x"], nj["y"] - ni["y"], nj["z"] - ni["z"]]
+    length = math.sqrt(sum(v * v for v in d))
+    ex = [v / length for v in d]
+    ey = [vecxz[1] * ex[2] - vecxz[2] * ex[1], vecxz[2] * ex[0] - vecxz[0] * ex[2], vecxz[0] * ex[1] - vecxz[1] * ex[0]]
+    ny = math.sqrt(sum(v * v for v in ey))
+    ey = [v / ny for v in ey]
+    ez = [ex[1] * ey[2] - ex[2] * ey[1], ex[2] * ey[0] - ex[0] * ey[2], ex[0] * ey[1] - ex[1] * ey[0]]
+    return ex, ey, ez
+
+
 def build_model(data):
     if ops is None:
         raise RuntimeError("Falta instalar openseespy para correr la Parte C.")
 
+    global CONSTRAINT_HANDLER
     ops.wipe()
     ops.model("basic", "-ndm", 3, "-ndf", 6)
+    ELEMENT_AXES.clear()
+    AUTO_ANCHORS.clear()
+    DIAPHRAGMS.clear()
+    CONSTRAINT_HANDLER = "Plain"
     nodes = node_map(data)
     connected_nodes = set()
     adjacency = {node_id: set() for node_id in nodes}
@@ -468,8 +1257,12 @@ def build_model(data):
         adjacency[ni].add(nj)
         adjacency[nj].add(ni)
 
+    declared_support_nodes = {support.get("node") for support in data.get("supports", [])}
     for node in nodes.values():
-        ops.node(node["id"], node["x"], node["y"], node["z"])
+        # Los nodos sin barras (geometria de muros/losas) no se crean: antes se
+        # creaban y se empotraban (252 "apoyos" ficticios en getFixedNodes).
+        if node["id"] in connected_nodes or node["id"] in declared_support_nodes:
+            ops.node(node["id"], node["x"], node["y"], node["z"])
 
     support_nodes = set()
     for support in data.get("supports", []):
@@ -486,16 +1279,19 @@ def build_model(data):
         width = float(element.get("width_m") or 0.60)
         height = float(element.get("height_m") or 0.80)
         area, iy, iz, j = section_properties(width, height)
+        factor = float(element.get("stiffnessFactor") or 1.0)  # enlaces rigidos
+        area, iy, iz, j = area * factor, iy * factor, iz * factor, j * factor
         ni = nodes[element["nodeI"]]
         nj = nodes[element["nodeJ"]]
         length = element_length(element, nodes)
         dz = abs(nj["z"] - ni["z"])
         transf = 2 if length > 0.0 and dz / length > 0.90 else 1
         ops.element("elasticBeamColumn", element["id"], element["nodeI"], element["nodeJ"], area, E_CONCRETE, G_CONCRETE, j, iy, iz, transf)
+        ELEMENT_AXES[element["id"]] = local_axes(ni, nj, (1.0, 0.0, 0.0) if transf == 2 else (0.0, 0.0, 1.0))
 
-    for node_id in nodes:
-        if node_id not in connected_nodes and node_id not in support_nodes:
-            ops.fix(node_id, 1, 1, 1, 1, 1, 1)
+    for node_id in support_nodes:
+        if node_id not in connected_nodes:
+            ops.fix(node_id, 1, 1, 1, 1, 1, 1)  # apoyo declarado sin barras
 
     visited = set()
     for node_id in sorted(connected_nodes):
@@ -514,11 +1310,49 @@ def build_model(data):
         if not any(node in support_nodes for node in component):
             anchor = min(component, key=lambda n: nodes[n]["z"])
             ops.fix(anchor, 1, 1, 1, 1, 1, 1)
+            AUTO_ANCHORS.append({"node": anchor, "componente_nodos": len(component)})
+
+    if DIAFRAGMA_RIGIDO:
+        base_z = min(nodes[n]["z"] for n in connected_nodes)
+        by_level = {}
+        for n in connected_nodes:
+            z = round(nodes[n]["z"], 3)
+            if abs(z - base_z) < 1e-6 or n in support_nodes:
+                continue
+            by_level.setdefault(z, []).append(n)
+        for k, (z, slaves) in enumerate(sorted(by_level.items()), start=1):
+            if len(slaves) < 2:
+                continue
+            master = DIAPHRAGM_MASTER_BASE + k
+            cx = sum(nodes[n]["x"] for n in slaves) / len(slaves)
+            cy = sum(nodes[n]["y"] for n in slaves) / len(slaves)
+            z_exact = nodes[slaves[0]]["z"]
+            if any(nodes[n]["z"] != z_exact for n in slaves):
+                # OpenSees ignora sin aviso los esclavos que no estan en el plano del maestro.
+                raise RuntimeError(f"Diafragma z={z}: nodos con cotas distintas {sorted({nodes[n]['z'] for n in slaves})}")
+            ops.node(master, cx, cy, z_exact)
+            ops.fix(master, 0, 0, 1, 1, 1, 0)
+            ops.rigidDiaphragm(3, master, *sorted(slaves))
+            DIAPHRAGMS.append({"z": z, "master": master, "slaves": len(slaves)})
+        if DIAPHRAGMS:
+            CONSTRAINT_HANDLER = "Transformation"
 
     return nodes
 
 
 def dead_nodal_loads(data):
+    """Caso G. Con CARGAS_GRAVEDAD_DISTRIBUIDAS la carga muerta de cada viga va
+    como carga uniforme (LoadSet.element_loads) y no se generan fuerzas nodales."""
+    if CARGAS_GRAVEDAD_DISTRIBUIDAS:
+        nodal = {n: [0.0, 0.0, -w] for n, w in self_weight_nodal(data).items()}
+        loads = LoadSet(nodal, element_loads=beam_gravity_element_loads(data, field="deadLoad"))
+        nodes = node_map(data)
+        for e in data.get("elements", []):
+            w = beam_self_weight_per_m(e)
+            if w > 0.0 and e.get("nodeI") in nodes and e.get("nodeJ") in nodes:
+                acc = loads.element_loads.setdefault(e["id"], [0.0, 0.0, 0.0])
+                acc[2] -= w
+        return loads
     nodes = node_map(data)
     nodal = {node_id: [0.0, 0.0, 0.0] for node_id in nodes}
     for element in data.get("elements", []):
@@ -533,18 +1367,23 @@ def dead_nodal_loads(data):
 
 
 def vector_loads_from_dict(loads):
-    return {int(node): [float(vec.get("Fx", 0.0)), float(vec.get("Fy", 0.0)), float(vec.get("Fz", 0.0))] for node, vec in loads.items()}
+    """{nodo: [Fx, Fy, Fz, Mz]} (Mz opcional, torsion accidental)."""
+    return {int(node): [float(vec.get("Fx", 0.0)), float(vec.get("Fy", 0.0)), float(vec.get("Fz", 0.0)),
+                        float(vec.get("Mz", 0.0))] for node, vec in loads.items()}
 
 
 def combine_nodal_loads(load_sets, lambdas):
     node_ids = sorted({node for loads in load_sets.values() for node in loads})
-    combined = {node: [0.0, 0.0, 0.0] for node in node_ids}
+    combined = LoadSet({node: [0.0, 0.0, 0.0, 0.0] for node in node_ids})
     for case, loads in load_sets.items():
         factor = lambdas.get(case, 0.0)
         for node, vec in loads.items():
-            combined[node][0] += factor * vec[0]
-            combined[node][1] += factor * vec[1]
-            combined[node][2] += factor * vec[2]
+            for k in range(len(vec)):
+                combined[node][k] += factor * vec[k]
+        for eid, w in element_loads_of(loads).items():
+            acc = combined.element_loads.setdefault(eid, [0.0, 0.0, 0.0])
+            for k in range(3):
+                acc[k] += factor * w[k]
     return combined
 
 
@@ -552,9 +1391,18 @@ def apply_nodal_loads(nodal_loads):
     ops.timeSeries("Linear", 1)
     ops.pattern("Plain", 1, 1)
     for node, load in nodal_loads.items():
-        if max(abs(load[0]), abs(load[1]), abs(load[2])) < 1e-12:
+        mz = load[3] if len(load) > 3 else 0.0   # torsion accidental
+        if max(abs(load[0]), abs(load[1]), abs(load[2]), abs(mz)) < 1e-12:
             continue
-        ops.load(node, load[0], load[1], load[2], 0.0, 0.0, 0.0)
+        ops.load(node, load[0], load[1], load[2], 0.0, 0.0, mz)
+    for eid, w in element_loads_of(nodal_loads).items():
+        if max(abs(w[0]), abs(w[1]), abs(w[2])) < 1e-12:
+            continue
+        ex, ey, ez = ELEMENT_AXES[eid]
+        wx = sum(w[k] * ex[k] for k in range(3))
+        wy = sum(w[k] * ey[k] for k in range(3))
+        wz = sum(w[k] * ez[k] for k in range(3))
+        ops.eleLoad("-ele", eid, "-type", "-beamUniform", wy, wz, wx)
 
 
 def analyze_case(data, nodal_loads, control_node, element_id):
@@ -562,7 +1410,7 @@ def analyze_case(data, nodal_loads, control_node, element_id):
     apply_nodal_loads(nodal_loads)
     ops.system("BandGeneral")
     ops.numberer("RCM")
-    ops.constraints("Plain")
+    ops.constraints(CONSTRAINT_HANDLER)
     ops.integrator("LoadControl", 1.0)
     ops.algorithm("Linear")
     ops.analysis("Static")
@@ -604,7 +1452,7 @@ def superposition_check(data, live_transfer, seismic, lambdas):
     element_id = next(element["id"] for element in data["elements"] if element.get("type") == "viga")
     load_sets = {
         "G": dead_nodal_loads(data),
-        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "Q": live_load_set(live_transfer),
         "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
         "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
     }
@@ -720,7 +1568,7 @@ def verify_building(data, live_transfer, seismic, lambdas):
     nodes = node_map(data)
     load_sets = {
         "G": dead_nodal_loads(data),
-        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "Q": live_load_set(live_transfer),
         "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
         "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
     }
@@ -730,7 +1578,7 @@ def verify_building(data, live_transfer, seismic, lambdas):
     apply_nodal_loads(combined)
     ops.system("BandGeneral")
     ops.numberer("RCM")
-    ops.constraints("Plain")
+    ops.constraints(CONSTRAINT_HANDLER)
     ops.integrator("LoadControl", 1.0)
     ops.algorithm("Linear")
     ops.analysis("Static")
@@ -808,13 +1656,15 @@ def verify_building(data, live_transfer, seismic, lambdas):
     column_rows = []
     for element in supported_columns:
         try:
-            force = ops.eleForce(element["id"])
+            # Acciones LOCALES (x local = eje de la columna). Con eleForce
+            # (global) el indice 0 es Fx global = corte, no axial.
+            force = ops.eleResponse(element["id"], "localForce")
         except Exception:
             continue
         if not force or len(force) < 12:
             continue
-        p_compression = max(-force[0], -force[6], 0.0)
-        m_demand = max(abs(force[4]), abs(force[5]), abs(force[10]), abs(force[11]))
+        p_compression = max(force[0], -force[6], 0.0)
+        m_demand = max(math.hypot(force[4], force[5]), math.hypot(force[10], force[11]))
         m_allow = phi_moment_at(phi_points, p_compression)
         axial_util = p_compression / phi_po if phi_po else 0.0
         if m_allow is None or m_allow <= 0.0:
@@ -1386,7 +2236,7 @@ def run_and_extract(data, nodal_loads):
     apply_nodal_loads(nodal_loads)
     ops.system("BandGeneral")
     ops.numberer("RCM")
-    ops.constraints("Plain")
+    ops.constraints(CONSTRAINT_HANDLER)
     ops.integrator("LoadControl", 1.0)
     ops.algorithm("Linear")
     ops.analysis("Static")
@@ -1426,12 +2276,24 @@ def run_and_extract(data, nodal_loads):
         reactions[2] += r[2] if len(r) > 2 else 0.0
 
     element_forces = {}
+    element_forces_local = {}
     for element in data.get("elements", []):
         try:
             force = list(ops.eleForce(element["id"]))
         except Exception:
             continue
         element_forces[element["id"]] = force
+        try:
+            element_forces_local[element["id"]] = list(ops.eleResponse(element["id"], "localForce"))
+        except Exception:
+            pass
+
+    all_reactions = [0.0, 0.0, 0.0]
+    fixed_nodes = list(ops.getFixedNodes()) if hasattr(ops, "getFixedNodes") else []
+    for node in fixed_nodes:
+        r = list(ops.nodeReaction(node))
+        for k in range(3):
+            all_reactions[k] += r[k]
 
     return {
         "ok": ok == 0,
@@ -1439,7 +2301,10 @@ def run_and_extract(data, nodal_loads):
         "displacements": displacements,
         "reactions": {"sum_Fx": reactions[0], "sum_Fy": reactions[1], "sum_Fz": reactions[2]},
         "per_node_reactions": {str(k): v for k, v in per_node.items()},
+        "reactions_all_fixed": {"sum_Fx": all_reactions[0], "sum_Fy": all_reactions[1], "sum_Fz": all_reactions[2]},
+        "auto_anchors": list(AUTO_ANCHORS),
         "element_forces": element_forces,
+        "element_forces_local": element_forces_local,
     }
 
 
@@ -1561,7 +2426,7 @@ def gravity_case_report(data):
                 continue
             if element.get("nodeI") not in nid_set or element.get("nodeJ") not in nid_set:
                 continue
-            force = res["element_forces"].get(element["id"])
+            force = res.get("element_forces_local", {}).get(element["id"])
             if not force or len(force) < 12:
                 continue
             ncols += 1
@@ -1756,7 +2621,7 @@ def superposition_check_multi(data, live_transfer, seismic, combinations):
     element_id = next(element["id"] for element in data["elements"] if element.get("type") == "viga")
     load_sets = {
         "G": dead_nodal_loads(data),
-        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "Q": live_load_set(live_transfer),
         "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
         "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
     }
@@ -2120,6 +2985,63 @@ def _wall_interaccion(Pn0, fracs):
     return points
 
 
+def wall_pm_curve_generic(t, L, dbar=_WALL_DBAR, spacing=_WALL_S, cover=_WALL_COVER, n_c=90):
+    """Diagrama de interaccion P-M nominal de un muro rectangular t x L con dos
+    capas de barras phi dbar @ spacing (misma armadura que W_DPRIME), flexion en
+    el plano. Compatibilidad de deformaciones con eps_cu en la fibra extrema y
+    las mismas leyes de material que la seccion de fibra (H-30, A630-420).
+    Devuelve puntos {label, P_kN, M_kN_m} ordenados por P (compresion +)."""
+    import numpy as np
+
+    n_strips = 200
+    dx = L / n_strips
+    d_c = L / 2.0 - (np.arange(n_strips) + 0.5) * dx          # + hacia el borde comprimido
+    a_c = np.full(n_strips, dx * t)
+    n_layer = 0
+    pos = cover
+    bars = []
+    while pos <= L - cover + 1e-9:
+        bars.append(L / 2.0 - pos)
+        pos += spacing
+    abar = math.pi * dbar ** 2 / 4.0
+    d_s = np.array(bars * 2)
+    a_s = np.full(d_s.size, abar)
+    As = a_s.sum()
+    Ag = t * L
+    ey = _FIB_FY / _FIB_ES
+
+    def conc(eps):
+        e = np.clip(eps, 0.0, None)
+        r = e / _FIB_EPS_C0
+        sig = np.where(e <= _FIB_EPS_C0, _FIB_FC * (2 * r - r ** 2),
+                       np.where(e <= _FIB_EPS_CU, _FIB_FC * (1 - 0.15 * (e - _FIB_EPS_C0) / (_FIB_EPS_CU - _FIB_EPS_C0)),
+                                0.85 * _FIB_FC))
+        return np.where(eps > 0.0, sig, 0.0)
+
+    def steel(eps):
+        return np.where(eps >= ey, _FIB_FY + _FIB_ES * _FIB_EH * (eps - ey),
+                        np.where(eps <= -ey, -_FIB_FY + _FIB_ES * _FIB_EH * (eps + ey), _FIB_ES * eps))
+
+    points = []
+    for c in np.geomspace(0.02 * L, 3.0 * L, n_c):
+        eps_c = _FIB_EPS_CU * (d_c - (L / 2.0 - c)) / c
+        eps_s = _FIB_EPS_CU * (d_s - (L / 2.0 - c)) / c
+        sc = conc(eps_c)
+        ss = steel(eps_s) - conc(eps_s)                   # descuenta el hormigon desplazado
+        P = float((sc * a_c).sum() + (ss * a_s).sum())
+        M = float((sc * a_c * d_c).sum() + (ss * a_s * d_s).sum())
+        points.append({"label": f"c/L={c / L:.2f}", "P_kN": P, "M_kN_m": abs(M)})
+    # compresion pura con la misma ley: deformacion uniforme eps_c0 (pico f'c)
+    p0 = _FIB_FC * (Ag - As) + float(steel(np.array([_FIB_EPS_C0]))[0]) * As
+    points = [p for p in points if p["P_kN"] < p0]
+    points.append({"label": "Compresion pura", "P_kN": float(p0), "M_kN_m": 0.0})
+    # traccion pura: acero fluyendo (incluye el endurecimiento que ya aparece en el barrido)
+    pt = min([-_FIB_FY * As] + [p["P_kN"] for p in points])
+    points.append({"label": "Traccion pura", "P_kN": pt, "M_kN_m": 0.0})
+    points.sort(key=lambda p: (p["P_kN"], p["M_kN_m"]))
+    return {"points": points, "As_m2": As, "Ag_m2": Ag, "n_barras": int(d_s.size)}
+
+
 def wall_pm_curve():
     """Curva P-M y M-phi del muro W_DPRIME_OPENING_TO_3 (t=0.25, L=7.60, H-30)."""
     Ag = _WALL_T * _WALL_L
@@ -2280,15 +3202,32 @@ def component_resultant(a, b):
     return sign * math.sqrt(a * a + b * b)
 
 
+def section_forces_local(f, length, t):
+    """Esfuerzos internos en la seccion x = t*L a partir de las 12 acciones
+    LOCALES de extremo (ops.eleResponse(id, 'localForce')). Misma convencion
+    que FrameForces.Evaluate en Unity: N positivo en traccion, cara I = +f[i],
+    cara J = -f[j]; la carga uniforme se obtiene del equilibrio (f_i + f_j)/L,
+    por lo que el momento es parabolico si la barra tiene eleLoad."""
+    s = max(0.0, min(1.0, t))
+    x = length * s
+    qy = (f[1] + f[7]) / length
+    qz = (f[2] + f[8]) / length
+    return {
+        "N": -f[0] * (1.0 - s) + f[6] * s,
+        "Vy": f[1] - qy * x,
+        "Vz": f[2] - qz * x,
+        "T": f[3] * (1.0 - s) - f[9] * s,
+        "My": f[4] + f[2] * x - 0.5 * qz * x * x,
+        "Mz": f[5] - f[1] * x + 0.5 * qy * x * x,
+    }
+
+
 def force_values_at(force, element, t, length):
-    n = (1.0 - t) * force[0] + t * force[6]
-    vy = (1.0 - t) * force[1] + t * force[7]
-    vz = (1.0 - t) * force[2] + t * force[8]
-    torsion = (1.0 - t) * force[3] + t * force[9]
-    my = (1.0 - t) * force[4] + t * force[10]
-    mz = (1.0 - t) * force[5] + t * force[11]
-    if element.get("type") == "viga" and abs(float(element.get("uniformLoad") or 0.0)) > 1e-12:
-        mz += abs(float(element.get("uniformLoad") or 0.0)) * length * length * t * (1.0 - t) / 2.0
+    """force: acciones LOCALES de extremo. (Antes se interpolaban acciones
+    globales entre extremos y se sumaba una parabola inventada con
+    uniformLoad; ambas cosas fueron corregidas.)"""
+    v = section_forces_local(force, length, t)
+    n, vy, vz, torsion, my, mz = v["N"], v["Vy"], v["Vz"], v["T"], v["My"], v["Mz"]
     return {
         "N": n,
         "Vy": vy,
@@ -2330,13 +3269,13 @@ def internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, 
 
     load_sets = {
         "G": dead_nodal_loads(data),
-        "Q": vector_loads_from_dict(live_transfer["cargas_nodales_Q"]),
+        "Q": live_load_set(live_transfer),
         "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
         "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
     }
     combined_loads = combine_nodal_loads(load_sets, lambdas)
     result = run_and_extract(data, combined_loads)
-    force = result["element_forces"].get(element["id"])
+    force = result.get("element_forces_local", {}).get(element["id"])
     if not force or len(force) < 12:
         return {"error": "No se pudieron extraer fuerzas internas para este elemento.", "elemento": element}
 
@@ -2437,7 +3376,7 @@ def print_internal_forces_at_position(data, live_transfer, seismic, wanted_id, c
 
 
 def interactive_menu():
-    data = load_json(JSON_PATH)
+    data = load_model_data()
     sc_kg_m2 = ask_float("Sobrecarga SC en kg/m2", 500.0)
     seismic_coeff = ask_float("Coeficiente sismico pseudoestatico", DEFAULT_SEISMIC_COEFF)
     q_q = kg_m2_to_kn_m2(sc_kg_m2)
@@ -2558,7 +3497,7 @@ def main():
         return
 
     q_q = kg_m2_to_kn_m2(args.sc_kg_m2) if args.sc_kg_m2 is not None else args.qQ
-    data = load_json(JSON_PATH)
+    data = load_model_data()
     live_transfer, seismic, _ = build_result(data, q_q, args.coef_sismo)
 
     if args.superposicion:

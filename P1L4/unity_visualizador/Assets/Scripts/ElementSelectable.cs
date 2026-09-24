@@ -172,7 +172,7 @@ public class ElementSelectable : MonoBehaviour
             float cRatio = GetCapacityRatio(pmDemand);
             result += $"P = {pmDemand.x:0.###} kN (compresion+)\n" +
                       $"M = {pmDemand.y:0.###} kN*m (resultante)\n" +
-                      $"C = {cRatio:0.###} (M/Mcap)\n";
+                      (cRatio >= UnityData.OutOfCurveRatio ? "C = FUERA DE LA CURVA (no cumple)\n" : $"C = {cRatio:0.###} (M/Mcap)\n");
 
             if (!string.IsNullOrEmpty(pmSectionId))
             {
@@ -215,7 +215,7 @@ public class ElementSelectable : MonoBehaviour
         float fey = UnityData.UseBaseCaseFactors ? UnityData.FactorEY : info != null ? info.EY : 0f;
 
         return $"\n--- Valores P-M de {UnityData.GetActiveLoadLabel()} ---\n" +
-               $"Resultado: P={total.x:0.##} kN | M={total.y:0.##} kN*m | C={cRatio:0.###}\n" +
+               $"Resultado: P={total.x:0.##} kN | M={total.y:0.##} kN*m | C={(cRatio >= UnityData.OutOfCurveRatio ? "fuera de curva" : cRatio.ToString("0.###"))}\n" +
                $"G  x {fg:0.##}: P={g.x:0.##}, M={g.y:0.##}\n" +
                $"Q  x {fq:0.##}: P={q.x:0.##}, M={q.y:0.##}\n" +
                $"EX x {fex:0.##}: P={ex.x:0.##}, M={ex.y:0.##}\n" +
@@ -225,41 +225,7 @@ public class ElementSelectable : MonoBehaviour
     private float GetCapacityRatio(Vector2 demand)
     {
         if (string.IsNullOrEmpty(pmSectionId)) return 0f;
-        PMCurveData curve = UnityData.GetPMCurve(pmSectionId);
-        if (curve == null || curve.points == null || curve.points.Length < 2) return 0f;
-
-        float p = demand.x;
-        float mCap = 0f;
-        for (int i = 0; i < curve.points.Length - 1; i++)
-        {
-            PMPoint a = curve.points[i];
-            PMPoint b = curve.points[i + 1];
-            float minP = Mathf.Min(a.P_kN, b.P_kN);
-            float maxP = Mathf.Max(a.P_kN, b.P_kN);
-            if (p < minP || p > maxP) continue;
-
-            float t = Mathf.Abs(b.P_kN - a.P_kN) > 0.001f
-                ? Mathf.InverseLerp(a.P_kN, b.P_kN, p)
-                : 0f;
-            mCap = Mathf.Lerp(a.M_kN_m, b.M_kN_m, t);
-            break;
-        }
-
-        if (mCap <= 0.001f)
-        {
-            float best = float.MaxValue;
-            foreach (PMPoint pt in curve.points)
-            {
-                float dist = Mathf.Abs(pt.P_kN - p);
-                if (dist < best)
-                {
-                    best = dist;
-                    mCap = pt.M_kN_m;
-                }
-            }
-        }
-
-        return mCap > 0.001f ? demand.y / mCap : 0f;
+        return UnityData.CapacityRatio(UnityData.GetPMCurve(pmSectionId), demand.x, demand.y);
     }
 
     private Vector2 GetPMDemandForCase(string caseName)

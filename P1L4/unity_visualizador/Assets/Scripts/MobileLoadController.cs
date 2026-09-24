@@ -13,13 +13,17 @@ public class MobileLoadController : MonoBehaviour
     public bool showAxial = true;
     public bool showShear = true;
     public bool showMoment = true;
-    // Manual-only test mode: position changes come exclusively from the X/Z controls.
+    // Caminata automatica: sobre una viga seleccionada recorre la viga de I a J
+    // y vuelve; en otro caso recorre la losa. Cualquier ajuste manual la detiene.
     public bool autoWalk = false;
+    public float autoWalkSpeed01 = 0.12f; // fraccion del recorrido por segundo
+    public bool logDiagnostics = false;    // logs [MobileLoadDiagnostics] en consola
 
     private const float LEVEL_TOL = 0.12f;
-    private const int MAX_SUPPORT_COLUMNS = 4;
+    private const int MAX_SUPPORT_COLUMNS = 6;
 
     private ElementSelectable selectedElement;
+    private bool slabBoundsOverride;
     private DiagramController diagramController;
     private GameObject personRoot;
     private Transform personBody;
@@ -55,14 +59,39 @@ public class MobileLoadController : MonoBehaviour
     private bool lastAutoWalkState;
     private float walkClockX;
     private float walkClockZ;
-    private float lastRefreshLoadKN = float.NaN;
-    private float lastRefreshPosX = float.NaN;
-    private float lastRefreshPosZ = float.NaN;
-    private float refreshAccum;
-    private ElementSelectable lastRefreshElement;
+    private float autoWalkClock;
+    private float beamLoadFraction = 1f;
+    private float beamLoadDistance;
+    private ElementPicker cachedPicker;
+    private ElementSelectable lastPickerSelection;
+    private bool loadOnSlab;          // la persona esta sobre una losa del nivel
+    private bool placeOnBeamPending;  // ubicar a la persona en el centro de la viga recien seleccionada
+    private readonly List<ElementSelectable> cachedColumns = new List<ElementSelectable>();
+    private float nextColumnCacheTime;
+    private bool staleObjectsCleared;
     private int diagnosticUpdateCount;
     private float nextDiagnosticLogTime;
     private Vector3 lastDiagnosticLoadPosition = new Vector3(float.NaN, float.NaN, float.NaN);
+
+    // Reparto de la carga de la persona desde la losa a sus apoyos (vigas o
+    // muros). Se busca el apoyo mas cercano en cada direccion (+X, -X, +Z, -Z)
+    // y la carga se reparte por franjas cruzadas (ver ComputeSlabDistribution).
+    private class SlabShare
+    {
+        public string label;
+        public ElementSelectable beam;   // null si el apoyo es un muro
+        public float fraction;
+        public float t;                  // posicion de la carga sobre la viga (0..1)
+        public float distance;
+    }
+
+    private readonly List<SlabShare> slabShares = new List<SlabShare>();
+    private float wallReaction;
+    private float otherColumnsReaction;
+    private bool slabSharesValid;
+    private readonly List<ElementSelectable> cachedBeams = new List<ElementSelectable>();
+    private float nextBeamCacheTime;
+    private List<Vector4> wallPlanSegments;   // (x0, z0, x1, z1) en coordenadas Unity
 
     private class ColumnSupport
     {
@@ -74,7 +103,7 @@ public class MobileLoadController : MonoBehaviour
 
     public static Rect PanelRect()
     {
-        return PanelLayout.Get("MobileLoad", new Rect(360f, 150f, 380f, 372f));
+        return PanelLayout.Get("MobileLoad", new Rect(360f, 150f, 380f, 440f));
     }
 
     public bool IsPanelVisible()
@@ -134,7 +163,37 @@ public class MobileLoadController : MonoBehaviour
 
     public void SetSelectedElement(ElementSelectable element)
     {
+        if (element != selectedElement)
+            placeOnBeamPending = true;
         selectedElement = element;
+        slabBoundsOverride = false;
+    }
+
+    // Ubica a la persona sobre un punto (click en la viga seleccionada).
+    public void PlaceLoadAt(Vector3 worldPoint, ElementSelectable beam)
+    {
+        if (beam != null) selectedElement = beam;
+        levelY = beam != null ? 0.5f * (beam.startPoint.y + beam.endPoint.y) : worldPoint.y;
+        if (!ComputePlanBounds(levelY)) return;
+        posX01 = Mathf.Clamp01((worldPoint.x - planXMin) / Mathf.Max(planXMax - planXMin, 1e-4f));
+        posZ01 = Mathf.Clamp01((worldPoint.z - planZMin) / Mathf.Max(planZMax - planZMin, 1e-4f));
+        StopAutoWalk();
+        placeOnBeamPending = false;
+        slabBoundsOverride = true;
+        boundsReady = true;
+        hasLevel = true;
+    }
+
+    // Al seleccionar una viga la persona aparece en su centro: asi el efecto en
+    // el diagrama se ve de inmediato (antes quedaba donde estaba, a menudo lejos).
+    private void PlaceOnSelectedBeamCenter()
+    {
+        placeOnBeamPending = false;
+        if (selectedElement == null || selectedElement.data == null || selectedElement.data.type != "viga") return;
+        Vector3 mid = 0.5f * (selectedElement.startPoint + selectedElement.endPoint);
+        posX01 = Mathf.Clamp01((mid.x - planXMin) / Mathf.Max(planXMax - planXMin, 1e-4f));
+        posZ01 = Mathf.Clamp01((mid.z - planZMin) / Mathf.Max(planZMax - planZMin, 1e-4f));
+        StopAutoWalk();
     }
 
     private void Update()
@@ -149,12 +208,13 @@ public class MobileLoadController : MonoBehaviour
             return;
         }
 
-        if (selectedElement != null)
+        if (selectedElement != null && !slabBoundsOverride)
         {
             ComputeLevelAndBounds();
             if (boundsReady)
             {
                 hasLevel = true;
+                if (placeOnBeamPending) PlaceOnSelectedBeamCenter();
             }
         }
         else if (!boundsReady && !hasLevel)
@@ -177,19 +237,25 @@ public class MobileLoadController : MonoBehaviour
 
     private void UpdateManualDiagramButtonsFromMouse()
     {
-        if (!Input.GetMouseButtonDown(0) || SelectedBeamDiagramPanel.BlocksPointer())
+        if (!Input.GetMouseButtonDown(0))
         {
             return;
         }
 
         Rect panel = PanelRect();
         Vector2 mouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        if (SelectedBeamDiagramPanel.BlocksPointer() && !panel.Contains(mouse))
+        {
+            return;
+        }
+
         float rowY = panel.y + 180f;
         string selected = selectedElement == null
             ? "null"
             : (selectedElement.data == null ? selectedElement.name : selectedElement.data.type);
-        Debug.Log($"[MobileDiagramDiagnostics] click mouse={mouse} panel={panel} rowY={rowY:0.0} " +
-                  $"selected={selected} states=A:{showAxial} S:{showShear} M:{showMoment}");
+        if (logDiagnostics)
+            Debug.Log($"[MobileDiagramDiagnostics] click mouse={mouse} panel={panel} rowY={rowY:0.0} " +
+                      $"selected={selected} states=A:{showAxial} S:{showShear} M:{showMoment}");
 
         if (selectedElement == null || selectedElement.data == null)
         {
@@ -222,21 +288,24 @@ public class MobileLoadController : MonoBehaviour
 
     private void UpdateManualPositionFromMouse()
     {
-        if (!Input.GetMouseButton(0) || SelectedBeamDiagramPanel.BlocksPointer())
+        if (!Input.GetMouseButton(0))
         {
             return;
         }
 
         Rect panel = PanelRect();
         Vector2 mouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        if (SelectedBeamDiagramPanel.BlocksPointer() && !panel.Contains(mouse))
+        {
+            return;
+        }
+
         float sliderX = panel.x + 132f;
         float sliderWidth = 125f;
-        float rowX = panel.x + 102f;
-        float rowWidth = 224f;
-        float rowY = panel.y + 130f;
+        float sliderY = panel.y + 130f;
 
-        bool onX = new Rect(rowX, rowY, rowWidth, 20f).Contains(mouse);
-        bool onZ = new Rect(rowX, rowY + 24f, rowWidth, 20f).Contains(mouse);
+        bool onX = new Rect(sliderX, sliderY, sliderWidth, 20f).Contains(mouse);
+        bool onZ = new Rect(sliderX, sliderY + 24f, sliderWidth, 20f).Contains(mouse);
         if (!onX && !onZ)
         {
             return;
@@ -251,15 +320,12 @@ public class MobileLoadController : MonoBehaviour
         {
             posZ01 = value;
         }
-        autoWalk = false;
-        lastAutoWalkState = false;
-        walkClockX = posX01;
-        walkClockZ = posZ01;
+        StopAutoWalk();
     }
 
     private void LogDiagnostics(string reason)
     {
-        if (Time.unscaledTime < nextDiagnosticLogTime)
+        if (!logDiagnostics || Time.unscaledTime < nextDiagnosticLogTime)
         {
             return;
         }
@@ -313,19 +379,26 @@ public class MobileLoadController : MonoBehaviour
 
     private void SyncSelectedElement()
     {
-        ElementPicker picker = FindObjectOfType<ElementPicker>();
+        if (cachedPicker == null) cachedPicker = FindObjectOfType<ElementPicker>();
+        ElementPicker picker = cachedPicker;
         if (picker == null || picker.Selected == null)
         {
             return;
         }
 
         ElementSelectable sel = picker.Selected;
-        if (sel.data == null && !sel.isWall)
+        if (sel == lastPickerSelection)
         {
-            selectedElement = null;
             return;
         }
+        lastPickerSelection = sel;
+        if (sel.data == null && !sel.isWall)
+        {
+            return;
+        }
+        if (sel != selectedElement) placeOnBeamPending = true;
         selectedElement = sel;
+        slabBoundsOverride = false;
     }
 
     private void ComputeLevelAndBounds()
@@ -384,7 +457,7 @@ public class MobileLoadController : MonoBehaviour
 
         if (!found)
         {
-            foreach (ElementSelectable col in FindObjectsOfType<ElementSelectable>())
+            foreach (ElementSelectable col in ColumnCandidates())
             {
                 if (col == null || col.data == null || col.data.type != "columna")
                 {
@@ -427,21 +500,22 @@ public class MobileLoadController : MonoBehaviour
         Transform t = slabPanel.transform;
         Vector3 c = t.position;
         Vector3 s = t.localScale;
-        float hx = s.x * 0.5f;
-        float hz = s.z * 0.5f;
-
-        planXMin = c.x - hx;
-        planXMax = c.x + hx;
-        planZMin = c.z - hz;
-        planZMax = c.z + hz;
         levelY = c.y;
-        levelLabel = !string.IsNullOrEmpty(slabPanel.name) ? slabPanel.name : "Losa";
+        levelLabel = (!string.IsNullOrEmpty(slabPanel.name) ? slabPanel.name : "Losa") + $" (z={levelY:0.##} m)";
+        if (!ComputePlanBounds(levelY))
+        {
+            planXMin = c.x - s.x * 0.5f;
+            planXMax = c.x + s.x * 0.5f;
+            planZMin = c.z - s.z * 0.5f;
+            planZMax = c.z + s.z * 0.5f;
+        }
         posX01 = Mathf.Clamp01((worldPoint.x - planXMin) / Mathf.Max(planXMax - planXMin, 1e-4f));
         posZ01 = Mathf.Clamp01((worldPoint.z - planZMin) / Mathf.Max(planZMax - planZMin, 1e-4f));
 
         autoWalk = false;
         lastAutoWalkState = false;
 
+        slabBoundsOverride = true;
         boundsReady = true;
         hasLevel = true;
     }
@@ -465,9 +539,9 @@ public class MobileLoadController : MonoBehaviour
     private void UpdateVisuals()
     {
         EnsureObjects();
-        ComputeSupports();
-
         AdvanceAutoWalk();
+        ComputeSlabDistribution();
+        ComputeSupports();
 
         Vector2 loadPlan = LoadPlanPos();
         Vector3 loadPos = new Vector3(loadPlan.x, levelY, loadPlan.y);
@@ -476,33 +550,223 @@ public class MobileLoadController : MonoBehaviour
         UpdatePerson(loadPos);
         UpdateReactionArrows();
         UpdateBeamDiagrams(loadPos);
+        // Los diagramas globales muestran solo la combinacion OpenSees: la carga
+        // movil no los modifica, por lo que no se regeneran en cada cuadro.
+    }
 
-        if (diagramController != null && selectedElement != null)
+    private List<ElementSelectable> BeamCandidates()
+    {
+        if (cachedBeams.Count == 0 || Time.unscaledTime >= nextBeamCacheTime)
         {
-            bool loadChanged = Mathf.Abs(loadKN - lastRefreshLoadKN) > 0.5f;
-            bool elementChanged = lastRefreshElement != selectedElement;
-            float dx = Mathf.Abs(posX01 - lastRefreshPosX);
-            float dz = Mathf.Abs(posZ01 - lastRefreshPosZ);
-            refreshAccum += dx + dz;
-            bool movedEnough = refreshAccum > 0.002f;
-
-            if (loadChanged || elementChanged || movedEnough)
+            cachedBeams.Clear();
+            foreach (ElementSelectable e in FindObjectsOfType<ElementSelectable>())
             {
-                diagramController.RefreshDiagramForElement(selectedElement);
-                lastRefreshLoadKN = loadKN;
-                lastRefreshPosX = posX01;
-                lastRefreshPosZ = posZ01;
-                lastRefreshElement = selectedElement;
-                refreshAccum = 0f;
+                if (e != null && e.data != null && e.data.type == "viga") cachedBeams.Add(e);
+            }
+            nextBeamCacheTime = Time.unscaledTime + 2f;
+        }
+        return cachedBeams;
+    }
+
+    private List<Vector4> WallPlanSegments()
+    {
+        if (wallPlanSegments != null) return wallPlanSegments;
+        wallPlanSegments = new List<Vector4>();
+        StructureData structure = UnityData.Structure;
+        if (structure == null || structure.walls == null || structure.nodes == null) return wallPlanSegments;
+        var nodes = new Dictionary<int, NodeData>();
+        foreach (NodeData n in structure.nodes) nodes[n.id] = n;
+        var seen = new HashSet<string>();
+        foreach (WallData w in structure.walls)
+        {
+            if (w == null || !nodes.TryGetValue(w.nodeI, out NodeData a) || !nodes.TryGetValue(w.nodeJ, out NodeData b)) continue;
+            string key = $"{a.x:0.00}|{a.y:0.00}|{b.x:0.00}|{b.y:0.00}";
+            if (!seen.Add(key)) continue;   // mismo muro en todos los pisos (z = -4..16)
+            wallPlanSegments.Add(new Vector4(a.x, a.y, b.x, b.y));
+        }
+        return wallPlanSegments;
+    }
+
+    // Apoyo mas cercano en cada direccion: 0:+Z, 1:-Z, 2:+X, 3:-X (plano Unity x,z).
+    private bool IsOnSlab(Vector2 p)
+    {
+        StructureData structure = UnityData.Structure;
+        if (structure == null || structure.slabs == null) return false;
+        foreach (SlabData slab in structure.slabs)
+        {
+            if (slab == null || Mathf.Abs(slab.z - levelY) > 0.25f) continue;
+            if (p.x >= Mathf.Min(slab.x0, slab.x1) - 0.05f && p.x <= Mathf.Max(slab.x0, slab.x1) + 0.05f &&
+                p.y >= Mathf.Min(slab.y0, slab.y1) - 0.05f && p.y <= Mathf.Max(slab.y0, slab.y1) + 0.05f)
+                return true;
+        }
+        return false;
+    }
+
+    private void ComputeSlabDistribution()
+    {
+        slabShares.Clear();
+        slabSharesValid = false;
+        Vector2 p = LoadPlanPos();
+        loadOnSlab = IsOnSlab(p);
+        if (!loadOnSlab)
+        {
+            beamLoadFraction = 0f;
+            return;
+        }
+        var best = new SlabShare[4];
+
+        void Consider(Vector2 a, Vector2 b, ElementSelectable beam, string label)
+        {
+            Vector2 dir = b - a;
+            if (dir.magnitude < 0.01f) return;
+            bool alongX = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y);
+            if (alongX)
+            {
+                if (Mathf.Abs(a.y - b.y) > 0.05f) return;            // solo apoyos alineados con los ejes
+                if (p.x < Mathf.Min(a.x, b.x) - 0.02f || p.x > Mathf.Max(a.x, b.x) + 0.02f) return;
+                float d = 0.5f * (a.y + b.y) - p.y;
+                int k = d >= 0f ? 0 : 1;
+                float ad = Mathf.Abs(d);
+                if (best[k] == null || ad < best[k].distance)
+                    best[k] = new SlabShare { label = label, beam = beam, distance = ad, t = Mathf.InverseLerp(a.x, b.x, p.x) };
+            }
+            else
+            {
+                if (Mathf.Abs(a.x - b.x) > 0.05f) return;
+                if (p.y < Mathf.Min(a.y, b.y) - 0.02f || p.y > Mathf.Max(a.y, b.y) + 0.02f) return;
+                float d = 0.5f * (a.x + b.x) - p.x;
+                int k = d >= 0f ? 2 : 3;
+                float ad = Mathf.Abs(d);
+                if (best[k] == null || ad < best[k].distance)
+                    best[k] = new SlabShare { label = label, beam = beam, distance = ad, t = Mathf.InverseLerp(a.y, b.y, p.y) };
             }
         }
+
+        foreach (ElementSelectable beam in BeamCandidates())
+        {
+            if (beam == null) continue;
+            if (Mathf.Abs(beam.startPoint.y - levelY) > LEVEL_TOL || Mathf.Abs(beam.endPoint.y - levelY) > LEVEL_TOL) continue;
+            string tag = !string.IsNullOrEmpty(beam.data.elementTag) ? beam.data.elementTag : beam.data.id.ToString();
+            Consider(new Vector2(beam.startPoint.x, beam.startPoint.z), new Vector2(beam.endPoint.x, beam.endPoint.z), beam, tag);
+        }
+        foreach (Vector4 w in WallPlanSegments())
+        {
+            Consider(new Vector2(w.x, w.y), new Vector2(w.z, w.w), null, "muro");
+        }
+
+        // Reparto por franjas cruzadas (metodo de las franjas): la persona en (x, z)
+        // se apoya en una franja en X (entre los apoyos +X/-X) y otra en Z. Cada
+        // franja es simplemente apoyada; su rigidez bajo la carga es k = L/(a*b)^2
+        // (flecha P*a^2*b^2/(3EIL)). La carga se divide entre franjas en proporcion
+        // a k y dentro de cada franja por la regla de la palanca. Asi la viga recibe
+        // una fraccion que varia suave con la distancia (100 % sobre la viga, ~50 %
+        // a 1 m en un pano de 5 m), en vez de caer a 0 apenas la persona se aleja
+        // como pasaba con 1/d^4. En el centro de un pano da alpha = Lz^3/(Lx^3+Lz^3).
+        SlabShare onSupport = null;
+        foreach (SlabShare share in best)
+        {
+            if (share != null && share.distance < 0.02f && (onSupport == null || share.distance < onSupport.distance))
+                onSupport = share;
+        }
+        foreach (SlabShare share in best)
+        {
+            if (share != null) share.fraction = 0f;
+        }
+        bool zPair = best[0] != null && best[1] != null;
+        bool xPair = best[2] != null && best[3] != null;
+        if (onSupport != null)
+        {
+            onSupport.fraction = 1f;
+        }
+        else if (zPair || xPair)
+        {
+            float kz = 0f;
+            float kx = 0f;
+            if (zPair)
+            {
+                float da = best[0].distance, db = best[1].distance;
+                kz = (da + db) / Mathf.Max(da * da * db * db, 1e-8f);
+            }
+            if (xPair)
+            {
+                float da = best[2].distance, db = best[3].distance;
+                kx = (da + db) / Mathf.Max(da * da * db * db, 1e-8f);
+            }
+            float alphaZ = kz / (kz + kx);
+            float alphaX = 1f - alphaZ;
+            if (zPair)
+            {
+                float lz = best[0].distance + best[1].distance;
+                best[0].fraction = alphaZ * best[1].distance / lz;
+                best[1].fraction = alphaZ * best[0].distance / lz;
+            }
+            if (xPair)
+            {
+                float lx = best[2].distance + best[3].distance;
+                best[2].fraction = alphaX * best[3].distance / lx;
+                best[3].fraction = alphaX * best[2].distance / lx;
+            }
+        }
+        else
+        {
+            // Sin un par de apoyos opuestos (borde de losa en voladizo): al mas cercano.
+            float sum = 0f;
+            foreach (SlabShare share in best)
+            {
+                if (share == null) continue;
+                share.fraction = 1f / Mathf.Pow(Mathf.Max(share.distance, 0.05f), 4f);
+                sum += share.fraction;
+            }
+            if (sum <= 0f) return;
+            foreach (SlabShare share in best)
+            {
+                if (share != null) share.fraction /= sum;
+            }
+        }
+        foreach (SlabShare share in best)
+        {
+            if (share != null && share.fraction >= 0.001f) slabShares.Add(share);
+        }
+        slabShares.Sort((x, y) => y.fraction.CompareTo(x.fraction));
+        slabSharesValid = slabShares.Count > 0;
+
+        // Fraccion que recibe la viga seleccionada (para el texto del panel, aunque
+        // los diagramas de la carga movil esten ocultos).
+        beamLoadFraction = 0f;
+        beamLoadDistance = 0f;
+        foreach (SlabShare share in slabShares)
+        {
+            if (share.beam != null && share.beam == selectedElement)
+            {
+                beamLoadFraction = share.fraction;
+                beamLoadDistance = share.distance;
+                break;
+            }
+        }
+    }
+
+    private List<ElementSelectable> ColumnCandidates()
+    {
+        // FindObjectsOfType recorre toda la escena: se cachea y se refresca cada 2 s.
+        if (cachedColumns.Count == 0 || Time.unscaledTime >= nextColumnCacheTime)
+        {
+            cachedColumns.Clear();
+            foreach (ElementSelectable e in FindObjectsOfType<ElementSelectable>())
+            {
+                if (e != null && e.data != null && e.data.type == "columna") cachedColumns.Add(e);
+            }
+            nextColumnCacheTime = Time.unscaledTime + 2f;
+        }
+        return cachedColumns;
     }
 
     private void ComputeSupports()
     {
         supports.Clear();
-        List<ColumnSupport> candidates = new List<ColumnSupport>();
-        foreach (ElementSelectable col in FindObjectsOfType<ElementSelectable>())
+        wallReaction = 0f;
+        otherColumnsReaction = 0f;
+        var candidates = new List<ColumnSupport>();
+        foreach (ElementSelectable col in ColumnCandidates())
         {
             if (col == null || col.data == null || col.data.type != "columna")
             {
@@ -521,56 +785,56 @@ public class MobileLoadController : MonoBehaviour
                 tag = !string.IsNullOrEmpty(col.data.elementTag) ? col.data.elementTag : col.data.id.ToString()
             });
         }
-
-        if (candidates.Count == 0)
+        if (candidates.Count == 0 || !slabSharesValid)
         {
             return;
         }
 
-        Vector2 loadPlan = LoadPlanPos();
-        candidates.Sort(delegate (ColumnSupport a, ColumnSupport b)
+        ColumnSupport Nearest(Vector2 point)
         {
-            return PlanDistSqr(a.plan, loadPlan).CompareTo(PlanDistSqr(b.plan, loadPlan));
-        });
-
-        int count = Mathf.Min(MAX_SUPPORT_COLUMNS, candidates.Count);
-        double totalWeight = 0.0;
-        double[] weights = new double[count];
-        bool snapped = false;
-
-        for (int i = 0; i < count; i++)
-        {
-            double dist = Mathf.Sqrt(PlanDistSqr(candidates[i].plan, loadPlan));
-            if (dist < 0.02f)
+            ColumnSupport best = null;
+            float bestD = float.PositiveInfinity;
+            foreach (ColumnSupport c in candidates)
             {
-                weights[i] = 1e9;
-                snapped = true;
+                float d = PlanDistSqr(c.plan, point);
+                if (d < bestD) { bestD = d; best = c; }
             }
-            else
-            {
-                weights[i] = 1.0 / (dist * dist + 0.05);
-            }
-            if (!snapped)
-            {
-                totalWeight += weights[i];
-            }
+            return best;
         }
 
-        if (snapped)
+        foreach (SlabShare share in slabShares)
         {
-            for (int i = 0; i < count; i++)
+            float f = loadKN * share.fraction;
+            if (share.beam == null)
             {
-                double w = weights[i] >= 1e8 ? loadKN : 0.0;
-                candidates[i].reaction = (float)w;
-                supports.Add(candidates[i]);
+                wallReaction += f;    // la parte que toma un muro baja por el muro
+                continue;
             }
-            return;
+            // Reacciones de viga empotrada-empotrada con carga puntual f en a = t*L.
+            ElementSelectable beam = share.beam;
+            float length = UnityData.TryGetFrameGeometry(beam.data.id, out var frame)
+                ? (float)frame.Length : Mathf.Max((beam.endPoint - beam.startPoint).magnitude, 0.001f);
+            float a = share.t * length;
+            float b = length - a;
+            float rI = f * b * b * (length + 2f * a) / (length * length * length);
+            float rJ = f - rI;
+            ColumnSupport cI = Nearest(new Vector2(beam.startPoint.x, beam.startPoint.z));
+            ColumnSupport cJ = Nearest(new Vector2(beam.endPoint.x, beam.endPoint.z));
+            if (cI != null) cI.reaction += rI;
+            if (cJ != null) cJ.reaction += rJ;
         }
 
-        for (int i = 0; i < count; i++)
+        candidates.Sort((x, y) => y.reaction.CompareTo(x.reaction));
+        foreach (ColumnSupport c in candidates)
         {
-            candidates[i].reaction = (float)(loadKN * weights[i] / totalWeight);
-            supports.Add(candidates[i]);
+            if (c.reaction > 0.01f && supports.Count < MAX_SUPPORT_COLUMNS)
+            {
+                supports.Add(c);
+            }
+            else if (c.reaction > 0.01f)
+            {
+                otherColumnsReaction += c.reaction;
+            }
         }
     }
 
@@ -583,8 +847,59 @@ public class MobileLoadController : MonoBehaviour
 
     private void AdvanceAutoWalk()
     {
-        // Automatic walking is disabled while validating manual X/Z movement.
+        if (!autoWalk)
+        {
+            lastAutoWalkState = false;
+            return;
+        }
+
+        bool onBeam = selectedElement != null && selectedElement.data != null && selectedElement.data.type == "viga";
+        if (!lastAutoWalkState)
+        {
+            // Arranca desde la posicion actual para que no haya saltos.
+            autoWalkClock = onBeam ? ProjectOnSelectedBeam01(LoadPlanPos()) : 0f;
+            walkClockX = posX01;
+            walkClockZ = posZ01;
+            lastAutoWalkState = true;
+        }
+
+        float dt = Mathf.Min(Time.deltaTime, 0.1f);
+        if (onBeam)
+        {
+            // Recorre la viga de I a J y vuelve (PingPong mantiene 0..1).
+            autoWalkClock += dt * autoWalkSpeed01;
+            float u = Mathf.PingPong(autoWalkClock, 1f);
+            Vector3 a = selectedElement.startPoint;
+            Vector3 b = selectedElement.endPoint;
+            Vector2 p = Vector2.Lerp(new Vector2(a.x, a.z), new Vector2(b.x, b.z), u);
+            posX01 = Mathf.Clamp01((p.x - planXMin) / Mathf.Max(planXMax - planXMin, 1e-4f));
+            posZ01 = Mathf.Clamp01((p.y - planZMin) / Mathf.Max(planZMax - planZMin, 1e-4f));
+        }
+        else
+        {
+            // Recorrido en zigzag por la losa (frecuencias distintas en X y Z).
+            walkClockX += dt * autoWalkSpeed01;
+            walkClockZ += dt * autoWalkSpeed01 * 0.37f;
+            posX01 = Mathf.PingPong(walkClockX, 1f);
+            posZ01 = Mathf.PingPong(walkClockZ, 1f);
+        }
+    }
+
+    private float ProjectOnSelectedBeam01(Vector2 plan)
+    {
+        if (selectedElement == null) return 0f;
+        Vector2 i = new Vector2(selectedElement.startPoint.x, selectedElement.startPoint.z);
+        Vector2 j = new Vector2(selectedElement.endPoint.x, selectedElement.endPoint.z);
+        Vector2 ij = j - i;
+        return ij.sqrMagnitude > 0.0001f ? Mathf.Clamp01(Vector2.Dot(plan - i, ij) / ij.sqrMagnitude) : 0.5f;
+    }
+
+    private void StopAutoWalk()
+    {
         autoWalk = false;
+        lastAutoWalkState = false;
+        walkClockX = posX01;
+        walkClockZ = posZ01;
     }
 
     private void UpdatePerson(Vector3 loadPos)
@@ -741,7 +1056,41 @@ public class MobileLoadController : MonoBehaviour
             return isColumna ? -ColumnExtraAxial() : 0f; // N is tension-positive.
         }
         if (!isViga) return 0f;
-        FrameSectionForces contribution = FrameForces.EvaluateFixedFixedPointLoad(loadKN, beamLength, t, s);
+        // Solo la parte de la carga que llega a ESTA viga: regla de la palanca
+        // en una franja de losa de ancho tributario b = A_trib / L (1 en la viga,
+        // 0 a una distancia b). Antes toda la carga iba a la viga seleccionada
+        // aunque la persona estuviera lejos de ella.
+        float fraction;
+        if (slabSharesValid)
+        {
+            // La persona esta sobre la losa: la viga recibe su parte del reparto
+            // losa -> apoyos, aplicada en la proyeccion de la persona sobre la viga.
+            fraction = 0f;
+            float distance = 0f;
+            foreach (SlabShare share in slabShares)
+            {
+                if (share.beam == element)
+                {
+                    fraction = share.fraction;
+                    t = share.t;
+                    distance = share.distance;
+                    break;
+                }
+            }
+            beamLoadFraction = fraction;
+            beamLoadDistance = distance;
+        }
+        else
+        {
+            // Fuera de las losas del nivel: solo carga la viga si la persona esta sobre ella.
+            Vector2 foot = beamI + ab * t;
+            float distance = Vector2.Distance(loadPlan, foot);
+            fraction = distance <= 0.3f ? 1f : 0f;
+            beamLoadFraction = fraction;
+            beamLoadDistance = distance;
+        }
+        if (fraction <= 0f) return 0f;
+        FrameSectionForces contribution = FrameForces.EvaluateFixedFixedPointLoad(loadKN * fraction, beamLength, t, s);
         if (modeName == "Shear") return contribution.Vz;
         if (modeName == "Moment") return contribution.My;
         return 0f;
@@ -837,12 +1186,10 @@ public class MobileLoadController : MonoBehaviour
         {
             visible = !visible;
         }
-        GUI.Label(new Rect(x + 170f, iy, 170f, 20f), "Movimiento manual X/Z", labelStyle);
-        if (!autoWalk)
+        if (GUI.Button(new Rect(x + 170f, iy, 196f, 20f), (autoWalk ? "[x] " : "[ ] ") + "Caminar automatico"))
         {
-            lastAutoWalkState = false;
-            walkClockX = posX01;
-            walkClockZ = posZ01;
+            if (autoWalk) StopAutoWalk();
+            else autoWalk = true;
         }
         iy += 24f;
 
@@ -857,7 +1204,15 @@ public class MobileLoadController : MonoBehaviour
         GUI.Label(new Rect(x + 12f, iy, w - 24f, 20f), "Nivel: " + levelLabel, labelStyle);
         iy += 22f;
 
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "Viga: simulacion local empotrada-empotrada (Vz/My). Click en losa/elemento para ubicar la persona.", labelStyle);
+        bool beamSelected = selectedElement != null && selectedElement.data != null && selectedElement.data.type == "viga";
+        bool beamOtherLevel = beamSelected &&
+            Mathf.Abs(0.5f * (selectedElement.startPoint.y + selectedElement.endPoint.y) - levelY) > LEVEL_TOL;
+        string beamInfo = !beamSelected
+            ? "Selecciona una viga y haz click en la losa para ubicar a la persona."
+            : beamOtherLevel
+                ? "La viga seleccionada esta en otro nivel: la persona no la carga."
+                : $"Viga seleccionada (empotrada, Vz/My): recibe {beamLoadFraction * 100f:0}% de P = {loadKN * beamLoadFraction:0.0} kN. Efecto en el panel de diagramas (gris = sin persona).";
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), beamInfo, labelStyle);
         iy += 34f;
 
         if (boundsReady)
@@ -908,10 +1263,7 @@ public class MobileLoadController : MonoBehaviour
         if ((Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag)
             && Event.current.button == 0 && sliderArea.Contains(Event.current.mousePosition))
         {
-            autoWalk = false;
-            lastAutoWalkState = false;
-            walkClockX = posX01;
-            walkClockZ = posZ01;
+            StopAutoWalk();
         }
         GUI.Label(new Rect(x + 12f, iy, 90f, 20f), label, labelStyle);
         if (GUI.Button(new Rect(x + 102f, iy, 26f, 20f), "-")) value = Mathf.Max(0f, value - 0.05f);
@@ -920,44 +1272,70 @@ public class MobileLoadController : MonoBehaviour
         GUI.Box(new Rect(x + 260f, iy, 44f, 20f), GUIContent.none, valueStyle);
         GUI.Label(new Rect(x + 263f, iy + 1f, 40f, 18f), (value * 100f).ToString("0") + "%", valueStyle);
         if (GUI.Button(new Rect(x + 304f, iy, 22f, 20f), "+")) value = Mathf.Min(1f, value + 0.05f);
-        if (Mathf.Abs(value - before) > 0.0001f)
+        if (Mathf.Abs(value - before) > 0.0001f && autoWalk)
         {
-            autoWalk = false;
+            StopAutoWalk();
         }
     }
 
     private void DrawDistributionInfo(float x, ref float iy, float w)
     {
-        if (supports.Count == 0)
+        if (slabSharesValid)
         {
-            GUI.Label(new Rect(x + 12f, iy, w - 24f, 36f), "Sin columnas de apoyo en este nivel.", labelStyle);
-            iy += 40f;
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Reparto losa -> apoyos (franjas cruzadas)", labelStyle);
+            iy += 18f;
+            float total = 0f;
+            foreach (SlabShare share in slabShares)
+            {
+                bool selected = share.beam != null && share.beam == selectedElement;
+                string mark = selected ? " <= seleccionada" : "";
+                GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f),
+                    $"{share.label}: {share.fraction * 100f:0}% = {loadKN * share.fraction:0.0} kN (d={share.distance:0.00} m){mark}", labelStyle);
+                iy += 16f;
+                total += share.fraction;
+            }
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"Conservacion: {total * 100f:0.0}% de P", labelStyle);
+            iy += 22f;
+        }
+
+        if (!loadOnSlab)
+        {
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "La persona esta fuera de las losas de este nivel: no carga vigas.", labelStyle);
+            iy += 34f;
+            return;
+        }
+        if (supports.Count == 0 && wallReaction <= 0f)
+        {
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Sin columnas en este nivel.", labelStyle);
+            iy += 20f;
             return;
         }
 
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Reparto a columnas", labelStyle);
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 18f), "Columnas (reacciones de las vigas cargadas)", labelStyle);
         iy += 18f;
+        float sum = wallReaction + otherColumnsReaction;
         foreach (ColumnSupport support in supports)
         {
-            GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"{support.tag}: {support.reaction:0.00} kN", labelStyle);
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"{support.tag}: {support.reaction:0.0} kN", labelStyle);
             iy += 16f;
-        }
-
-        float sum = 0f;
-        foreach (ColumnSupport support in supports)
-        {
             sum += support.reaction;
         }
-        float error = Mathf.Abs(loadKN - sum);
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"Conservacion: suma={sum:0.00} | error={error:0.000}", labelStyle);
+        if (otherColumnsReaction > 0.01f || wallReaction > 0.01f)
+        {
+            GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"Otras columnas: {otherColumnsReaction:0.0} kN | muros: {wallReaction:0.0} kN", labelStyle);
+            iy += 16f;
+        }
+        GUI.Label(new Rect(x + 12f, iy, w - 24f, 16f), $"Conservacion: suma={sum:0.00} kN | error={Mathf.Abs(loadKN - sum):0.000}", labelStyle);
         iy += 20f;
-        GUI.Label(new Rect(x + 12f, iy, w - 24f, 32f), "La carga se reparte a las columnas cercanas por distancia.", labelStyle);
-        iy += 34f;
     }
 
     private void EnsureObjects()
     {
-        ClearStaleGeneratedObjects();
+        if (!staleObjectsCleared)
+        {
+            ClearStaleGeneratedObjects();
+            staleObjectsCleared = true;
+        }
         EnsurePerson();
         EnsureReactionArrows();
         if (shearLine == null)
@@ -1047,7 +1425,7 @@ public class MobileLoadController : MonoBehaviour
             {
                 continue;
             }
-            if (personRoot != null && child.gameObject == personRoot)
+            if (IsLiveGeneratedObject(child.gameObject))
             {
                 continue;
             }
@@ -1063,9 +1441,20 @@ public class MobileLoadController : MonoBehaviour
         }
     }
 
+    private bool IsLiveGeneratedObject(GameObject go)
+    {
+        return go == personRoot || go == axialLine || go == shearLine || go == momentLine ||
+               go == axialBaseLine || go == shearBaseLine || go == momentBaseLine ||
+               reactionArrows.Contains(go);
+    }
+
     private bool IsStaleGeneratedObject(string objectName)
     {
         return objectName.StartsWith("CargaMovil_Persona") ||
+               objectName.StartsWith("CargaMovil_Corte") ||
+               objectName.StartsWith("CargaMovil_Momento") ||
+               objectName.StartsWith("CargaMovil_Axial") ||
+               objectName.StartsWith("CargaMovil_Reaccion") ||
                objectName.StartsWith("CargaMovil_Cuerpo") ||
                objectName.StartsWith("CargaMovil_Cabeza") ||
                objectName.StartsWith("CargaMovil_Brazo") ||
@@ -1095,6 +1484,7 @@ public class MobileLoadController : MonoBehaviour
     private GameObject CreateLineObject(string name, Color color)
     {
         GameObject go = new GameObject(name);
+        go.transform.SetParent(transform, false); // se limpia junto con el controlador
         LineRenderer line = go.AddComponent<LineRenderer>();
         line.material = CreateMaterial(color);
         line.startWidth = 0.08f;

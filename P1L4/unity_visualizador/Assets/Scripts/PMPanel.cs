@@ -422,7 +422,8 @@ private bool AreAuxiliaryTablesVisible()
     {
         string shortCombo = string.IsNullOrEmpty(combo) ? "C1" : combo;
         float cRatio = GetCapacityRatio(new Vector2(p, m));
-        string label = $"{shortCombo}\nP = {p:0.0} kN\nM = {m:0.0} kN*m\nC = {cRatio:0.###}";
+        string cText = cRatio >= UnityData.OutOfCurveRatio ? "fuera de curva" : cRatio.ToString("0.###");
+        string label = $"{shortCombo}\nP = {p:0.0} kN\nM = {m:0.0} kN*m\nC = {cText}";
         float labelW = prominent ? 170f : 112f;
         float labelH = prominent ? 74f : 18f;
         float lx = Mathf.Clamp(dx + 10f, 8f, Screen.width - labelW - 8f);
@@ -440,40 +441,7 @@ private bool AreAuxiliaryTablesVisible()
 
     private float GetCapacityRatio(Vector2 demand)
     {
-        if (currentCurve == null || currentCurve.points == null || currentCurve.points.Length < 2) return 0f;
-
-        float p = demand.x;
-        float mCap = 0f;
-        for (int i = 0; i < currentCurve.points.Length - 1; i++)
-        {
-            PMPoint a = currentCurve.points[i];
-            PMPoint b = currentCurve.points[i + 1];
-            float minP = Mathf.Min(a.P_kN, b.P_kN);
-            float maxP = Mathf.Max(a.P_kN, b.P_kN);
-            if (p < minP || p > maxP) continue;
-
-            float t = Mathf.Abs(b.P_kN - a.P_kN) > 0.001f
-                ? Mathf.InverseLerp(a.P_kN, b.P_kN, p)
-                : 0f;
-            mCap = Mathf.Lerp(a.M_kN_m, b.M_kN_m, t);
-            break;
-        }
-
-        if (mCap <= 0.001f)
-        {
-            float best = float.MaxValue;
-            foreach (PMPoint pt in currentCurve.points)
-            {
-                float dist = Mathf.Abs(pt.P_kN - p);
-                if (dist < best)
-                {
-                    best = dist;
-                    mCap = pt.M_kN_m;
-                }
-            }
-        }
-
-        return mCap > 0.001f ? demand.y / mCap : 0f;
+        return UnityData.CapacityRatio(currentCurve, demand.x, demand.y);
     }
 
     private DemandRecord[] GetVisibleDemands()

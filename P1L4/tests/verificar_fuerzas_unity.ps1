@@ -10,8 +10,15 @@ $referencePath = Join-Path $scratch 'reference.json'
 $previousMpl = $env:MPLCONFIGDIR
 try {
     $env:MPLCONFIGDIR = Join-Path $scratch 'matplotlib'
-    & $Python (Join-Path $PSScriptRoot 'referencia_opensees.py') $referencePath
-    if ($LASTEXITCODE -ne 0) { throw 'OpenSees reference failed' }
+    # OpenSees escribe warnings ("WARNING no response...") en stderr. Con
+    # ErrorActionPreference='Stop', PowerShell 5.1 los convierte en error terminante
+    # (aun con 2>$null), asi que se relaja la variable alrededor de la llamada.
+    $previousEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & $Python (Join-Path $PSScriptRoot 'referencia_opensees.py') $referencePath 2>$null
+    $refExit = $LASTEXITCODE
+    $ErrorActionPreference = $previousEap
+    if ($refExit -ne 0) { throw 'OpenSees reference failed' }
 } finally {
     $env:MPLCONFIGDIR = $previousMpl
 }

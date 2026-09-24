@@ -282,6 +282,13 @@ public class StructureViewer : MonoBehaviour
                 continue;
             }
 
+            // Barras internas del modelo de muros (columna ancha y brazos rigidos):
+            // el muro ya se dibuja como panel y sus demandas se muestran al seleccionarlo.
+            if (element.type == "muro_eq" || element.type == "brazo_rigido")
+            {
+                continue;
+            }
+
             Vector3 start = nodes[element.nodeI];
             Vector3 end = nodes[element.nodeJ];
             bool isColumn = element.type == "columna";

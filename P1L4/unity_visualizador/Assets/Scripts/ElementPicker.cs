@@ -51,6 +51,33 @@ public class ElementPicker : MonoBehaviour
             RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
+            // Con la carga movil activa manda lo que esta MAS CERCA de la camara: si es
+            // una losa, el click solo ubica a la persona. Antes se buscaba primero un
+            // elemento en todo el rayo, y el rayo atraviesa la losa: se seleccionaba una
+            // viga o columna del piso de abajo y la viga que se estaba mirando cambiaba.
+            MobileLoadController mobileActive = FindObjectOfType<MobileLoadController>();
+            if (mobileActive != null && mobileActive.IsPanelVisible())
+            {
+                foreach (RaycastHit candidate in hits)
+                {
+                    bool isSlab = candidate.collider.name.StartsWith("Losa_");
+                    ElementSelectable el = candidate.collider.GetComponentInParent<ElementSelectable>();
+                    if (!isSlab && el == null) continue;
+                    if (isSlab)
+                    {
+                        mobileActive.SetLoadOnSlabPanel(candidate.collider.gameObject, candidate.point);
+                        return;
+                    }
+                    if (el == Selected && el.data != null && el.data.type == "viga")
+                    {
+                        // Click sobre la viga ya seleccionada: la persona se para ahi.
+                        mobileActive.PlaceLoadAt(candidate.point, el);
+                        return;
+                    }
+                    break; // el primer objeto es otro elemento: se selecciona abajo
+                }
+            }
+
             ElementSelectable selectable = null;
             RaycastHit selectableHit = default(RaycastHit);
             foreach (RaycastHit candidate in hits)
@@ -107,17 +134,20 @@ foreach (RaycastHit candidate in hits)
                 }
                 if (info != null)
                 {
-                    SetElementSelection(null);
-                    selectedInfo = info;
-                    scroll = Vector2.zero;
                     if (candidate.collider.name.StartsWith("Losa_"))
                     {
                         var mobileLoad = FindObjectOfType<MobileLoadController>();
-                        if (mobileLoad != null)
+                        if (mobileLoad != null && mobileLoad.IsPanelVisible())
                         {
+                            // Con la carga movil activa, el click en la losa solo ubica a la
+                            // persona: se mantiene la barra seleccionada y su panel de diagramas.
                             mobileLoad.SetLoadOnSlabPanel(candidate.collider.gameObject, candidate.point);
+                            return;
                         }
                     }
+                    SetElementSelection(null);
+                    selectedInfo = info;
+                    scroll = Vector2.zero;
                     return;
                 }
             }

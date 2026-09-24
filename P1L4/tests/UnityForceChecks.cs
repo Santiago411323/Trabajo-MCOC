@@ -82,7 +82,8 @@ public static class UnityForceChecks
             Near(-atI.N, r.local[0], "P=-N=local FxI");
         }
         Check(reference.records.Length == data.p1l4.elementForces.Length, "all exported records tested");
-        Check(rawBefore == JsonSerializer.Serialize(data.p1l4.elementForces, options), "raw JSON must remain global/unmodified");
+        Check(rawBefore == JsonSerializer.Serialize(data.p1l4.elementForces, options), "raw JSON records must remain unmodified");
+        Check(data.p1l4.elementForceCoordinates == "local", "exporter declares localForce contract");
 
         var fixedNodes = new HashSet<int>(reference.fixedNodes);
         foreach (var node in data.nodes)
@@ -92,7 +93,9 @@ public static class UnityForceChecks
         }
         foreach (var support in data.supports)
             Check(Object.ReferenceEquals(support, UnityData.GetNodeSupport(support.node)), "preserve declared constraints");
-        Check(UnityData.GetNodeSupport(261).type.Contains("inferido"), "automatic anchor is labelled");
+        // Modelo corregido: vigas partidas en uniones T/X, sin anclajes automaticos.
+        foreach (var support in data.supports)
+            Check(support.type == null || !support.type.Contains("anclaje"), "no automatic anchors " + support.node);
         Check(UnityData.GetNodeSupport(54) == null, "ordinary beam joint is not a ground support");
 
         // Superposition must use local actions with their signs, not magnitudes.
@@ -128,12 +131,14 @@ public static class UnityForceChecks
             for (int c = 0; c < 12; c++) Near(actual[c], -g[c]+2*q[c]-.7*ex[c]+.9*ey[c], "signed factors");
         }
 
-        // Regression from the audit: the vertical column's axial force is not Fx global.
+        // Regresiones (modelo con cargas distribuidas y conectividad corregida):
+        // la viga E1_84 flexiona en My (vertical) y la columna E1_272 esta comprimida.
         UnityData.UseBaseCaseFactors = false;
         UnityData.TryGetSectionForces(84, "C1", .5f, out var beam);
-        Near(beam.Mz, -8.5362158184, "E1_84 center Mz");
+        Near(beam.Mz, 0.0, "E1_84 center Mz (diafragma rigido: sin flexion en el plano)");
+        Near(beam.My, 71.7036110959, "E1_84 center My (parabolic span moment)");
         UnityData.TryGetSectionForces(272, "C1", .5f, out var column);
-        Near(column.N, -2620.7558614332, "E1_272 compression");
+        Near(column.N, -4064.5462725412, "E1_272 compression");
 
         // Uniform-load reference beam: only legitimate end actions generate curvature.
         var fixedBeam = new float[12];
@@ -152,6 +157,15 @@ public static class UnityForceChecks
         Near(mobileCenter.Vz, -50, "mobile shear after point load");
         Near(mobileCenter.My, 125, "mobile center moment");
         Near(mobileJ.My, -125, "mobile fixed moment J");
+
+        // Razon demanda/capacidad P-M: fuera de la envolvente nunca debe dar C=0.
+        var curve = new PMCurveData { points = new[] {
+            new PMPoint { P_kN = -100, M_kN_m = 0 }, new PMPoint { P_kN = 0, M_kN_m = 50 },
+            new PMPoint { P_kN = 200, M_kN_m = 80 }, new PMPoint { P_kN = 400, M_kN_m = 0 } } };
+        Near(UnityData.CapacityRatio(curve, 100, 32.5f), 0.5, "C interpolado");
+        Check(UnityData.CapacityRatio(curve, -150, 10) >= UnityData.OutOfCurveRatio, "traccion mayor que la capacidad: no cumple");
+        Check(UnityData.CapacityRatio(curve, 500, 0) >= UnityData.OutOfCurveRatio, "compresion mayor que la capacidad: no cumple");
+        Check(UnityData.CapacityRatio(curve, -100, 5) >= UnityData.OutOfCurveRatio, "M>0 en la punta de traccion: no cumple");
 
         // Invalid or absent forces must not be replaced with legacy approximate data.
         data.p1l4.elementForces = data.p1l4.elementForces.Where(r => !(r.combo=="Q" && r.id==84)).ToArray();

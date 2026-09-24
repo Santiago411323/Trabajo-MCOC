@@ -6,6 +6,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
     private static int nextWindowId = 41050;
     private readonly int windowId = nextWindowId++;
     private readonly float[,] samples = new float[5, 61];
+    private readonly float[] baseSamples = new float[61];
     private readonly string[] names = { "My", "Mz", "Vy", "Vz", "Axial N" };
     private readonly Color[] colors = {
         new Color(1f, 0.45f, 0.85f), new Color(0.7f, 0.6f, 1f),
@@ -29,8 +30,9 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
     {
         if (picker == null) picker = FindObjectOfType<ElementPicker>();
         ElementSelectable beam = picker != null ? picker.Selected : null;
+        // Vigas, columnas y enlaces: todas las barras tienen N, V y M.
         return beam != null && beam.gameObject.activeInHierarchy && beam.data != null &&
-            beam.data.type == "viga" ? beam : null;
+            (beam.data.type == "viga" || beam.data.type == "columna" || beam.data.type == "enlace") ? beam : null;
     }
 
     public bool ContainsMouse(Vector2 mouse)
@@ -38,9 +40,22 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
         return isActiveAndEnabled && SelectedBeam() != null && GetPanelRect().Contains(mouse);
     }
 
+    private static SelectedBeamDiagramPanel active;
+
+    private void OnEnable()
+    {
+        active = this;
+    }
+
+    private void OnDisable()
+    {
+        if (active == this) active = null;
+    }
+
     public static bool BlocksPointer()
     {
-        SelectedBeamDiagramPanel panel = FindObjectOfType<SelectedBeamDiagramPanel>();
+        // Instancia cacheada: se consulta varias veces por cuadro.
+        SelectedBeamDiagramPanel panel = active != null ? active : FindObjectOfType<SelectedBeamDiagramPanel>();
         return panel != null && panel.ContainsMouse(
             new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
     }
@@ -78,7 +93,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
         GUI.depth = -20;
         string tag = string.IsNullOrEmpty(beam.data.elementTag) ? beam.data.id.ToString() : beam.data.elementTag;
         panel = GUI.Window(windowId, GetPanelRect(), DrawWindow,
-            "Diagramas de viga - " + tag, windowStyle);
+            "Diagramas de " + beam.data.type + " - " + tag, windowStyle);
         GUI.depth = previousDepth;
     }
 
@@ -101,7 +116,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
                 MobileLoadController.Instance.IsActiveFor(selected);
             GUI.Label(new Rect(0f, 36f, width, 38f),
                 "Eje I → J | N: tracción+ | escala propia\n" +
-                (includesMobile ? "OpenSees + carga móvil local en Vz/My" :
+                (includesMobile ? "Color: OpenSees + persona | gris: solo OpenSees (My, Vz)" :
                     "Combinación OpenSees; carga móvil inactiva"), textStyle);
             if (diagrams != null && diagrams.TryGetSelectedDiagramSamples(selected, samples))
             {
@@ -109,7 +124,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
             }
             else
                 GUI.Label(new Rect(0f, 80f, width, 52f),
-                    "No hay fuerzas disponibles para esta viga y combinación.", textStyle);
+                    "No hay fuerzas disponibles para esta barra y combinación.", textStyle);
             GUI.EndScrollView();
         }
         GUI.DragWindow(new Rect(0f, 0f, panel.width, 25f));
@@ -126,13 +141,44 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
             min = Mathf.Min(min, samples[row, i]);
             max = Mathf.Max(max, samples[row, i]);
         }
+        float totalMin = min, totalMax = max;
+        // Curva solo OpenSees (sin la persona) para ver el efecto de la carga movil.
+        bool showBase = false;
+        float maxDelta = 0f;
+        MobileLoadController mobile = MobileLoadController.Instance;
+        if ((row == 0 || row == 3) && mobile != null && mobile.IsActiveFor(selected))
+        {
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)(count - 1);
+                mobile.TryGetLocalBeamContribution(selected, t, out float dVz, out float dMy);
+                float delta = row == 0 ? dMy : dVz;
+                baseSamples[i] = samples[row, i] - delta;
+                maxDelta = Mathf.Abs(delta) > Mathf.Abs(maxDelta) ? delta : maxDelta;
+                min = Mathf.Min(min, baseSamples[i]);
+                max = Mathf.Max(max, baseSamples[i]);
+            }
+            showBase = true;
+        }
         GUI.Label(new Rect(rect.x, rect.y, rect.width, 19f),
-            $"{names[row]} [{unit}]   mín {min:0.##} / máx {max:0.##}", titleStyle);
+            $"{names[row]} [{unit}]   mín {totalMin:0.##} / máx {totalMax:0.##}" +
+            (showBase ? $"   | persona: {maxDelta:+0.#;-0.#;0} {unit}" : ""), titleStyle);
         Rect plot = new Rect(rect.x + 12f, rect.y + 23f, rect.width - 24f, 48f);
         float bound = Mathf.Max(Mathf.Abs(min), Mathf.Abs(max), 0.000001f);
         float zero = plot.center.y;
         DrawLine(new Vector2(plot.x, zero), new Vector2(plot.xMax, zero), Color.gray, 1f);
         Vector2 previous = Vector2.zero;
+        if (showBase)
+        {
+            Color baseColor = new Color(0.75f, 0.75f, 0.75f, 0.8f);
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 point = new Vector2(plot.x + plot.width * i / (count - 1),
+                    zero - baseSamples[i] / bound * (plot.height * 0.45f));
+                if (i > 0) DrawLine(previous, point, baseColor, 1f);
+                previous = point;
+            }
+        }
         for (int i = 0; i < count; i++)
         {
             Vector2 point = new Vector2(plot.x + plot.width * i / (count - 1),

@@ -14,7 +14,7 @@ def main(output):
     live = cvm.transfer_live_load(data, data['Q_kN_m2'])
     seismic = cvm.build_seismic_cases(data, live, data['seismic_coefficient'])
     loads = {'G': cvm.dead_nodal_loads(data),
-             'Q': cvm.vector_loads_from_dict(live['cargas_nodales_Q']),
+             'Q': cvm.live_load_set(live),
              'EX': cvm.vector_loads_from_dict(seismic['cargas_nodales_EX']),
              'EY': cvm.vector_loads_from_dict(seismic['cargas_nodales_EY'])}
     cases = dict(loads)
@@ -30,15 +30,16 @@ def main(output):
             f = list(cvm.ops.eleResponse(e['id'], 'localForce'))
             length = cvm.element_length(e, nodes)
             assert len(f) == 12
-            # This model has ONLY nodal loads. Check that constant N,V and linear M
-            # reproduce both end actions, rather than assuming a distributed load.
-            assert abs(f[0]+f[6]) < 1e-6
-            assert abs(f[1]+f[7]) < 1e-6
-            assert abs(f[2]+f[8]) < 1e-6
-            assert abs(f[4]+f[2]*length+f[10]) < 1e-6
-            assert abs(f[5]-f[1]*length+f[11]) < 1e-6
-            points = [[-f[0], f[1], f[2], f[3], f[4]+f[2]*length*t, f[5]-f[1]*length*t]
-                      for t in (0, .25, .5, .75, 1)]
+            # D y Q son cargas uniformes por viga (eleLoad): la evaluacion con la
+            # carga q = (f_i + f_j)/L debe cerrar el equilibrio en el extremo J.
+            assert abs(f[0]+f[6]) < 1e-6 * max(1.0, abs(f[0]))  # sin carga axial distribuida
+            end = cvm.section_forces_local(f, length, 1.0)
+            assert abs(end['My'] + f[10]) < 1e-6 * max(1.0, abs(f[10]))
+            assert abs(end['Mz'] + f[11]) < 1e-6 * max(1.0, abs(f[11]))
+            points = []
+            for t in (0, .25, .5, .75, 1):
+                v = cvm.section_forces_local(f, length, t)
+                points.append([v['N'], v['Vy'], v['Vz'], v['T'], v['My'], v['Mz']])
             result['records'].append({'combo': case, 'id': e['id'], 'local': f,
                                       'length': length, 'points': points})
         result['fixedNodes'] = sorted(cvm.ops.getFixedNodes())

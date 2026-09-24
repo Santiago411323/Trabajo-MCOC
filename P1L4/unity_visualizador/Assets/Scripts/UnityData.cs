@@ -280,6 +280,48 @@ public static class UnityData
         return pmCurveLookup.TryGetValue(sectionId, out var curve) ? curve : null;
     }
 
+    // Razon C = M_demanda / M_capacidad sobre una envolvente P-M (compresion +).
+    // Si la demanda cae fuera del rango de P de la curva (mas traccion o mas
+    // compresion que la capacidad axial) o sobre un punto de M = 0 con M > 0,
+    // NO cumple: se devuelve OutOfCurveRatio en vez de 0 (antes se tomaba el
+    // punto mas cercano y podia mostrar C = 0 en una seccion que no resiste).
+    public const float OutOfCurveRatio = 99.99f;
+
+    public static float CapacityRatio(PMCurveData curve, float p, float m)
+    {
+        if (curve == null || curve.points == null || curve.points.Length < 2) return 0f;
+        float minP = float.PositiveInfinity;
+        float maxP = float.NegativeInfinity;
+        foreach (PMPoint pt in curve.points)
+        {
+            minP = Mathf.Min(minP, pt.P_kN);
+            maxP = Mathf.Max(maxP, pt.P_kN);
+        }
+        m = Mathf.Abs(m);
+        if (p < minP - 0.01f || p > maxP + 0.01f) return OutOfCurveRatio;
+
+        // Capacidad = mayor M de la envolvente a ese P (tramos con dP > 0).
+        float mCap = 0f;
+        bool found = false;
+        for (int i = 0; i < curve.points.Length - 1; i++)
+        {
+            PMPoint a = curve.points[i];
+            PMPoint b = curve.points[i + 1];
+            if (Mathf.Abs(b.P_kN - a.P_kN) <= 0.001f) continue;
+            if (p < Mathf.Min(a.P_kN, b.P_kN) || p > Mathf.Max(a.P_kN, b.P_kN)) continue;
+            float t = Mathf.InverseLerp(a.P_kN, b.P_kN, p);
+            mCap = Mathf.Max(mCap, Mathf.Lerp(a.M_kN_m, b.M_kN_m, t));
+            found = true;
+        }
+        if (!found)
+        {
+            foreach (PMPoint pt in curve.points)
+                if (Mathf.Abs(pt.P_kN - p) <= 0.01f) mCap = Mathf.Max(mCap, pt.M_kN_m);
+        }
+        if (mCap <= 0.001f) return m <= 0.001f ? 0f : OutOfCurveRatio;
+        return m / mCap;
+    }
+
     public static SectionMaterialData GetMaterial(string sectionId)
     {
         if (string.IsNullOrEmpty(sectionId) || materialLookup == null) return null;
