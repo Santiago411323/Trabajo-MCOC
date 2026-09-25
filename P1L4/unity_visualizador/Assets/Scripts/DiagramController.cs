@@ -1036,7 +1036,7 @@ public class DiagramController : MonoBehaviour
 
     private void StepDeformationScale(int direction)
     {
-        float[] scales = { 1f, 10f, 25f, 50f, 100f };
+        float[] scales = { 1f, 10f, 25f, 50f, 100f, 200f, 500f };
         int nearest = 0;
         float distance = Mathf.Abs(deformedMultiplier - scales[0]);
         for (int i = 1; i < scales.Length; i++)
