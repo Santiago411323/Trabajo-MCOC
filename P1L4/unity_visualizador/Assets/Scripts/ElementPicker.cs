@@ -34,7 +34,7 @@ public class ElementPicker : MonoBehaviour
 
     void Update()
     {
-        if(MobileLoadController.CapturesPointer || MobileLoadResultsDashboard.BlocksPointer() || Input.GetKey(KeyCode.LeftShift)) return;
+        if(MobileLoadController.CapturesPointer || MobileLoadLivePanel.BlocksPointer() || Input.GetKey(KeyCode.LeftShift)) return;
         if (cam == null)
         {
             cam = Camera.main;

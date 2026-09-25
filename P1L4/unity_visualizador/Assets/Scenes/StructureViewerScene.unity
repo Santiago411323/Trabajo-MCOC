@@ -209,8 +209,10 @@ MonoBehaviour:
   shearMultiplier: 1
   momentMultiplier: 1.2
   diagramBaseOffset: 0.06
-  deformedMultiplier: 120
-  deformedTargetPct: 0.06
+  deformedMultiplier: 50
+  deformationHalfCycleSeconds: 1.75
+  animateDeformation: 1
+  showOriginalDeformationReference: 1
   auditSingleElementDiagrams: 0
   drawGlobalForceDiagrams: 0
 --- !u!114 &50083057

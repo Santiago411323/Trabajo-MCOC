@@ -24,16 +24,37 @@ public class DiagramController : MonoBehaviour
     public float shearMultiplier = 1.0f;
     public float momentMultiplier = 1.2f;
     public float diagramBaseOffset = 0.06f;
-    public float deformedMultiplier = 120f;
-    public float deformedTargetPct = 0.06f;
+    [Tooltip("Escala exclusivamente visual de la deformada. No modifica los desplazamientos de OpenSees.")]
+    public float deformedMultiplier = 50f;
+    [Tooltip("Segundos desde la forma original hasta la deformada maxima.")]
+    public float deformationHalfCycleSeconds = 1.75f;
+    public bool animateDeformation = true;
+    public bool showOriginalDeformationReference = true;
     public bool auditSingleElementDiagrams = false;
     public bool drawGlobalForceDiagrams = false;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<ElementSelectable> structuralElements = new List<ElementSelectable>();
+    public IReadOnlyList<ElementSelectable> StructuralElements => structuralElements;
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
+    private readonly List<GameObject> mobileDiagramObjects = new List<GameObject>();
     private DiagramMode currentMode = DiagramMode.None;
-    private readonly Dictionary<string, float> deformedScaleByBuilding = new Dictionary<string, float>();
+    private sealed class DeformedSegment
+    {
+        public int nodeI;
+        public int nodeJ;
+        public Vector3 originalI;
+        public Vector3 originalJ;
+        public LineRenderer originalLine;
+        public LineRenderer deformedLine;
+    }
+
+    private readonly List<DeformedSegment> deformedSegments = new List<DeformedSegment>();
+    private readonly Dictionary<Renderer, bool> hiddenOriginalRenderers = new Dictionary<Renderer, bool>();
+    private float deformationAnimationTime;
+    private float deformationAnimationFactor;
+    private float maximumRealDisplacement;
+    private int maximumDisplacementNode;
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
     private GUIStyle tableBoxStyle;
     private GUIStyle tableTextStyle;
@@ -93,6 +114,11 @@ public class DiagramController : MonoBehaviour
         if (PressedKey(KeyCode.Alpha2)) ShowDiagram(DiagramMode.Shear);
         if (PressedKey(KeyCode.Alpha3)) ShowDiagram(DiagramMode.Moment);
         if (PressedKey(KeyCode.Alpha5)) ShowDiagram(DiagramMode.Deformed);
+
+        if (currentMode == DiagramMode.Deformed)
+        {
+            UpdateDeformationAnimation();
+        }
     }
 
     private bool PressedKey(KeyCode key)
@@ -113,6 +139,7 @@ public class DiagramController : MonoBehaviour
 
     private void ShowDiagram(DiagramMode mode)
     {
+        bool enteringDeformedMode = mode == DiagramMode.Deformed && currentMode != DiagramMode.Deformed;
         currentMode = mode;
         modeToRedraw = mode;
         ClearDiagram();
@@ -130,9 +157,9 @@ public class DiagramController : MonoBehaviour
 
         if (mode == DiagramMode.Deformed)
         {
-            deformedScaleByBuilding.Clear();
+            if (enteringDeformedMode) deformationAnimationTime = 0f;
             CreateDeformedDiagram();
-            Debug.Log("[DiagramController] modo Deformada activado (escala por edificio)");
+            Debug.Log($"[DiagramController] modo Deformada activado (escala visual {deformedMultiplier:0.#}x; desplazamientos numericos reales)");
             return;
         }
 
@@ -191,6 +218,86 @@ public class DiagramController : MonoBehaviour
         string building = string.IsNullOrEmpty(element.data.sourceBuilding) ? "?" : element.data.sourceBuilding;
         currentMaxByBuilding[building] = ComputeBuildingMax(building, currentMode);
         CreateElementDiagram(element, currentMode);
+    }
+
+    public void ShowMobileComponent(string component, IList<ElementSelectable> targets)
+    {
+        ClearMobileComponentDiagrams();
+        if (component == "Deformed")
+        {
+            ShowDiagram(DiagramMode.Deformed);
+            return;
+        }
+        if (currentMode != DiagramMode.None) ShowDiagram(DiagramMode.None);
+        if (targets == null || targets.Count == 0) return;
+
+        float bound = 0.000001f;
+        foreach (ElementSelectable element in targets)
+            for (int i = 0; i <= 12; i++)
+                if (TryMobileComponent(element, component, i / 12f, out float value))
+                    bound = Mathf.Max(bound, Mathf.Abs(value));
+
+        foreach (ElementSelectable element in targets)
+            CreateMobileComponentDiagram(element, component, bound);
+    }
+
+    public void ClearMobileComponentDiagrams()
+    {
+        foreach (GameObject diagram in mobileDiagramObjects)
+            if (diagram != null) Destroy(diagram);
+        mobileDiagramObjects.Clear();
+    }
+
+    private void CreateMobileComponentDiagram(ElementSelectable element, string component, float bound)
+    {
+        if (element == null || element.data == null) return;
+        const int segments = 12;
+        var points = new Vector3[segments + 1];
+        Vector3 axis = element.endPoint - element.startPoint;
+        Vector3 direction = MobileDiagramDirection(element, component, axis);
+        float drawSign = component == "My" || component == "Mz" ? -1f : 1f;
+        bool found = false;
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = i / (float)segments;
+            Vector3 basePoint = Vector3.Lerp(element.startPoint, element.endPoint, t);
+            float value = 0f;
+            if (TryMobileComponent(element, component, t, out float current)) { value = current; found = true; }
+            points[i] = basePoint + direction * (diagramBaseOffset + drawSign * value / bound * diagramScale);
+        }
+        if (!found) return;
+
+        GameObject root = new GameObject($"Mobile_{component}_E{element.data.id}");
+        root.transform.SetParent(transform); root.hideFlags = HideFlags.DontSave;
+        LineRenderer line = root.AddComponent<LineRenderer>();
+        line.useWorldSpace = true; line.positionCount = points.Length; line.SetPositions(points);
+        line.startWidth = line.endWidth = .075f;
+        line.material = CreateMaterial(new Color(.12f, .82f, 1f, .95f));
+        mobileDiagramObjects.Add(root);
+    }
+
+    private bool TryMobileComponent(ElementSelectable element, string component, float t, out float value)
+    {
+        value = 0f;
+        if (element == null || element.data == null ||
+            !UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, t, out FrameSectionForces forces)) return false;
+        if (component == "N") value = forces.N;
+        else if (component == "Vy") value = forces.Vy;
+        else if (component == "Vz") value = forces.Vz;
+        else if (component == "My") value = forces.My;
+        else if (component == "Mz") value = forces.Mz;
+        else return false;
+        return !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    private Vector3 MobileDiagramDirection(ElementSelectable element, string component, Vector3 axis)
+    {
+        if (UnityData.TryGetFrameGeometry(element.data.id, out FrameGeometry frame))
+        {
+            Vector3 local = UnityData.AxisToUnity(component == "Vz" || component == "My" ? frame.Z : frame.Y).normalized;
+            if (local.sqrMagnitude > .01f) return local;
+        }
+        return GetOffsetDirection(axis, component == "N" ? DiagramMode.Axial : component.StartsWith("V") ? DiagramMode.Shear : DiagramMode.Moment);
     }
 
     private float ComputeBuildingMax(string building, DiagramMode mode)
@@ -273,46 +380,72 @@ public class DiagramController : MonoBehaviour
     private void CreateDeformedDiagram()
     {
         string combo = UnityData.ActiveCombo;
-        if (string.IsNullOrEmpty(combo) || UnityData.DisplacementsByCombo == null)
+        StructureData structure = UnityData.Structure;
+        if (string.IsNullOrEmpty(combo) || UnityData.DisplacementsByCombo == null || structure == null)
         {
             Debug.LogWarning("[DiagramController] No hay desplazamientos para el combo activo.");
             return;
         }
 
-        int created = 0;
-        var scales = new List<string>();
-        foreach (ElementSelectable element in structuralElements)
+        var nodePositions = new Dictionary<int, Vector3>();
+        if (structure.nodes != null)
         {
-            string building = string.IsNullOrEmpty(element.data.sourceBuilding) ? "?" : element.data.sourceBuilding;
-            float scale = GetDeformedScale(building, combo);
-            if (scale <= 0f)
+            foreach (NodeData node in structure.nodes)
             {
-                scale = deformedMultiplier;
+                nodePositions[node.id] = new Vector3(node.x, node.z, node.y);
             }
-
-            Vector3 dI = UnityData.GetNodeDisplacement(combo, element.data.nodeI);
-            Vector3 dJ = UnityData.GetNodeDisplacement(combo, element.data.nodeJ);
-
-            Vector3 p0 = element.startPoint + dI * scale;
-            Vector3 p1 = element.endPoint + dJ * scale;
-
-            CreateLine(element.startPoint, element.endPoint, new Color(0.5f, 0.5f, 0.55f, 0.6f), 0.04f,
-                $"Deformada_Ref_E{element.data.id}");
-
-            CreateLine(p0, p1, new Color(0.35f, 1f, 0.4f), 0.16f,
-                $"Deformada_E{element.data.id}");
-
-            created++;
         }
 
-        foreach (var kv in deformedScaleByBuilding)
+        maximumRealDisplacement = 0f;
+        maximumDisplacementNode = 0;
+        foreach (KeyValuePair<int, Vector3> node in nodePositions)
         {
-            scales.Add($"{kv.Key}={kv.Value:0.#}");
+            float magnitude = UnityData.GetNodeDisplacement(combo, node.Key).magnitude;
+            if (magnitude > maximumRealDisplacement)
+            {
+                maximumRealDisplacement = magnitude;
+                maximumDisplacementNode = node.Key;
+            }
         }
-        Debug.Log($"[DiagramController] Deformada combo={combo}: {created} elementos, escala por edificio {string.Join(", ", scales)} ({deformedTargetPct * 100:0.#}% de la altura por edificio)");
+
+        HideOriginalSolidStructure();
+        int created = 0;
+        if (structure.elements != null)
+        {
+            foreach (ElementData element in structure.elements)
+            {
+                if (!nodePositions.TryGetValue(element.nodeI, out Vector3 originalI) ||
+                    !nodePositions.TryGetValue(element.nodeJ, out Vector3 originalJ)) continue;
+
+                float width = element.type == "muro_eq" ? 0.18f :
+                    element.type == "brazo_rigido" ? 0.08f : 0.13f;
+                AddDeformedSegment(element.nodeI, element.nodeJ, originalI, originalJ, width, element.id);
+                created++;
+            }
+        }
+
+        UpdateDeformedSegmentPositions(animateDeformation ? deformationAnimationFactor : 1f);
+        Debug.Log($"[DiagramController] Deformada combo={combo}: {created} elementos del modelo completo; escala visual={deformedMultiplier:0.#}x; max real={maximumRealDisplacement * 1000f:0.###} mm nodo={maximumDisplacementNode}");
     }
 
-    private void CreateLine(Vector3 a, Vector3 b, Color color, float width, string name)
+    private void AddDeformedSegment(int nodeI, int nodeJ, Vector3 originalI, Vector3 originalJ, float width, int elementId)
+    {
+        LineRenderer original = CreateLine(originalI, originalJ, new Color(0.55f, 0.58f, 0.64f, 0.5f), 0.035f,
+            $"Deformada_Ref_E{elementId}");
+        LineRenderer deformed = CreateLine(originalI, originalJ, new Color(0.25f, 1f, 0.48f), width,
+            $"Deformada_E{elementId}");
+        deformedSegments.Add(new DeformedSegment
+        {
+            nodeI = nodeI,
+            nodeJ = nodeJ,
+            originalI = originalI,
+            originalJ = originalJ,
+            originalLine = original,
+            deformedLine = deformed
+        });
+    }
+
+    private LineRenderer CreateLine(Vector3 a, Vector3 b, Color color, float width, string name)
     {
         GameObject lineObject = new GameObject(name);
         lineObject.transform.SetParent(transform);
@@ -326,53 +459,59 @@ public class DiagramController : MonoBehaviour
         line.useWorldSpace = true;
         line.material = CreateMaterial(color);
         diagramObjects.Add(lineObject);
+        return line;
     }
 
-    private float GetDeformedScale(string building, string combo)
+    private void UpdateDeformationAnimation()
     {
-        if (deformedScaleByBuilding.TryGetValue(building, out float cached))
+        if (animateDeformation)
         {
-            return cached;
+            float duration = Mathf.Max(0.2f, deformationHalfCycleSeconds);
+            deformationAnimationTime += Time.unscaledDeltaTime;
+            float linear = Mathf.PingPong(deformationAnimationTime / duration, 1f);
+            deformationAnimationFactor = Mathf.SmoothStep(0f, 1f, linear);
         }
-
-        Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
-        float maxDisp = 0f;
-        bool first = true;
-
-        foreach (ElementSelectable e in structuralElements)
+        else
         {
-            if (e.data == null) continue;
-            string eb = string.IsNullOrEmpty(e.data.sourceBuilding) ? "?" : e.data.sourceBuilding;
-            if (eb != building) continue;
-
-            Vector3 a = e.startPoint;
-            Vector3 b = e.endPoint;
-            if (first)
-            {
-                bounds = new Bounds(a, Vector3.zero);
-                bounds.Encapsulate(b);
-                first = false;
-            }
-            else
-            {
-                bounds.Encapsulate(a);
-                bounds.Encapsulate(b);
-            }
-
-            Vector3 dI = UnityData.GetNodeDisplacement(combo, e.data.nodeI);
-            Vector3 dJ = UnityData.GetNodeDisplacement(combo, e.data.nodeJ);
-            maxDisp = Mathf.Max(maxDisp, dI.magnitude, dJ.magnitude);
+            deformationAnimationFactor = 1f;
         }
+        UpdateDeformedSegmentPositions(deformationAnimationFactor);
+    }
 
-        float scale = 0f;
-        if (maxDisp >= 1e-9f)
+    private void UpdateDeformedSegmentPositions(float animationFactor)
+    {
+        string combo = UnityData.ActiveCombo;
+        float displayFactor = Mathf.Max(0f, deformedMultiplier) * Mathf.Clamp01(animationFactor);
+        foreach (DeformedSegment segment in deformedSegments)
         {
-            float height = bounds.size.y + 1f;
-            scale = (height * deformedTargetPct) / maxDisp;
+            if (segment.originalLine != null) segment.originalLine.enabled = showOriginalDeformationReference;
+            if (segment.deformedLine == null) continue;
+            Vector3 displacementI = UnityData.GetNodeDisplacement(combo, segment.nodeI);
+            Vector3 displacementJ = UnityData.GetNodeDisplacement(combo, segment.nodeJ);
+            segment.deformedLine.SetPosition(0, segment.originalI + displacementI * displayFactor);
+            segment.deformedLine.SetPosition(1, segment.originalJ + displacementJ * displayFactor);
         }
+    }
 
-        deformedScaleByBuilding[building] = scale;
-        return scale;
+    private void HideOriginalSolidStructure()
+    {
+        foreach (ElementSelectable element in elements)
+        {
+            if (element == null) continue;
+            Renderer renderer = element.GetComponent<Renderer>();
+            if (renderer == null || hiddenOriginalRenderers.ContainsKey(renderer)) continue;
+            hiddenOriginalRenderers[renderer] = renderer.enabled;
+            renderer.enabled = false;
+        }
+    }
+
+    private void RestoreOriginalSolidStructure()
+    {
+        foreach (KeyValuePair<Renderer, bool> item in hiddenOriginalRenderers)
+        {
+            if (item.Key != null) item.Key.enabled = item.Value;
+        }
+        hiddenOriginalRenderers.Clear();
     }
 
     private Dictionary<string, float> GetMaxValueByBuilding(DiagramMode mode)
@@ -843,6 +982,8 @@ public class DiagramController : MonoBehaviour
 
     private void ClearDiagram()
     {
+        RestoreOriginalSolidStructure();
+        deformedSegments.Clear();
         foreach (GameObject diagramObject in diagramObjects)
         {
             if (Application.isPlaying)
@@ -862,7 +1003,53 @@ public class DiagramController : MonoBehaviour
 
     private void OnGUI()
     {
+        DrawDeformationControls();
         DrawSelectedValueTable();
+    }
+
+    private void DrawDeformationControls()
+    {
+        if (currentMode != DiagramMode.Deformed) return;
+
+        float width = 610f;
+        float x = Mathf.Max(12f, (Screen.width - width) * 0.5f);
+        float y = 138f;
+        GUI.Box(new Rect(x, y, width, 32f), GUIContent.none);
+        GUI.Label(new Rect(x + 10f, y + 7f, 112f, 20f), "Deformation Scale:");
+
+        if (GUI.Button(new Rect(x + 124f, y + 5f, 28f, 22f), "−")) StepDeformationScale(-1);
+        GUI.Label(new Rect(x + 157f, y + 7f, 48f, 20f), $"{deformedMultiplier:0.#}x");
+        if (GUI.Button(new Rect(x + 205f, y + 5f, 28f, 22f), "+")) StepDeformationScale(1);
+
+        bool nextAnimate = GUI.Toggle(new Rect(x + 248f, y + 6f, 92f, 20f), animateDeformation, " Animate");
+        if (nextAnimate != animateDeformation)
+        {
+            animateDeformation = nextAnimate;
+            if (animateDeformation) deformationAnimationTime = 0f;
+        }
+
+        showOriginalDeformationReference = GUI.Toggle(new Rect(x + 342f, y + 6f, 88f, 20f),
+            showOriginalDeformationReference, " Original");
+        GUI.Label(new Rect(x + 438f, y + 7f, 166f, 20f),
+            $"Max real: {maximumRealDisplacement * 1000f:0.###} mm (N{maximumDisplacementNode})");
+    }
+
+    private void StepDeformationScale(int direction)
+    {
+        float[] scales = { 1f, 10f, 25f, 50f, 100f };
+        int nearest = 0;
+        float distance = Mathf.Abs(deformedMultiplier - scales[0]);
+        for (int i = 1; i < scales.Length; i++)
+        {
+            float candidate = Mathf.Abs(deformedMultiplier - scales[i]);
+            if (candidate < distance)
+            {
+                nearest = i;
+                distance = candidate;
+            }
+        }
+        deformedMultiplier = scales[Mathf.Clamp(nearest + direction, 0, scales.Length - 1)];
+        UpdateDeformedSegmentPositions(animateDeformation ? deformationAnimationFactor : 1f);
     }
 
     private void DrawSelectedValueTable()

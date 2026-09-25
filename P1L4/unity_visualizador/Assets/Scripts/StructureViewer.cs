@@ -820,18 +820,8 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateDiagramController()
     {
-        if (diagramController != null)
-        {
-            if (Application.isPlaying)
-            {
-                Destroy(diagramController);
-            }
-            else
-            {
-                DestroyImmediate(diagramController);
-            }
-        }
-        diagramController = gameObject.AddComponent<DiagramController>();
+        if (diagramController == null) diagramController = GetComponent<DiagramController>();
+        if (diagramController == null) diagramController = gameObject.AddComponent<DiagramController>();
         diagramController.Initialize(selectables);
         if (GetComponent<SelectedBeamDiagramPanel>() == null)
             gameObject.AddComponent<SelectedBeamDiagramPanel>();
@@ -865,9 +855,9 @@ public class StructureViewer : MonoBehaviour
         {
             mobileLoadController = gameObject.AddComponent<MobileLoadController>();
         }
-        if (GetComponent<MobileLoadResultsDashboard>() == null)
+        if (GetComponent<MobileLoadLivePanel>() == null)
         {
-            gameObject.AddComponent<MobileLoadResultsDashboard>();
+            gameObject.AddComponent<MobileLoadLivePanel>();
         }
     }
 

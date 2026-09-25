@@ -11,6 +11,7 @@ using UnityEngine;
 public class MobileLoadController : MonoBehaviour
 {
     public static MobileLoadController Instance { get; private set; }
+    public event Action<Response> ResponseApplied;
     public float loadKN = 0.8f;
     public bool visible = true;
     public float speed = 1f;
@@ -101,6 +102,20 @@ public class MobileLoadController : MonoBehaviour
         Vector2.Distance(new Vector2(response.x,response.y),position) <= .01f && Mathf.Abs(response.p-loadKN) <= 1e-5f;
     public Vector2 CurrentWalkDirection => walkDirection;
     public string AnalysisStatus => status;
+    public bool LoadActive => active;
+    public string LiveMovementStatus => routeComplete ? "STOPPED" : IsMoving ? "PLAYING" : slab != null && active ? "PAUSED" : "STOPPED";
+    public void SetLoadActive(bool value)
+    {
+        if(value==active)return;
+        active=value;selectionVersion++;ClearResponse();sentLoad=float.NaN;
+        playing=directionalWalking=false;UpdateDirectionArrowColors();
+    }
+    public void DrawMovementSetupInline()
+    {
+        EnsureStyles();
+        if(slab==null) {GUILayout.Label("Seleccione una losa para configurar el movimiento.",smallStyle);return;}
+        DrawMovementTab();
+    }
     public void PauseFromResults()
     {
         playing=false; directionalWalking=false; UpdateDirectionArrowColors();
@@ -316,7 +331,8 @@ public class MobileLoadController : MonoBehaviour
             if(selectedArrow!=null) {StartDirectionalWalk(new Vector2(selectedArrow.x,selectedArrow.y));return;}
         }
         Vector2 mouse=new Vector2(Input.mousePosition.x,Screen.height-Input.mousePosition.y);
-        if(PanelRect().Contains(mouse)||SelectedBeamDiagramPanel.BlocksPointer()) return;
+        if((!MobileLoadLivePanel.OwnsMobilePanel&&PanelRect().Contains(mouse))||
+            MobileLoadLivePanel.BlocksPointer()||SelectedBeamDiagramPanel.BlocksPointer()) return;
         if(picker==null) picker=FindObjectOfType<ElementPicker>();
         if(picker!=null && picker.IsMouseOverViewerGui()) return;
         if(Input.GetMouseButtonDown(0) && (Input.GetKey(KeyCode.LeftShift)||PointerOnPerson())) {dragging=true;directionalWalking=playing=false;UpdateDirectionArrowColors();}
@@ -471,7 +487,7 @@ public class MobileLoadController : MonoBehaviour
             foreach(var f in r.forces) {forces[f.id]=f.f;UnityData.MobileForces[f.id]=f.f;}
             foreach(var u in r.displacements) {displacements[u.node]=new Vector3(u.ux,u.uz,u.uy);UnityData.MobileDisplacements[u.node]=displacements[u.node];}
             status="PASS — respuesta global incremental OpenSees. Aproximacion nodal.";
-            GetComponent<DiagramController>()?.Refresh(); Record();
+            GetComponent<DiagramController>()?.Refresh(); Record(); ResponseApplied?.Invoke(response);
         }
         catch(Exception ex) { ClearResponse(); status="ERROR: "+ex.Message; }
     }
@@ -542,7 +558,7 @@ public class MobileLoadController : MonoBehaviour
     }
     private void OnGUI()
     {
-        if(!visible) return;
+        if(!visible||MobileLoadLivePanel.OwnsMobilePanel) return;
         EnsureStyles();
         Rect panel=PanelLayout.Apply("MobileLoad",PanelRect());
         GUI.DrawTexture(panel,panelTexture);
