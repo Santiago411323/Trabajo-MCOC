@@ -16,7 +16,8 @@ public class DiagramController : MonoBehaviour
         Axial,
         Shear,
         Moment,
-        Deformed
+        Deformed,
+        DeformedReal
     }
 
     public float diagramScale = 1.3f;
@@ -86,6 +87,7 @@ public class DiagramController : MonoBehaviour
         else if (modeName == "Corte") ShowDiagram(DiagramMode.Shear);
         else if (modeName == "Momento") ShowDiagram(DiagramMode.Moment);
         else if (modeName == "Deformada") ShowDiagram(DiagramMode.Deformed);
+        else if (modeName == "Deformada real") ShowDiagram(DiagramMode.DeformedReal);
         else ShowDiagram(DiagramMode.None);
     }
 
@@ -94,6 +96,7 @@ public class DiagramController : MonoBehaviour
         if (currentMode == DiagramMode.Shear) return "Corte";
         if (currentMode == DiagramMode.Moment) return "Momento";
         if (currentMode == DiagramMode.Deformed) return "Deformada";
+        if (currentMode == DiagramMode.DeformedReal) return "Deformada real 1x";
         return currentMode.ToString();
     }
 
@@ -114,6 +117,7 @@ public class DiagramController : MonoBehaviour
         if (PressedKey(KeyCode.Alpha2)) ShowDiagram(DiagramMode.Shear);
         if (PressedKey(KeyCode.Alpha3)) ShowDiagram(DiagramMode.Moment);
         if (PressedKey(KeyCode.Alpha5)) ShowDiagram(DiagramMode.Deformed);
+        if (PressedKey(KeyCode.Alpha6)) ShowDiagram(DiagramMode.DeformedReal);
 
         if (currentMode == DiagramMode.Deformed)
         {
@@ -132,6 +136,7 @@ public class DiagramController : MonoBehaviour
             if (key == KeyCode.Alpha2) return keyboard.digit2Key.wasPressedThisFrame;
             if (key == KeyCode.Alpha3) return keyboard.digit3Key.wasPressedThisFrame;
             if (key == KeyCode.Alpha5) return keyboard.digit5Key.wasPressedThisFrame;
+            if (key == KeyCode.Alpha6) return keyboard.digit6Key.wasPressedThisFrame;
         }
 #endif
         return Input.GetKeyDown(key);
@@ -144,7 +149,8 @@ public class DiagramController : MonoBehaviour
         modeToRedraw = mode;
         ClearDiagram();
 
-        if (auditSingleElementDiagrams && mode != DiagramMode.None && mode != DiagramMode.Deformed)
+        if (auditSingleElementDiagrams && mode != DiagramMode.None &&
+            mode != DiagramMode.Deformed && mode != DiagramMode.DeformedReal)
         {
             CreateAuditDiagramForSingleElement(mode);
             return;
@@ -155,11 +161,12 @@ public class DiagramController : MonoBehaviour
             return;
         }
 
-        if (mode == DiagramMode.Deformed)
+        if (mode == DiagramMode.Deformed || mode == DiagramMode.DeformedReal)
         {
             if (enteringDeformedMode) deformationAnimationTime = 0f;
             CreateDeformedDiagram();
-            Debug.Log($"[DiagramController] modo Deformada activado (escala visual {deformedMultiplier:0.#}x; desplazamientos numericos reales)");
+            float activeScale = mode == DiagramMode.DeformedReal ? 1f : deformedMultiplier;
+            Debug.Log($"[DiagramController] modo {CurrentResultName()} activado (escala visual {activeScale:0.#}x; desplazamientos numericos reales)");
             return;
         }
 
@@ -190,7 +197,7 @@ public class DiagramController : MonoBehaviour
         {
             return;
         }
-        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed)
+        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed || currentMode == DiagramMode.DeformedReal)
         {
             return;
         }
@@ -424,8 +431,10 @@ public class DiagramController : MonoBehaviour
             }
         }
 
-        UpdateDeformedSegmentPositions(animateDeformation ? deformationAnimationFactor : 1f);
-        Debug.Log($"[DiagramController] Deformada combo={combo}: {created} elementos del modelo completo; escala visual={deformedMultiplier:0.#}x; max real={maximumRealDisplacement * 1000f:0.###} mm nodo={maximumDisplacementNode}");
+        float initialAnimation = currentMode == DiagramMode.Deformed && animateDeformation ? deformationAnimationFactor : 1f;
+        UpdateDeformedSegmentPositions(initialAnimation);
+        float activeScale = currentMode == DiagramMode.DeformedReal ? 1f : deformedMultiplier;
+        Debug.Log($"[DiagramController] {CurrentResultName()} combo={combo}: {created} elementos del modelo completo; escala visual={activeScale:0.#}x; max real={maximumRealDisplacement * 1000f:0.###} mm nodo={maximumDisplacementNode}");
     }
 
     private void AddDeformedSegment(int nodeI, int nodeJ, Vector3 originalI, Vector3 originalJ, float width, int elementId)
@@ -481,7 +490,8 @@ public class DiagramController : MonoBehaviour
     private void UpdateDeformedSegmentPositions(float animationFactor)
     {
         string combo = UnityData.ActiveCombo;
-        float displayFactor = Mathf.Max(0f, deformedMultiplier) * Mathf.Clamp01(animationFactor);
+        float visualScale = currentMode == DiagramMode.DeformedReal ? 1f : Mathf.Max(0f, deformedMultiplier);
+        float displayFactor = visualScale * Mathf.Clamp01(animationFactor);
         foreach (DeformedSegment segment in deformedSegments)
         {
             if (segment.originalLine != null) segment.originalLine.enabled = showOriginalDeformationReference;
@@ -943,7 +953,7 @@ public class DiagramController : MonoBehaviour
         if (mode == DiagramMode.Axial) return Color.red;
         if (mode == DiagramMode.Shear) return new Color(1f, 0.55f, 0f);
         if (mode == DiagramMode.Moment) return Color.magenta;
-        if (mode == DiagramMode.Deformed) return new Color(0.3f, 1f, 0.4f);
+        if (mode == DiagramMode.Deformed || mode == DiagramMode.DeformedReal) return new Color(0.3f, 1f, 0.4f);
         return Color.green;
     }
 
@@ -1054,7 +1064,7 @@ public class DiagramController : MonoBehaviour
 
     private void DrawSelectedValueTable()
     {
-        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed)
+        if (currentMode == DiagramMode.None || currentMode == DiagramMode.Deformed || currentMode == DiagramMode.DeformedReal)
         {
             return;
         }
