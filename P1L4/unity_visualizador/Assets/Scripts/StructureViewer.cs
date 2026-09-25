@@ -865,6 +865,10 @@ public class StructureViewer : MonoBehaviour
         {
             mobileLoadController = gameObject.AddComponent<MobileLoadController>();
         }
+        if (GetComponent<MobileLoadResultsDashboard>() == null)
+        {
+            gameObject.AddComponent<MobileLoadResultsDashboard>();
+        }
     }
 
     private void CreateSupports(StructureData data)

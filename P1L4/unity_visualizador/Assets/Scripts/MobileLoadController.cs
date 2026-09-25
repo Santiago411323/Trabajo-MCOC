@@ -30,6 +30,7 @@ public class MobileLoadController : MonoBehaviour
     private Vector2 position, destination, origin, scroll;
     private bool playing, place, chooseDestination, dragging, directionalWalking;
     private Vector2 walkDirection;
+    private bool routeComplete;
     private ElementSelectable observed;
     private float nextRequest, sentAt, clock;
     private int sequence, selectionVersion, sentVersion;
@@ -86,6 +87,43 @@ public class MobileLoadController : MonoBehaviour
     public void SetSelectedElement(ElementSelectable e) { observed=e; hasValue=false; }
     public float[] Increment(int id) => IsPanelReady() && forces.TryGetValue(id,out var f) ? f : null;
     public Vector3 IncrementDisplacement(int id) => IsPanelReady() && displacements.TryGetValue(id,out var d) ? d : Vector3.zero;
+    // Read-only bridge for the professional results dashboard. Movement remains
+    // owned by this controller; the dashboard only observes its current state.
+    public SlabData CurrentSlab => slab;
+    public SlabLoadMetadata CurrentSlabMetadata => slabMetadata;
+    public Vector2 CurrentPosition => position;
+    public Response CurrentResponse => response;
+    public GameObject PersonObject => person;
+    public ElementSelectable ObservedElement => observed;
+    public bool IsMoving => playing || directionalWalking;
+    public bool RouteComplete => routeComplete;
+    public bool HasCurrentResults => response != null && response.ok &&
+        Vector2.Distance(new Vector2(response.x,response.y),position) <= .01f && Mathf.Abs(response.p-loadKN) <= 1e-5f;
+    public Vector2 CurrentWalkDirection => walkDirection;
+    public string AnalysisStatus => status;
+    public void PauseFromResults()
+    {
+        playing=false; directionalWalking=false; UpdateDirectionArrowColors();
+        status="Recorrido pausado desde el panel de resultados.";
+    }
+    public bool MoveToRecordedPosition(string slabId,Vector2 point)
+    {
+        if(UnityData.Structure==null||UnityData.Structure.slabs==null)return false;
+        SlabData target=null;
+        foreach(var candidate in UnityData.Structure.slabs) if(candidate.id==slabId) {target=candidate;break;}
+        if(slab==null||target==null||!target.Contains(point.x,point.y))return false;
+        PauseFromResults();
+        if(slab.id!=target.id) SwitchWalkingSlab(target);
+        position=destination=point;SyncCoordinates();sentLoad=float.NaN;DrawPerson();
+        status="Posición crítica restaurada en "+slab.id+".";
+        return true;
+    }
+    public void ReplayFrom(string slabId,Vector2 point,Vector2 direction)
+    {
+        if(!MoveToRecordedPosition(slabId,point))return;
+        routeComplete=false;
+        StartDirectionalWalk(direction.sqrMagnitude>.5f?direction:Vector2.right);
+    }
     public static bool CapturesPointer => Instance != null && Instance.active &&
         (Instance.place || Instance.chooseDestination || Instance.dragging || Instance.PointerOnPerson() || Instance.PointerOnDirectionArrow());
     private bool PointerOnPerson()
@@ -138,7 +176,7 @@ public class MobileLoadController : MonoBehaviour
         Vector2 p=new Vector2(point.x,point.z);
         if(Contains(p)) { position=origin=destination=p; SyncCoordinates(); }
         playing=directionalWalking=false;UpdateDirectionArrowColors();
-        visible=true; active=true; sentLoad=float.NaN;
+        visible=true; active=true; sentLoad=float.NaN; routeComplete=false;
         DrawPerson();
         status="Persona colocada. Elija una de las cuatro flechas para caminar por losas conectadas.";
     }
@@ -153,7 +191,7 @@ public class MobileLoadController : MonoBehaviour
     private void StartDirectionalWalk(Vector2 direction)
     {
         if(slab==null||!active) return;
-        walkDirection=direction.normalized;directionalWalking=true;playing=true;
+        walkDirection=direction.normalized;directionalWalking=true;playing=true;routeComplete=false;
         place=chooseDestination=dragging=false;
         status="Caminando hacia "+DirectionName(walkDirection)+" por losas conectadas.";
         UpdateDirectionArrowColors();
@@ -200,7 +238,7 @@ public class MobileLoadController : MonoBehaviour
 
     private void StopAtBuildingEnd(string reason)
     {
-        playing=false;directionalWalking=false;UpdateDirectionArrowColors();
+        playing=false;directionalWalking=false;routeComplete=true;UpdateDirectionArrowColors();
         status=$"Recorrido terminado en {slab.id}: {reason}.";
     }
 

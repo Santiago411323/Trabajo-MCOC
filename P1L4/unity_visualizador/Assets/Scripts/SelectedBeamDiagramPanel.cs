@@ -25,6 +25,14 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
     private GUIStyle windowStyle;
     private Texture2D background;
 
+    public void SelectDiagramByCode(string code)
+    {
+        int index = System.Array.IndexOf(names, code);
+        if (index < 0) return;
+        selectedDiagram = index;
+        expanded = true;
+    }
+
     private ElementSelectable SelectedBeam()
     {
         if (picker == null) picker = FindObjectOfType<ElementPicker>();
