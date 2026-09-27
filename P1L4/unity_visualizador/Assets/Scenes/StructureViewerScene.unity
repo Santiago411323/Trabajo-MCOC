@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobileLoadController
   loadKN: 100
-  visible: 1
+  visible: 0
   diagramScale: 0.018
   posX01: 0.5
   posZ01: 0.5

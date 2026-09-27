@@ -12,6 +12,13 @@ public class OrbitCamera : MonoBehaviour
     public float zoomSpeed = 4f;
     public float panSpeed = 8f;
 
+    [Header("Fast navigation")]
+    [Range(0.05f, 0.4f)] public float zoomPercentPerStep = 0.18f;
+    public float keyboardPanSpeed = 24f;
+    public float fastNavigationMultiplier = 2.5f;
+    public float minDistance = 3f;
+    public float maxDistance = 180f;
+
     private float x = 45f;
     private float y = 28f;
 
@@ -31,11 +38,16 @@ public class OrbitCamera : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         Mouse mouse = Mouse.current;
+        Keyboard keyboard = Keyboard.current;
+        bool fastNavigation = keyboard != null &&
+            (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        float speedMultiplier = fastNavigation ? fastNavigationMultiplier : 1f;
+
         if (mouse != null && mouse.rightButton.isPressed)
         {
             Vector2 delta = mouse.delta.ReadValue();
-            x += delta.x * xSpeed * Time.deltaTime;
-            y -= delta.y * ySpeed * Time.deltaTime;
+            x += delta.x * xSpeed * Time.deltaTime * speedMultiplier;
+            y -= delta.y * ySpeed * Time.deltaTime * speedMultiplier;
             y = Mathf.Clamp(y, -10f, 80f);
         }
 
@@ -43,52 +55,61 @@ public class OrbitCamera : MonoBehaviour
         if (mouse != null && mouse.middleButton.isPressed)
         {
             Vector2 delta = mouse.delta.ReadValue();
-            Vector2 pan = -delta * panSpeed * Time.deltaTime;
+            Vector2 pan = -delta * panSpeed * Time.deltaTime * speedMultiplier;
             Pan(pan.x, pan.y);
         }
 
-        // Pan con las flechas del teclado (moverse por los lados).
-        Keyboard keyboard = Keyboard.current;
+        // Pan con flechas o WASD. Shift activa el desplazamiento rapido.
         if (keyboard != null)
         {
             float ax = 0f;
             float ay = 0f;
-            if (keyboard.rightArrowKey.isPressed) ax += 1f;
-            if (keyboard.leftArrowKey.isPressed) ax -= 1f;
-            if (keyboard.upArrowKey.isPressed) ay += 1f;
-            if (keyboard.downArrowKey.isPressed) ay -= 1f;
+            if (keyboard.rightArrowKey.isPressed || keyboard.dKey.isPressed) ax += 1f;
+            if (keyboard.leftArrowKey.isPressed || keyboard.aKey.isPressed) ax -= 1f;
+            if (keyboard.upArrowKey.isPressed || keyboard.wKey.isPressed) ay += 1f;
+            if (keyboard.downArrowKey.isPressed || keyboard.sKey.isPressed) ay -= 1f;
             if (ax != 0f || ay != 0f)
             {
-                Pan(ax * panSpeed * Time.deltaTime, ay * panSpeed * Time.deltaTime);
+                Vector2 direction = new Vector2(ax, ay).normalized;
+                Pan(direction.x * keyboardPanSpeed * speedMultiplier * Time.deltaTime,
+                    direction.y * keyboardPanSpeed * speedMultiplier * Time.deltaTime);
             }
         }
 
         float scroll = mouse != null ? mouse.scroll.ReadValue().y / 120f : 0f;
 #else
+        bool fastNavigation = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        float speedMultiplier = fastNavigation ? fastNavigationMultiplier : 1f;
+
         if (Input.GetMouseButton(1))
         {
-            x += Input.GetAxis("Mouse X") * xSpeed * Time.deltaTime;
-            y -= Input.GetAxis("Mouse Y") * ySpeed * Time.deltaTime;
+            x += Input.GetAxis("Mouse X") * xSpeed * Time.deltaTime * speedMultiplier;
+            y -= Input.GetAxis("Mouse Y") * ySpeed * Time.deltaTime * speedMultiplier;
             y = Mathf.Clamp(y, -10f, 80f);
         }
 
         if (Input.GetMouseButton(2))
         {
             Vector2 pan = -new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            Pan(pan.x * panSpeed, pan.y * panSpeed);
+            Pan(pan.x * panSpeed * speedMultiplier, pan.y * panSpeed * speedMultiplier);
         }
 
-        float ax = (Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) - (Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
-        float ay = (Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) - (Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
+        float ax = ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) ? 1f : 0f) -
+            ((Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) ? 1f : 0f);
+        float ay = ((Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) ? 1f : 0f) -
+            ((Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) ? 1f : 0f);
         if (ax != 0f || ay != 0f)
         {
-            Pan(ax * panSpeed * Time.deltaTime, ay * panSpeed * Time.deltaTime);
+            Vector2 direction = new Vector2(ax, ay).normalized;
+            Pan(direction.x * keyboardPanSpeed * speedMultiplier * Time.deltaTime,
+                direction.y * keyboardPanSpeed * speedMultiplier * Time.deltaTime);
         }
 
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        float rawScroll = Input.GetAxis("Mouse ScrollWheel");
+        float scroll = Mathf.Abs(rawScroll) > 0.0001f ? Mathf.Sign(rawScroll) : 0f;
 #endif
         if (scroll != 0f && SelectedBeamDiagramPanel.BlocksPointer()) scroll = 0f;
-        distance = Mathf.Clamp(distance - scroll * zoomSpeed, 5f, 120f);
+        ApplyZoom(scroll, speedMultiplier);
 
         UpdatePosition();
     }
@@ -111,6 +132,18 @@ public class OrbitCamera : MonoBehaviour
         transform.rotation = rotation;
     }
 
+    private void ApplyZoom(float scrollSteps, float speedMultiplier)
+    {
+        if (Mathf.Abs(scrollSteps) < 0.0001f) return;
+
+        // El paso depende de la distancia actual: rapido en vista general y preciso
+        // al acercarse. zoomSpeed conserva compatibilidad con el valor de la escena.
+        float legacyAdjustment = Mathf.Max(0.25f, zoomSpeed / 4f);
+        float fraction = Mathf.Clamp(zoomPercentPerStep * legacyAdjustment * speedMultiplier, 0.04f, 0.45f);
+        distance *= Mathf.Pow(1f - fraction, scrollSteps);
+        distance = Mathf.Clamp(distance, minDistance, maxDistance);
+    }
+
     public void FocusOn(Vector3 point, float newDistance = -1f)
     {
         if (target == null)
@@ -121,7 +154,7 @@ public class OrbitCamera : MonoBehaviour
         target.position = point;
         if (newDistance > 0f)
         {
-            distance = Mathf.Clamp(newDistance, 5f, 120f);
+            distance = Mathf.Clamp(newDistance, minDistance, maxDistance);
         }
         UpdatePosition();
     }

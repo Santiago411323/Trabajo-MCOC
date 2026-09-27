@@ -56,6 +56,9 @@ public class DiagramController : MonoBehaviour
     private float deformationAnimationFactor;
     private float maximumRealDisplacement;
     private int maximumDisplacementNode;
+    public float MaximumRealDisplacement => maximumRealDisplacement;
+    public int MaximumDisplacementNode => maximumDisplacementNode;
+    public float DeformationVisualScale => currentMode == DiagramMode.DeformedReal ? 1f : deformedMultiplier;
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
     private GUIStyle tableBoxStyle;
     private GUIStyle tableTextStyle;
@@ -1021,10 +1024,11 @@ public class DiagramController : MonoBehaviour
     {
         if (currentMode != DiagramMode.Deformed) return;
 
-        float width = 610f;
-        float x = Mathf.Max(12f, (Screen.width - width) * 0.5f);
-        float y = 138f;
-        GUI.Box(new Rect(x, y, width, 32f), GUIContent.none);
+        Rect controls = GetDeformationControlsRect();
+        float width = controls.width;
+        float x = controls.x;
+        float y = controls.y;
+        GUI.Box(controls, GUIContent.none);
         GUI.Label(new Rect(x + 10f, y + 7f, 112f, 20f), "Deformation Scale:");
 
         if (GUI.Button(new Rect(x + 124f, y + 5f, 28f, 22f), "−")) StepDeformationScale(-1);
@@ -1042,6 +1046,17 @@ public class DiagramController : MonoBehaviour
             showOriginalDeformationReference, " Original");
         GUI.Label(new Rect(x + 438f, y + 7f, 166f, 20f),
             $"Max real: {maximumRealDisplacement * 1000f:0.###} mm (N{maximumDisplacementNode})");
+    }
+
+    public Rect GetDeformationControlsRect()
+    {
+        const float width = 610f;
+        return new Rect(Mathf.Max(12f, (Screen.width - width) * 0.5f), 138f, width, 32f);
+    }
+
+    public bool ContainsDeformationControls(Vector2 guiMouse)
+    {
+        return currentMode == DiagramMode.Deformed && GetDeformationControlsRect().Contains(guiMouse);
     }
 
     private void StepDeformationScale(int direction)

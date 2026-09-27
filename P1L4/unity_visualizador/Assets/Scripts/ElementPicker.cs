@@ -60,8 +60,7 @@ public class ElementPicker : MonoBehaviour
                 if (info != null)
                 {
                     SetElementSelection(null);
-                    selectedInfo = info;
-                    scroll = Vector2.zero;
+                    SetInfoSelection(info);
                 }
                 MobileLoadController.Instance?.SetLoadOnSlabPanel(hits[0].collider.gameObject, hits[0].point);
                 return;
@@ -85,27 +84,12 @@ public class ElementPicker : MonoBehaviour
 
             if (selectable != null)
             {
-                Selected = selectable;
                 lastHitPoint = selectableHit.point;
                 scroll = Vector2.zero;
-
-                if (selectedElement != null)
-                {
-                    selectedElement.OnDeselected();
-                }
-                selectedElement = selectable;
+                SetElementSelection(selectable);
                 selectable.OnSelected();
 
                 SetInfoSelection(null);
-
-                if (!string.IsNullOrEmpty(selectedElement.pmSectionId))
-                {
-                    var pmPanel = FindObjectOfType<PMPanel>();
-                    if (pmPanel != null)
-                    {
-                        pmPanel.ShowPMForElement(selectedElement);
-                    }
-                }
                 var mobileLoad = FindObjectOfType<MobileLoadController>();
                 if (mobileLoad != null)
                 {
@@ -135,8 +119,7 @@ foreach (RaycastHit candidate in hits)
                         }
                     }
                     SetElementSelection(null);
-                    selectedInfo = info;
-                    scroll = Vector2.zero;
+                    SetInfoSelection(info);
                     return;
                 }
             }
@@ -151,11 +134,6 @@ foreach (RaycastHit candidate in hits)
                 SetElementSelection(nearby);
                 nearby.OnSelected();
 
-                var pmPanel = FindObjectOfType<PMPanel>();
-                if (pmPanel != null && !string.IsNullOrEmpty(nearby.pmSectionId))
-                {
-                    pmPanel.ShowPMForElement(nearby);
-                }
                 var mobileLoad = FindObjectOfType<MobileLoadController>();
                 if (mobileLoad != null)
                 {
@@ -245,6 +223,19 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
         {
             return true;
         }
+        if (ElementResultsPanel.BlocksPointer(guiMouse))
+        {
+            return true;
+        }
+        DiagramController diagramController = FindObjectOfType<DiagramController>();
+        if (diagramController != null && diagramController.ContainsDeformationControls(guiMouse))
+        {
+            return true;
+        }
+        if ((Selected != null || selectedInfo != null) && GetBasePanelRect().Contains(guiMouse))
+        {
+            return true;
+        }
         return false;
     }
 
@@ -262,14 +253,6 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
         SetElementSelection(sel);
         sel.OnSelected();
 
-        var pmPanel = FindObjectOfType<PMPanel>();
-        if (!string.IsNullOrEmpty(sel.pmSectionId))
-        {
-            if (pmPanel != null)
-            {
-                pmPanel.ShowPMForElement(sel);
-            }
-        }
         var mobileLoad = FindObjectOfType<MobileLoadController>();
         if (mobileLoad != null)
         {
@@ -295,23 +278,25 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
         }
         selectedElement = sel;
         Selected = sel;
-
-        if (sel == null)
+        var pmPanel = FindObjectOfType<PMPanel>();
+        if (pmPanel != null)
         {
-            var pmPanel = FindObjectOfType<PMPanel>();
-            if (pmPanel != null)
-            {
-                pmPanel.Hide();
-            }
+            pmPanel.Hide();
         }
+        ElementResultsPanel.SelectionChanged(sel);
     }
 
     private void SetInfoSelection(InfoSelectable info)
     {
+        if (selectedInfo != null && selectedInfo != info)
+        {
+            selectedInfo.OnDeselected();
+        }
         selectedInfo = info;
         if (info != null)
         {
             scroll = Vector2.zero;
+            info.OnSelected();
         }
     }
 
@@ -324,14 +309,12 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
         string info = Selected != null
             ? Selected.GetValuesAt(lastHitPoint)
             : $"==={selectedInfo.name}===\n{selectedInfo.GetInfo()}";
-        float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
-        float maxW = Screen.width - panelOffset.x * 2f - pmZone;
-        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.36f, maxW));
-        float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 82f);
-        float panelH = Mathf.Min(Mathf.Max(480f, Screen.height * 0.86f), maxPanelH);
-
-        float px = Screen.width - panelOffset.x - panelW;
-        float py = Screen.height - panelOffset.y - panelH;
+        Rect basePanel = GetBasePanelRect();
+        float reserved = Selected != null ? ElementResultsPanel.ReservedHeight : 0f;
+        float panelW = basePanel.width;
+        float panelH = Mathf.Max(245f, basePanel.height - reserved - (reserved > 0f ? 8f : 0f));
+        float px = basePanel.x;
+        float py = basePanel.y;
 
         GUI.Box(new Rect(px, py, panelW, panelH), GUIContent.none, boxStyle);
 
@@ -350,6 +333,17 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
 
         labelStyle.fontSize = prevSize;
         GUI.EndScrollView();
+    }
+
+    public Rect GetBasePanelRect()
+    {
+        float pmZone = Mathf.Min(440f, Screen.width * 0.42f) + 24f;
+        float maxW = Screen.width - panelOffset.x * 2f - pmZone;
+        float panelW = Mathf.Max(panelMinSize.x, Mathf.Min(Screen.width * 0.36f, maxW));
+        float maxPanelH = Mathf.Max(280f, Screen.height - panelOffset.y * 2f - 82f);
+        float panelH = Mathf.Min(Mathf.Max(480f, Screen.height * 0.86f), maxPanelH);
+        return new Rect(Screen.width - panelOffset.x - panelW,
+            Screen.height - panelOffset.y - panelH, panelW, panelH);
     }
 
     private void DrawLabel(string text, Rect area, float width, ref float yOffset)

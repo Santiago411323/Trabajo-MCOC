@@ -17,6 +17,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
     private ElementSelectable selected;
     private int selectedDiagram;
     private bool expanded = true;
+    private bool visible;
     private bool positioned;
     private Rect panel;
     private Vector2 scroll;
@@ -44,7 +45,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 
     public bool ContainsMouse(Vector2 mouse)
     {
-        return isActiveAndEnabled && SelectedBeam() != null && GetPanelRect().Contains(mouse);
+        return visible && isActiveAndEnabled && SelectedBeam() != null && GetPanelRect().Contains(mouse);
     }
 
     private static SelectedBeamDiagramPanel active;
@@ -86,7 +87,7 @@ public class SelectedBeamDiagramPanel : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || !visible) return;
         ElementSelectable beam = SelectedBeam();
         if (beam == null) return;
         if (selected != beam)

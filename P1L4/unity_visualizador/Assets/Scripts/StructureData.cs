@@ -6,6 +6,7 @@ public class StructureData
 {
     public string units;
     public float q_G;
+    public float Q_kN_m2;
     public string p1l4_version;
     public NodeData[] nodes;
     public ElementData[] elements;
@@ -300,11 +301,27 @@ public class SlabLoadCatalog { public SlabLoadMetadata[] slabs; }
 public class SlabLoadMetadata
 {
     public string id, profile;
-    public float thickness, unitWeight, finishes, qG;
+    public float thickness, density, unitWeight, finishes, qG, qQ, area, mass;
+    public float selfWeight, permanentAdditional, totalG, totalQ, ratio;
     public SlabLoadEdge[] edges;
+    public SlabReceiverMetadata[] receivers;
 }
 [Serializable]
-public class SlabLoadEdge { public string side,message; public float area; public int[] beams; }
+public class SlabLoadEdge
+{
+    public string side,message;
+    public float area;
+    public int[] beams;
+    public SlabReceiverArea[] receivers;
+}
+[Serializable]
+public class SlabReceiverArea { public int beam; public float area; }
+[Serializable]
+public class SlabReceiverMetadata
+{
+    public int beam;
+    public float area, selfWeight, G, Q;
+}
 
 [Serializable]
 public class TributaryFloorData

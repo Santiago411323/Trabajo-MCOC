@@ -218,15 +218,6 @@ public class StructureViewer : MonoBehaviour
         {
             diagramController.Refresh();
         }
-
-        if (pmPanel != null)
-        {
-            var picker = FindObjectOfType<ElementPicker>();
-            if (picker != null && picker.Selected != null)
-            {
-                pmPanel.ShowPMForElement(picker.Selected);
-            }
-        }
     }
 
     private void ActivateBaseSuperposition()
@@ -711,14 +702,14 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateDiaphragms(StructureData data)
     {
-        if (data.diaphragmList == null)
-        {
-            return;
-        }
-
         if (data.slabs != null && data.slabs.Length > 0)
         {
             CreateSlabPanels(data);
+            return;
+        }
+
+        if (data.diaphragmList == null)
+        {
             return;
         }
 
@@ -750,7 +741,7 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateSlabPanels(StructureData data)
     {
-        float thickness = 0.02f;
+        float thickness = 0.15f;
         var slabLoads=new Dictionary<string,SlabLoadMetadata>();
         var catalog=Resources.Load<TextAsset>("slab_load_surfaces");
         if(catalog!=null)
@@ -775,24 +766,11 @@ public class StructureViewer : MonoBehaviour
             plane.transform.localScale = new Vector3(dx, thickness, dy);
             plane.GetComponent<Renderer>().material = DiaphragmMaterial();
 
-            float area = dx * dy;
             slabLoads.TryGetValue(slab.id,out var loadMetadata);
-            float qG = loadMetadata!=null ? loadMetadata.qG : data.q_G;
-            float totalLoad = area * qG;
-            InfoSelectable info = plane.AddComponent<InfoSelectable>();
-            info.info = $"Losa / diafragma de area\n" +
-                        $"ID: {slab.id}\n" +
-                        $"Nivel: {slab.nivel}\n" +
-                        $"Area: {area:0.###} m2\n" +
-                        $"Dimensiones: {dx:0.###} x {dy:0.###} m\n" +
-                        $"qG: {qG:0.###} kN/m2\n" +
-                        $"Carga gravitacional estimada: {totalLoad:0.###} kN\n" +
-                        $"Nota: visualizada como panel; no es shell OpenSees.";
-            if(loadMetadata!=null)
-                info.info += $"\nPerfil: {loadMetadata.profile}\nEspesor de carga: {loadMetadata.thickness:0.###} m\n" +
-                    $"Peso unitario: {loadMetadata.unitWeight:0.####} kN/m3\n" +
-                    $"Terminaciones/adicional: {loadMetadata.finishes:0.####} kN/m2\n" +
-                    "q_G = espesor × peso unitario + adicional.\nNodos/malla shell: no disponibles.";
+            SlabSelectable info = plane.AddComponent<SlabSelectable>();
+            info.slab = slab;
+            info.metadata = loadMetadata;
+            info.structure = data;
 
             diaphragmObjects.Add(plane);
             RegisterFloor(plane, slab.nivel);
@@ -825,6 +803,8 @@ public class StructureViewer : MonoBehaviour
         diagramController.Initialize(selectables);
         if (GetComponent<SelectedBeamDiagramPanel>() == null)
             gameObject.AddComponent<SelectedBeamDiagramPanel>();
+        if (GetComponent<ElementResultsPanel>() == null)
+            gameObject.AddComponent<ElementResultsPanel>();
     }
 
     private void CreatePMPanel()
@@ -1304,7 +1284,7 @@ public class StructureViewer : MonoBehaviour
         float innerY = y + 26f;
         float innerW = w - 24f;
         leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, h - 34f), leftScroll,
-            new Rect(x + 4f, innerY, w - 24f, 520f));
+            new Rect(x + 4f, innerY, w - 24f, 570f));
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Visibilidad");
         innerY += 22f;
@@ -1319,6 +1299,20 @@ public class StructureViewer : MonoBehaviour
         showIds = GUI.Toggle(new Rect(innerX, innerY, 105f, 20f), showIds, "IDs");
         showLocalAxes = GUI.Toggle(new Rect(innerX + 110f, innerY, 120f, 20f), showLocalAxes, "Ejes locales");
         innerY += 34f;
+
+        bool mobilePanelVisible = mobileLoadController != null && mobileLoadController.IsPanelVisible();
+        string mobileButtonLabel = mobilePanelVisible ? "OCULTAR CARGA MÓVIL" : "ACTIVAR CARGA MÓVIL";
+        Color previousBackground = GUI.backgroundColor;
+        GUI.backgroundColor = mobilePanelVisible ? new Color(0.72f, 0.78f, 0.84f) : new Color(0.15f, 0.78f, 0.92f);
+        if (GUI.Button(new Rect(innerX, innerY, innerW, 28f), mobileButtonLabel))
+        {
+            mobileLoadController?.SetPanelVisible(!mobilePanelVisible);
+            statusMessage = mobilePanelVisible
+                ? "Panel de carga móvil oculto."
+                : "Carga móvil activada: seleccione una losa para colocar la persona.";
+        }
+        GUI.backgroundColor = previousBackground;
+        innerY += 40f;
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Filtro por piso");
         innerY += 22f;

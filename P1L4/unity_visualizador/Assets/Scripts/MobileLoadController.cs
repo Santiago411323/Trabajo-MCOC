@@ -13,7 +13,7 @@ public class MobileLoadController : MonoBehaviour
     public static MobileLoadController Instance { get; private set; }
     public event Action<Response> ResponseApplied;
     public float loadKN = 0.8f;
-    public bool visible = true;
+    public bool visible = false;
     public float speed = 1f;
     public string pythonExecutable = "";
     public bool active;
@@ -82,6 +82,16 @@ public class MobileLoadController : MonoBehaviour
     }
     public static Rect PanelRect() => PanelLayout.Get("MobileLoad",new Rect(330,55,500,Mathf.Min(735,Screen.height-70)));
     public bool IsPanelVisible() => visible;
+    public void SetPanelVisible(bool value)
+    {
+        if (visible == value) return;
+        visible = value;
+        place = chooseDestination = dragging = false;
+        if (visible)
+            status = slab == null
+                ? "Carga móvil activada. Seleccione una losa para colocar la persona."
+                : "Carga móvil activada en " + slab.id + ".";
+    }
     public bool IsPanelReady() => active && response != null && response.ok;
     public bool IsActiveFor(ElementSelectable e) => IsPanelReady() && e != null && e.data != null;
     public bool SameElement(ElementSelectable e) => observed == e;
@@ -172,6 +182,10 @@ public class MobileLoadController : MonoBehaviour
     private void RestoreSlab() { if(slabRenderer!=null) slabRenderer.material.color=slabColor; }
     public void SetLoadOnSlabPanel(GameObject obj,Vector3 point)
     {
+        // A slab click may still select and inspect the slab while the mobile-load
+        // tool is hidden. Only place the person after the user explicitly opens it
+        // from the Layers panel.
+        if(!visible) return;
         SlabData found=null;
         foreach(var s in UnityData.Structure.slabs)
             if(obj.name=="Losa_"+s.id+"_"+s.nivel) { found=s; break; }
@@ -191,7 +205,7 @@ public class MobileLoadController : MonoBehaviour
         Vector2 p=new Vector2(point.x,point.z);
         if(Contains(p)) { position=origin=destination=p; SyncCoordinates(); }
         playing=directionalWalking=false;UpdateDirectionArrowColors();
-        visible=true; active=true; sentLoad=float.NaN; routeComplete=false;
+        active=true; sentLoad=float.NaN; routeComplete=false;
         DrawPerson();
         status="Persona colocada. Elija una de las cuatro flechas para caminar por losas conectadas.";
     }

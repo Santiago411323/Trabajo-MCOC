@@ -518,6 +518,11 @@ def main():
             "steelBars": curve["steelBars"], "barDiameter_mm": 12.0, "Ast_mm2": curve["Ast_mm2"],
             "rho_percent": curve["rho_percent"], "note": "Armadura supuesta: 2 capas phi12@200"})
 
+    # Las losas visuales se reconstruyen desde recintos cerrados por cuatro
+    # bordes de vigas; no se heredan diafragmas rectangulares sobredimensionados.
+    from slab_panels import rebuild_slabs
+    output["slabs"] = rebuild_slabs(output)
+
     # ── Guardar ──────────────────────────────────────────────────────
     write_json(JSON_OUT, output)
     from exportar_superficies_carga import export as export_surfaces
