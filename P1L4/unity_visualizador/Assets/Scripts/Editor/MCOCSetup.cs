@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class MCOCSetup
 {
@@ -10,6 +11,22 @@ public static class MCOCSetup
     {
         EditorApplication.delayCall += () =>
         {
+            // This bootstrap belongs only to the desktop viewer.  Running it
+            // while another scene (for example StructuralARScene) is active
+            // injects the complete building into that scene and attempts an
+            // illegal scene save during Play Mode.
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+
+            Scene activeScene = SceneManager.GetActiveScene();
+            if (activeScene.IsValid() && !string.IsNullOrEmpty(activeScene.path) &&
+                activeScene.path != "Assets/Scenes/StructureViewerScene.unity")
+            {
+                return;
+            }
+
             if (GameObject.Find("StructureViewer") != null)
             {
                 return;
@@ -26,6 +43,12 @@ public static class MCOCSetup
 
     public static void CrearVisualizador(bool showDialog)
     {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            Debug.LogWarning("[MCOCSetup] No se crea ni guarda el visualizador durante Play Mode.");
+            return;
+        }
+
         TextAsset json = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/estructura_p1l4_unity.json");
         if (json == null)
         {
