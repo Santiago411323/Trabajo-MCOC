@@ -6,7 +6,7 @@ using UnityEngine;
 // It only presents data that is actually exported by OpenSees/P1L4.
 public class ElementResultsPanel : MonoBehaviour
 {
-    private enum ResultView { None, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature }
+    private enum ResultView { None, ModelEditor, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature }
 
     private static ElementResultsPanel active;
     private readonly float[,] samples = new float[6, 61];
@@ -14,6 +14,7 @@ public class ElementResultsPanel : MonoBehaviour
     private readonly int[] forceRows = { 4, 2, 3, 0, 1 };
     private ElementPicker picker;
     private DiagramController diagrams;
+    private StructuralModelEditor modelEditor;
     private ElementSelectable selected;
     private bool expanded;
     private int forceIndex = 4;
@@ -21,22 +22,24 @@ public class ElementResultsPanel : MonoBehaviour
     private Vector2 resultsScroll;
     private ResultView view;
     private Rect panelRect;
-    private GUIStyle panelStyle, titleStyle, textStyle, mutedStyle, valueStyle, successStyle, failureStyle;
-    private Texture2D background;
+    private GUIStyle panelStyle, cardStyle, titleStyle, textStyle, mutedStyle, valueStyle, successStyle, failureStyle;
+    private Texture2D background, cardBackground;
 
     public static float ReservedHeight
     {
         get
         {
             if (active == null || active.SelectedElement() == null) return 0f;
-            if (!active.expanded) return 54f;
+            if (!active.expanded) return 80f;
             if (active.view == ResultView.Interaction)
                 return Mathf.Min(410f, Mathf.Max(300f, Screen.height * .38f));
             if (active.view == ResultView.MomentCurvature)
                 return Mathf.Min(440f, Mathf.Max(340f, Screen.height * .42f));
             if (active.view == ResultView.StressStrain)
                 return Mathf.Min(420f, Mathf.Max(330f, Screen.height * .40f));
-            return 330f;
+            if (active.view == ResultView.ModelEditor)
+                return Mathf.Min(470f, Mathf.Max(390f, Screen.height * .46f));
+            return 360f;
         }
     }
 
@@ -62,12 +65,14 @@ public class ElementResultsPanel : MonoBehaviour
         ClearResultVisualization();
         if (active == this) active = null;
         if (background != null) Destroy(background);
+        if (cardBackground != null) Destroy(cardBackground);
     }
 
     private void Bind()
     {
         if (picker == null) picker = FindObjectOfType<ElementPicker>();
         if (diagrams == null) diagrams = GetComponent<DiagramController>();
+        if (modelEditor == null) modelEditor = GetComponent<StructuralModelEditor>();
     }
 
     private ElementSelectable SelectedElement()
@@ -96,6 +101,7 @@ public class ElementResultsPanel : MonoBehaviour
 
     private void ClearResultVisualization()
     {
+        if (diagrams != null) diagrams.ClearSelectedComponentDiagram();
         if (view == ResultView.Deformed && diagrams != null)
             diagrams.SetResultMode("None");
         PMPanel pm = FindObjectOfType<PMPanel>();
@@ -111,9 +117,11 @@ public class ElementResultsPanel : MonoBehaviour
         // complete panel on screen instead of letting its upper part start at
         // a negative Y coordinate.
         float bottom = Mathf.Min(baseRect.yMax, Screen.height - 4f);
-        float height = Mathf.Min(ReservedHeight, Mathf.Max(120f, bottom - 4f));
-        float width = expanded && (view == ResultView.Interaction || view == ResultView.MomentCurvature ||
-            view == ResultView.StressStrain)
+        float minimumHeight = expanded ? 120f : 80f;
+        float height = Mathf.Min(ReservedHeight, Mathf.Max(minimumHeight, bottom - 4f));
+        // One integrated results drawer: compact when closed and wide enough for
+        // readable charts when open. It remains attached below the inspector.
+        float width = expanded
             ? Mathf.Min(940f, Screen.width - 32f)
             : baseRect.width;
         panelRect = new Rect(Screen.width - picker.panelOffset.x - width,
@@ -133,13 +141,21 @@ public class ElementResultsPanel : MonoBehaviour
         GUI.Box(rect, GUIContent.none, panelStyle);
         string type = ElementType(element).ToUpperInvariant();
         string tag = ElementTag(element);
-        GUI.Label(new Rect(rect.x + 12f, rect.y + 7f, rect.width - 150f, 22f),
+        GUI.Label(new Rect(rect.x + 12f, rect.y + 6f, rect.width - 150f, 21f),
             "RESULTADOS — " + type + " " + tag, titleStyle);
 
         if (!expanded)
         {
-            if (GUI.Button(new Rect(rect.x + 12f, rect.y + 28f, rect.width - 24f, 22f), "ACTIVAR RESULTADOS"))
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 27f, rect.width - 24f, 18f),
+                $"ID Unity: {element.gameObject.name}   |   elementTag OpenSees: {tag}", mutedStyle);
+            float half = (rect.width - 29f) * .5f;
+            if (GUI.Button(new Rect(rect.x + 12f, rect.y + 47f, half, 22f), "ACTIVAR RESULTADOS"))
                 expanded = true;
+            if (GUI.Button(new Rect(rect.x + 17f + half, rect.y + 47f, half, 22f), "EDITAR MODELO"))
+            {
+                expanded = true;
+                SetView(ResultView.ModelEditor);
+            }
             return;
         }
 
@@ -150,8 +166,13 @@ public class ElementResultsPanel : MonoBehaviour
             view = ResultView.None;
             return;
         }
+        if (GUI.Button(new Rect(rect.xMax - 264f, rect.y + 6f, 126f, 23f), "EDITAR MODELO"))
+            SetView(ResultView.ModelEditor);
 
-        Rect viewport = new Rect(rect.x + 6f, rect.y + 35f, rect.width - 12f, rect.height - 41f);
+        GUI.Label(new Rect(rect.x + 12f, rect.y + 28f, rect.width - 290f, 18f),
+            $"ID Unity: {element.gameObject.name}   |   elementTag OpenSees: {tag}   |   {UnityData.GetActiveLoadLabel()}", mutedStyle);
+
+        Rect viewport = new Rect(rect.x + 6f, rect.y + 50f, rect.width - 12f, rect.height - 56f);
         float contentHeight = ResultsContentHeight(element);
         float contentWidth = Mathf.Max(220f, viewport.width - 22f);
         resultsScroll = GUI.BeginScrollView(viewport, resultsScroll,
@@ -161,11 +182,16 @@ public class ElementResultsPanel : MonoBehaviour
         float y = 2f;
         float width = contentWidth - 16f;
         y = DrawResultOptions(element, x, y, width);
-        GUI.Label(new Rect(x, y, width, 19f), "Caso: " + UnityData.GetActiveLoadLabel(), mutedStyle);
+        GUI.Label(new Rect(x, y, width, 19f),
+            "Seleccione una lectura: el gráfico inferior y la curva 3D sobre el elemento se actualizan juntos.", mutedStyle);
         y += 22f;
 
         switch (view)
         {
+            case ResultView.ModelEditor:
+                if (modelEditor != null) modelEditor.DrawEditor(element, x, y, width);
+                else DrawUnavailable(x, y, width, "EDITOR PARAMÉTRICO", "No se encontró StructuralModelEditor.");
+                break;
             case ResultView.Forces: DrawForces(element, x, y, width); break;
             case ResultView.Deformed: DrawDeformed(element, x, y, width); break;
             case ResultView.Interaction: DrawInteraction(element, x, y, width); break;
@@ -189,6 +215,7 @@ public class ElementResultsPanel : MonoBehaviour
         float optionHeight = IsBeam(element) ? 31f : 60f;
         switch (view)
         {
+            case ResultView.ModelEditor: return optionHeight + 390f;
             case ResultView.Interaction: return optionHeight + 350f;
             case ResultView.Fibers: return optionHeight + 290f;
             case ResultView.MomentCurvature:
@@ -243,6 +270,8 @@ public class ElementResultsPanel : MonoBehaviour
 
     private void SetView(ResultView next)
     {
+        if (view == ResultView.Forces && next != ResultView.Forces && diagrams != null)
+            diagrams.ClearSelectedComponentDiagram();
         if (view == ResultView.Deformed && next != ResultView.Deformed && diagrams != null)
             diagrams.SetResultMode("None");
         view = next;
@@ -260,25 +289,36 @@ public class ElementResultsPanel : MonoBehaviour
             DrawUnavailable(x, y, width, "DIAGRAMAS DE ESFUERZOS", "El muro no tiene fuerzas de barra N/V/M exportadas.");
             return;
         }
-        forceIndex = GUI.Toolbar(new Rect(x, y, width, 25f), forceIndex, forceNames);
-        y += 30f;
+        float toolbarWidth = Mathf.Min(width, 590f);
+        forceIndex = GUI.Toolbar(new Rect(x, y, toolbarWidth, 27f), forceIndex, forceNames);
+        GUI.Label(new Rect(x + toolbarWidth + 12f, y + 4f, width - toolbarWidth - 12f, 20f),
+            "LÍNEA 3D ACTIVA SOBRE LA BARRA", successStyle);
+        y += 34f;
         if (diagrams == null || !diagrams.TryGetSelectedDiagramSamples(element, samples))
         {
+            if (diagrams != null) diagrams.ClearSelectedComponentDiagram();
             DrawUnavailable(x, y, width, forceNames[forceIndex], "No hay fuerzas válidas para este elemento y combinación.");
             return;
         }
 
+        // Keep the 3D curve synchronized with the component visible in this
+        // panel, the active combination and any live moving-load response.
+        diagrams.ShowSelectedComponentDiagram(element, forceNames[forceIndex]);
+
         int row = forceRows[forceIndex];
         float min = samples[row, 0], max = samples[row, 0];
+        int minIndex = 0, maxIndex = 0;
         for (int i = 1; i < samples.GetLength(1); i++)
         {
-            min = Mathf.Min(min, samples[row, i]);
-            max = Mathf.Max(max, samples[row, i]);
+            if (samples[row, i] < min) { min = samples[row, i]; minIndex = i; }
+            if (samples[row, i] > max) { max = samples[row, i]; maxIndex = i; }
         }
         string unit = forceIndex >= 3 ? "kN·m" : "kN";
-        GUI.Label(new Rect(x, y, width, 22f),
-            $"{forceNames[forceIndex]} [{unit}]     mín {min:0.###}     máx {max:0.###}", valueStyle);
-        Rect plot = new Rect(x + 10f, y + 28f, width - 20f, 98f);
+        float current = samples[row, samples.GetLength(1) / 2];
+        float plotWidth = width >= 650f ? width * .66f : width;
+        GUI.Label(new Rect(x, y, plotWidth, 22f),
+            $"{forceNames[forceIndex]} [{unit}] · a lo largo de la barra (i → j)", valueStyle);
+        Rect plot = new Rect(x + 10f, y + 28f, plotWidth - 20f, 118f);
         GUI.Box(plot, GUIContent.none);
         float bound = Mathf.Max(Mathf.Abs(min), Mathf.Abs(max), .000001f);
         float zero = plot.center.y;
@@ -290,10 +330,42 @@ public class ElementResultsPanel : MonoBehaviour
             Vector2 point = new Vector2(plot.x + 5f + (plot.width - 10f) * i / (count - 1),
                 zero - samples[row, i] / bound * (plot.height * .42f));
             if (i > 0) DrawLine(previous, point, new Color(.18f, .82f, 1f), 2f);
+            if (i % 6 == 0)
+                DrawLine(new Vector2(point.x, zero), point, new Color(.18f, .82f, 1f, .35f), 1f);
             previous = point;
         }
-        GUI.Label(new Rect(x, y + 130f, width, 20f),
-            $"I {samples[row, 0]:0.###}   Centro {samples[row, count / 2]:0.###}   J {samples[row, count - 1]:0.###}", textStyle);
+        Vector2 minPoint = new Vector2(plot.x + 5f + (plot.width - 10f) * minIndex / (count - 1),
+            zero - min / bound * (plot.height * .42f));
+        Vector2 maxPoint = new Vector2(plot.x + 5f + (plot.width - 10f) * maxIndex / (count - 1),
+            zero - max / bound * (plot.height * .42f));
+        DrawMarker(minPoint, new Color(1f, .38f, .46f), 7f);
+        DrawMarker(maxPoint, new Color(1f, .74f, .24f), 7f);
+        GUI.Label(new Rect(x + 10f, y + 149f, plotWidth - 20f, 20f),
+            $"I  {samples[row, 0]:0.###}     CENTRO  {current:0.###}     J  {samples[row, count - 1]:0.###}  {unit}", textStyle);
+
+        if (width >= 650f)
+        {
+            float cardsX = x + plotWidth + 12f;
+            float cardsWidth = width - plotWidth - 12f;
+            GUI.Label(new Rect(cardsX, y, cardsWidth, 22f), "LECTURA RÁPIDA", titleStyle);
+            DrawMetricCard(new Rect(cardsX, y + 28f, cardsWidth, 39f), "VALOR CENTRAL", current, unit,
+                new Color(.18f, .82f, 1f));
+            DrawMetricCard(new Rect(cardsX, y + 72f, cardsWidth, 39f), "MÁXIMO", max, unit,
+                new Color(1f, .74f, .24f));
+            DrawMetricCard(new Rect(cardsX, y + 116f, cardsWidth, 39f), "MÍNIMO", min, unit,
+                new Color(1f, .38f, .46f));
+        }
+    }
+
+    private void DrawMetricCard(Rect rect, string label, float value, string unit, Color color)
+    {
+        GUI.Box(rect, GUIContent.none, cardStyle);
+        GUI.Label(new Rect(rect.x + 10f, rect.y + 4f, rect.width - 20f, 15f), label, mutedStyle);
+        Color previous = valueStyle.normal.textColor;
+        valueStyle.normal.textColor = color;
+        GUI.Label(new Rect(rect.x + 10f, rect.y + 18f, rect.width - 20f, 19f),
+            $"{value:0.###} {unit}", valueStyle);
+        valueStyle.normal.textColor = previous;
     }
 
     private void DrawDeformed(ElementSelectable element, float x, float y, float width)
@@ -1374,6 +1446,10 @@ public class ElementResultsPanel : MonoBehaviour
         background.SetPixel(0, 0, new Color(.045f, .06f, .09f, .97f));
         background.Apply();
         panelStyle = new GUIStyle(GUI.skin.box); panelStyle.normal.background = background;
+        cardBackground = new Texture2D(1, 1);
+        cardBackground.SetPixel(0, 0, new Color(.075f, .105f, .14f, .98f));
+        cardBackground.Apply();
+        cardStyle = new GUIStyle(GUI.skin.box); cardStyle.normal.background = cardBackground;
         textStyle = new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true };
         textStyle.normal.textColor = new Color(.88f, .92f, .96f);
         titleStyle = new GUIStyle(textStyle) { fontSize = 13, fontStyle = FontStyle.Bold };

@@ -4,6 +4,10 @@ using UnityEngine;
 [ExecuteAlways]
 public class StructureViewer : MonoBehaviour
 {
+    // Set by StructuralModelEditor after a successful external OpenSees run.
+    // It lets the reloaded scene consume the new JSON immediately, without
+    // depending on the timing of Unity's AssetDatabase refresh.
+    public static string RuntimeJsonOverride;
     [Header("Datos exportados desde OpenSeesPy")]
     public TextAsset structureJson;
 
@@ -119,7 +123,8 @@ public class StructureViewer : MonoBehaviour
             }
         }
 
-        loadedData = JsonUtility.FromJson<StructureData>(structureJson.text);
+        string json = !string.IsNullOrEmpty(RuntimeJsonOverride) ? RuntimeJsonOverride : structureJson.text;
+        loadedData = JsonUtility.FromJson<StructureData>(json);
         UnityData.LoadData(loadedData);
 
         if (loadedData.tributaryList != null)
@@ -806,6 +811,8 @@ public class StructureViewer : MonoBehaviour
             gameObject.AddComponent<SelectedBeamDiagramPanel>();
         if (GetComponent<ElementResultsPanel>() == null)
             gameObject.AddComponent<ElementResultsPanel>();
+        if (GetComponent<StructuralModelEditor>() == null)
+            gameObject.AddComponent<StructuralModelEditor>();
     }
 
     private void CreatePMPanel()
@@ -1224,6 +1231,14 @@ public class StructureViewer : MonoBehaviour
             statusMessage = "Resultado activo: " + resultOptions[resultIndex];
         }
         GUI.Label(new Rect(cx + 78f, cy + 24f, 560f, 18f), "Teclas: 0 Ninguno | 1 Axial | 2 Corte | 3 Momento | 5 Deformada xN | 6 Deformada real 1x");
+        if (StructuralModelEditor.ResultsStale)
+        {
+            Color previous = GUI.color;
+            GUI.color = new Color(1f, .72f, .25f);
+            GUI.Label(new Rect(x + w - 470f, cy + 26f, 450f, 18f),
+                "MODELO EDITADO · RESULTADOS PENDIENTES DE REANÁLISIS");
+            GUI.color = previous;
+        }
 
         float bx = x + w - 245f;
         if (GUI.Button(new Rect(bx, cy, 55f, 22f), "ISO")) SetCameraPreset("ISO");

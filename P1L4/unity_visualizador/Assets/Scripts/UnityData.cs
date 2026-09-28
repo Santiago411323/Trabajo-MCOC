@@ -348,6 +348,19 @@ public static class UnityData
         return materialLookup.TryGetValue(sectionId, out var mat) ? mat : null;
     }
 
+    public static void UpsertMaterial(SectionMaterialData material)
+    {
+        if (material == null || string.IsNullOrEmpty(material.sectionId)) return;
+        if (materialLookup == null) materialLookup = new Dictionary<string, SectionMaterialData>();
+        materialLookup[material.sectionId] = material;
+    }
+
+    public static void RemoveMaterial(string sectionId)
+    {
+        if (string.IsNullOrEmpty(sectionId) || materialLookup == null) return;
+        materialLookup.Remove(sectionId);
+    }
+
     public static string GetComboLabel(string combo)
     {
         if (string.IsNullOrEmpty(combo)) return "sin combinacion activa";

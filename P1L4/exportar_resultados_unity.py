@@ -24,6 +24,8 @@ El JSON se escribe en:
 import sys
 import os
 import json
+import math
+import re
 from pathlib import Path
 
 # ── Configuracion de rutas ──────────────────────────────────────────
@@ -149,6 +151,180 @@ def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def apply_model_edits(data, path):
+    """Aplica las ediciones guardadas desde Unity sin modificar el modelo base.
+
+    La geometria nodal y la conectividad permanecen intactas. Para barras se
+    actualizan las dimensiones de la seccion que consume build_model(); para
+    muros se actualiza la seccion equivalente de columna ancha.
+    """
+    path = Path(path)
+    if not path.exists():
+        return [], []
+    payload = load_json(path)
+    edits = payload.get("elements", [])
+    if not edits:
+        return [], []
+
+    custom_sections = []
+    applied = []
+    elements = data.get("elements", [])
+    walls = data.get("walls", [])
+
+    for edit in edits:
+        tag = str(edit.get("elementTag") or "")
+        element_id = int(edit.get("elementId") or 0)
+        is_wall = bool(edit.get("isWall"))
+        safe_tag = re.sub(r"[^A-Za-z0-9_]+", "_", tag or str(element_id)).strip("_")
+        section_id = "EDIT_" + (safe_tag or "SECTION")
+        width = max(0.05, float(edit.get("width_m") or 0.0))
+        height = max(0.05, float(edit.get("height_m") or 0.0))
+        fc = max(1.0, float(edit.get("fc_MPa") or 25.0))
+        fy = max(1.0, float(edit.get("fy_MPa") or 420.0))
+        diameter = max(1.0, float(edit.get("barDiameter_mm") or 0.0))
+        top = max(0, int(edit.get("topBars") or 0))
+        bottom = max(0, int(edit.get("bottomBars") or 0))
+        side = max(0, int(edit.get("sideBarsEach") or 0))
+        total_bars = top + bottom + 2 * side
+        ast = total_bars * math.pi * diameter ** 2 / 4.0
+        rho = 100.0 * ast / max(width * height * 1_000_000.0, 1.0)
+        cover = max(0.0, float(edit.get("cover_mm") or 0.0))
+
+        matched = []
+        if is_wall:
+            source_id = str(edit.get("sourceId") or tag)
+            analysis_ids = set()
+            for wall_index, wall in enumerate(walls, start=1):
+                if wall_index == element_id or int(wall.get("id") or 0) == element_id or str(wall.get("sourceId") or "") == source_id:
+                    wall["grosor"] = width
+                    wall["longitud"] = height
+                    matched.append(wall)
+                    analysis_ids.update(wall.get("analysisElements") or [])
+            for element in elements:
+                if element.get("type") == "muro_eq" and (element.get("id") in analysis_ids or str(element.get("wallName") or "") == source_id):
+                    element["width_m"] = width
+                    element["height_m"] = height
+                    element["wallThickness_m"] = width
+                    element["wallLength_m"] = height
+                    element["sectionId"] = section_id
+        else:
+            for element in elements:
+                same_id = int(element.get("id") or 0) == element_id
+                same_tag = tag and str(element.get("elementTag") or "") == tag
+                if same_id or same_tag:
+                    element["width_m"] = width
+                    element["height_m"] = height
+                    element["sectionId"] = section_id
+                    element["seccion"] = section_id
+                    matched.append(element)
+
+        if not matched:
+            print(f"  AVISO editor Unity: no se encontro {tag or element_id}")
+            continue
+
+        custom_sections.append({
+            "sectionId": section_id,
+            "elementType": edit.get("elementType") or ("muro" if is_wall else "elemento"),
+            "materialName": f"Editado en Unity: H-{fc:g} / acero fy={fy:g} MPa",
+            "fc_MPa": fc,
+            "fy_MPa": fy,
+            "E_MPa": 4700.0 * math.sqrt(fc),
+            "Es_MPa": 200000.0,
+            "b_m": width,
+            "h_m": height,
+            "steelBars": total_bars,
+            "barDiameter_mm": diameter,
+            "Ast_mm2": ast,
+            "rho_percent": rho,
+            "effectiveDepth_mm": max(1.0, height * 1000.0 - cover - diameter / 2.0),
+            "topBars": top,
+            "bottomBars": bottom,
+            "sideBarsEach": side,
+            "cover_mm": cover,
+            "concreteFibersX": 20,
+            "concreteFibersY": 20,
+            "concreteModel": "Concrete01",
+            "steelModel": "Steel01",
+            "note": "Seccion parametrica editada en Unity; dimensiones incluidas en el reanalisis OpenSees."
+        })
+        applied.append({"elementTag": tag, "elementId": element_id, "sectionId": section_id})
+
+    return custom_sections, applied
+
+
+def custom_capacity_curve(edit, cvm):
+    """Curva P-M y M-phi para una seccion rectangular editada en Unity."""
+    if bool(edit.get("isWall")):
+        return None
+    b = float(edit["width_m"])
+    h = float(edit["height_m"])
+    fc = float(edit["fc_MPa"]) * 1000.0
+    fy = float(edit["fy_MPa"]) * 1000.0
+    es = 200_000_000.0
+    cover = float(edit["cover_mm"]) / 1000.0
+    diameter = float(edit["barDiameter_mm"])
+    top = int(edit["topBars"])
+    bottom = int(edit["bottomBars"])
+    side = int(edit["sideBarsEach"])
+    if min(b, h) <= 2.0 * cover or top + bottom + 2 * side <= 0:
+        return None
+
+    x0, x1 = -b / 2.0 + cover, b / 2.0 - cover
+    y0, y1 = -h / 2.0 + cover, h / 2.0 - cover
+    bars = []
+    for x in cvm.evenly_spaced_positions(x0, x1, bottom):
+        bars.append({"fila": "inferior", "x": x, "y": y0})
+    for x in cvm.evenly_spaced_positions(x0, x1, top):
+        bars.append({"fila": "superior", "x": x, "y": y1})
+    step = (y1 - y0) / (side + 1) if side > 0 else 0.0
+    for index in range(1, side + 1):
+        y = y0 + index * step
+        bars.extend(({"fila": "lateral_izquierdo", "x": x0, "y": y},
+                     {"fila": "lateral_derecho", "x": x1, "y": y}))
+
+    area_bar = math.pi * (diameter / 1000.0) ** 2 / 4.0
+    nx = ny = 20
+    fibers = [{"type": "concrete", "x": -b / 2 + (ix + .5) * b / nx,
+               "y": -h / 2 + (iy + .5) * h / ny, "area": b / nx * h / ny}
+              for ix in range(nx) for iy in range(ny)]
+    fibers.extend({"type": "steel", "x": bar["x"], "y": bar["y"], "area": area_bar}
+                  for bar in bars)
+    section = {"b": b, "h": h, "cover": cover, "fc": fc, "fy": fy, "Es": es,
+               "bar_area_m2": area_bar, "fibers": fibers, "rebar_xy": bars,
+               "concrete_fibers_x": nx, "concrete_fibers_y": ny}
+    ast = len(bars) * area_bar
+    po = 0.85 * fc * (b * h - ast) + fy * ast
+    pm = cvm.simplified_pm_points(section, po)
+
+    mphi = []
+    first_yield = None
+    yield_strain = fy / es
+    for index in range(1, 401):
+        phi = index * 0.00015
+        eps0 = cvm.solve_eps0_for_p(section, phi, 0.0)
+        p, moment, steel_strain, concrete_strain = cvm.section_response(section, eps0, phi)
+        point = {"phi_1_m": phi, "P_kN": p, "M_kN_m": abs(moment),
+                 "max_steel_strain": steel_strain, "max_concrete_strain": concrete_strain,
+                 "steel_yielded": steel_strain >= yield_strain}
+        if first_yield is None and point["steel_yielded"]:
+            first_yield = dict(point)
+        mphi.append(point)
+
+    tag = str(edit.get("elementTag") or edit.get("elementId") or "SECTION")
+    section_id = "EDIT_" + re.sub(r"[^A-Za-z0-9_]+", "_", tag).strip("_")
+    ast_mm2 = ast * 1e6
+    return {
+        "sectionId": section_id, "elementType": edit.get("elementType") or "elemento",
+        "b_m": b, "h_m": h, "fc_MPa": fc / 1000.0, "fy_MPa": fy / 1000.0,
+        "steelBars": len(bars), "barDiameter_mm": diameter, "Ast_mm2": ast_mm2,
+        "rho_percent": 100.0 * ast / (b * h), "Po_kN": po,
+        "interpretation": "Seccion rectangular editada en Unity; compatibilidad de deformaciones y fibras discretizadas.",
+        "momentCurvature": mphi, "momentCurvatureFirstYield": first_yield,
+        "points": [{"label": p["estado"], "P_kN": p["Pn_kN"], "M_kN_m": p["Mn_kN_m"]} for p in pm]
+    }
 
 
 def main():
@@ -175,6 +351,8 @@ def main():
                         help="Carga viva Q en kg/m2 (default: 500)")
     parser.add_argument("--sc", type=float, default=cvm.DEFAULT_SEISMIC_COEFF,
                         help="Coeficiente sismico (default: 0.20)")
+    parser.add_argument("--model-edits", type=str, default=str(BASE_DIR / "model_edits.json"),
+                        help="JSON de ediciones parametricas guardado desde Unity")
     args = parser.parse_args()
 
     q_Q = cvm.kg_m2_to_kn_m2(args.q_kg_m2)
@@ -190,6 +368,12 @@ def main():
     if cvm.MODELAR_MUROS:
         data, wall_report = cvm.agregar_muros(data)
         print(f"  Muros: {len(wall_report['muros'])} muros -> {wall_report['elementos_muro']} barras + {wall_report['brazos']} brazos rigidos")
+    edit_path = Path(args.model_edits)
+    edit_payload = load_json(edit_path) if edit_path.exists() else {"elements": []}
+    model_edits = edit_payload.get("elements", [])
+    custom_sections, applied_edits = apply_model_edits(data, edit_path)
+    if applied_edits:
+        print(f"  Editor Unity: {len(applied_edits)} secciones parametricas aplicadas desde {edit_path}")
     data_nodes = {n["id"]: n for n in data["nodes"]}
     print(f"  Conectividad: {connectivity_report['barras_partidas']} barras partidas, "
           f"{connectivity_report['nodos_nuevos_en_cruces']} nodos en cruces, "
@@ -350,6 +534,11 @@ def main():
             "points": wall_points
         })
 
+    for edit in model_edits:
+        curve = custom_capacity_curve(edit, cvm)
+        if curve is not None:
+            pm_curves.append(curve)
+
     # ── Demandas por muro desde el analisis ─────────────────────────
     # Cada panel del JSON apunta a las barras "muro_eq" que lo representan
     # (walls[i].analysisElements). P = compresion en la base del panel,
@@ -498,7 +687,7 @@ def main():
             "displacements": displacements_flat,
             "elementForces": element_forces_flat,
             "pmCurves": pm_curves,
-            "sectionMaterials": SECTION_MATERIALS,
+            "sectionMaterials": [dict(section) for section in SECTION_MATERIALS] + custom_sections,
             "wallRegistry": wall_registry
         },
         "units": data.get("units", "m, kN, kN*m"),

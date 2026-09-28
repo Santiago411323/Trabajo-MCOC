@@ -104,6 +104,7 @@ public class ElementSelectable : MonoBehaviour
             $"=== Elemento {tag} ({data.type}) ===\n" +
             $"ID Unity: {gameObject.name}\n" +
             $"elementTag OpenSees: {tag}\n" +
+            (StructuralModelEditor.ResultsStale ? "ESTADO: MODELO EDITADO — RESULTADOS PENDIENTES DE REANÁLISIS\n" : "") +
             $"\n--- Ubicacion ---\n" +
             $"Piso / nivel: {floor}\n" +
             $"Edificio: {building}\n" +
@@ -269,6 +270,7 @@ public class ElementSelectable : MonoBehaviour
             $"=== Muro {wallId} ===\n" +
             $"ID Unity: {gameObject.name}\n" +
             $"ID origen: {sourceId}\n" +
+            (StructuralModelEditor.ResultsStale ? "ESTADO: MODELO EDITADO — RESULTADOS PENDIENTES DE REANÁLISIS\n" : "") +
             $"\n--- Ubicacion ---\n" +
             $"Piso / tramo: {wallBottom} -> {wallTop}\n" +
             $"Edificio: {source}\n" +

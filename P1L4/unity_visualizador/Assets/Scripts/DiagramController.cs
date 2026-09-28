@@ -39,6 +39,8 @@ public class DiagramController : MonoBehaviour
     public IReadOnlyList<ElementSelectable> StructuralElements => structuralElements;
     private readonly List<GameObject> diagramObjects = new List<GameObject>();
     private readonly List<GameObject> mobileDiagramObjects = new List<GameObject>();
+    private readonly List<GameObject> selectedComponentDiagramObjects = new List<GameObject>();
+    private string selectedComponentSignature = string.Empty;
     private DiagramMode currentMode = DiagramMode.None;
     private sealed class DeformedSegment
     {
@@ -256,6 +258,162 @@ public class DiagramController : MonoBehaviour
         foreach (GameObject diagram in mobileDiagramObjects)
             if (diagram != null) Destroy(diagram);
         mobileDiagramObjects.Clear();
+    }
+
+    /// <summary>
+    /// Draws the component currently open in the results panel directly on the
+    /// selected member. This is intentionally separate from the global diagram
+    /// mode so inspecting one member never fills the building with curves.
+    /// </summary>
+    public void ShowSelectedComponentDiagram(ElementSelectable element, string component)
+    {
+        if (element == null || element.data == null || !element.gameObject.activeInHierarchy ||
+            (element.data.type != "viga" && element.data.type != "columna" && element.data.type != "enlace"))
+        {
+            ClearSelectedComponentDiagram();
+            return;
+        }
+
+        const int segments = 24;
+        float[] values = new float[segments + 1];
+        float bound = 0.000001f;
+        float checksum = 0f;
+        int criticalIndex = 0;
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = i / (float)segments;
+            if (!TryComponentValue(element, component, t, out values[i]))
+            {
+                ClearSelectedComponentDiagram();
+                return;
+            }
+            bound = Mathf.Max(bound, Mathf.Abs(values[i]));
+            if (Mathf.Abs(values[i]) > Mathf.Abs(values[criticalIndex])) criticalIndex = i;
+            checksum += values[i] * (i + 1f);
+        }
+
+        string signature = element.data.id + "|" + component + "|" +
+            UnityData.GetActiveLoadLabel() + "|" + checksum.ToString("0.#####");
+        if (signature == selectedComponentSignature && selectedComponentDiagramObjects.Count > 0) return;
+
+        ClearSelectedComponentDiagram();
+        selectedComponentSignature = signature;
+
+        Vector3 axis = element.endPoint - element.startPoint;
+        float length = axis.magnitude;
+        if (length < 0.0001f) return;
+
+        Vector3 direction = ComponentDiagramDirection(element, component, axis);
+        float drawSign = component == "My" ? -1f : 1f;
+        float visualExtent = Mathf.Clamp(length * 0.22f, 0.45f, 1.6f);
+        float baseOffset = Mathf.Max(0.075f, diagramBaseOffset);
+        Vector3[] baseline = new Vector3[segments + 1];
+        Vector3[] curve = new Vector3[segments + 1];
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = i / (float)segments;
+            Vector3 memberPoint = Vector3.Lerp(element.startPoint, element.endPoint, t);
+            baseline[i] = memberPoint + direction * baseOffset;
+            curve[i] = baseline[i] + direction * (drawSign * values[i] / bound * visualExtent);
+        }
+
+        Color color = ComponentDiagramColor(component);
+        CreateSelectedOverlayLine(baseline, new Color(.72f, .78f, .84f, .72f), .035f,
+            $"Resultado3D_Eje_{component}_E{element.data.id}");
+        CreateSelectedOverlayLine(curve, color, .095f,
+            $"Resultado3D_{component}_E{element.data.id}");
+        CreateSelectedOverlayMarker(curve[criticalIndex], color,
+            Mathf.Clamp(length * .018f, .10f, .22f),
+            $"Resultado3D_Max_{component}_E{element.data.id}");
+
+        Color ordinateColor = new Color(color.r, color.g, color.b, .42f);
+        for (int i = 0; i <= segments; i += 3)
+            CreateSelectedOverlayLine(new[] { baseline[i], curve[i] }, ordinateColor, .025f,
+                $"Resultado3D_Ordenada_{component}_E{element.data.id}_{i}");
+    }
+
+    public void ClearSelectedComponentDiagram()
+    {
+        foreach (GameObject diagram in selectedComponentDiagramObjects)
+        {
+            if (diagram == null) continue;
+            if (Application.isPlaying) Destroy(diagram);
+            else DestroyImmediate(diagram);
+        }
+        selectedComponentDiagramObjects.Clear();
+        selectedComponentSignature = string.Empty;
+    }
+
+    private bool TryComponentValue(ElementSelectable element, string component, float t, out float value)
+    {
+        value = 0f;
+        if (!UnityData.TryGetSectionForces(element.data.id, UnityData.ActiveCombo, t, out FrameSectionForces f))
+            return false;
+        if (component == "N") value = f.N;
+        else if (component == "Vy") value = f.Vy;
+        else if (component == "Vz") value = f.Vz;
+        else if (component == "My") value = f.My;
+        else if (component == "Mz") value = f.Mz;
+        else return false;
+        return !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    private Vector3 ComponentDiagramDirection(ElementSelectable element, string component, Vector3 axis)
+    {
+        if (UnityData.TryGetFrameGeometry(element.data.id, out FrameGeometry frame))
+        {
+            bool localZ = component == "Vz" || component == "My";
+            Vector3 localDirection = UnityData.AxisToUnity(localZ ? frame.Z : frame.Y).normalized;
+            if (localDirection.sqrMagnitude > .01f) return localDirection;
+        }
+        DiagramMode fallback = component == "N" ? DiagramMode.Axial :
+            component.StartsWith("V") ? DiagramMode.Shear : DiagramMode.Moment;
+        return GetOffsetDirection(axis, fallback);
+    }
+
+    private static Color ComponentDiagramColor(string component)
+    {
+        if (component == "N") return new Color(.35f, 1f, .48f, 1f);
+        if (component == "Vy") return new Color(1f, .66f, .16f, 1f);
+        if (component == "Vz") return new Color(.18f, .82f, 1f, 1f);
+        if (component == "My") return new Color(1f, .32f, .78f, 1f);
+        return new Color(.68f, .48f, 1f, 1f);
+    }
+
+    private void CreateSelectedOverlayLine(Vector3[] points, Color color, float width, string objectName)
+    {
+        GameObject root = new GameObject(objectName);
+        root.transform.SetParent(transform);
+        root.hideFlags = HideFlags.DontSave;
+        LineRenderer line = root.AddComponent<LineRenderer>();
+        line.useWorldSpace = true;
+        line.positionCount = points.Length;
+        line.SetPositions(points);
+        line.startWidth = line.endWidth = width;
+        line.numCapVertices = 3;
+        line.numCornerVertices = 2;
+        line.material = CreateMaterial(color);
+        selectedComponentDiagramObjects.Add(root);
+    }
+
+    private void CreateSelectedOverlayMarker(Vector3 position, Color color, float size, string objectName)
+    {
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        marker.name = objectName;
+        marker.transform.SetParent(transform);
+        marker.transform.position = position;
+        marker.transform.localScale = Vector3.one * size;
+        marker.hideFlags = HideFlags.DontSave;
+        Collider collider = marker.GetComponent<Collider>();
+        if (collider != null)
+        {
+            if (Application.isPlaying) Destroy(collider);
+            else DestroyImmediate(collider);
+        }
+        Renderer renderer = marker.GetComponent<Renderer>();
+        if (renderer != null) renderer.material = CreateMaterial(color);
+        selectedComponentDiagramObjects.Add(marker);
     }
 
     private void CreateMobileComponentDiagram(ElementSelectable element, string component, float bound)
