@@ -93,10 +93,13 @@ public static class MCOCSetup
             picker.cam = camera;
         }
 
-        if (camera.GetComponent<OrbitCamera>() == null)
-        {
-            camera.gameObject.AddComponent<OrbitCamera>();
-        }
+        OrbitCamera orbit = camera.GetComponent<OrbitCamera>();
+        if (orbit == null) orbit = camera.gameObject.AddComponent<OrbitCamera>();
+        orbit.zoomPercentPerStep = 0.24f;
+        orbit.keyboardPanSpeed = 32f;
+        orbit.fastNavigationMultiplier = 3f;
+        orbit.minDistance = 1.5f;
+        orbit.maxDistance = 250f;
 
         if (Object.FindObjectOfType<Light>() == null)
         {

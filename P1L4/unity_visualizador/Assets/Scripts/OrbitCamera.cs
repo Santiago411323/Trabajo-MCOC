@@ -13,11 +13,11 @@ public class OrbitCamera : MonoBehaviour
     public float panSpeed = 8f;
 
     [Header("Fast navigation")]
-    [Range(0.05f, 0.4f)] public float zoomPercentPerStep = 0.18f;
-    public float keyboardPanSpeed = 24f;
-    public float fastNavigationMultiplier = 2.5f;
-    public float minDistance = 3f;
-    public float maxDistance = 180f;
+    [Range(0.05f, 0.4f)] public float zoomPercentPerStep = 0.24f;
+    public float keyboardPanSpeed = 32f;
+    public float fastNavigationMultiplier = 3f;
+    public float minDistance = 1.5f;
+    public float maxDistance = 250f;
 
     private float x = 45f;
     private float y = 28f;
@@ -76,7 +76,8 @@ public class OrbitCamera : MonoBehaviour
             }
         }
 
-        float scroll = mouse != null ? mouse.scroll.ReadValue().y / 120f : 0f;
+        float rawScroll = mouse != null ? mouse.scroll.ReadValue().y : 0f;
+        float scroll = NormalizeWheelSteps(rawScroll);
 #else
         bool fastNavigation = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         float speedMultiplier = fastNavigation ? fastNavigationMultiplier : 1f;
@@ -142,6 +143,17 @@ public class OrbitCamera : MonoBehaviour
         float fraction = Mathf.Clamp(zoomPercentPerStep * legacyAdjustment * speedMultiplier, 0.04f, 0.45f);
         distance *= Mathf.Pow(1f - fraction, scrollSteps);
         distance = Mathf.Clamp(distance, minDistance, maxDistance);
+    }
+
+    private static float NormalizeWheelSteps(float rawScroll)
+    {
+        if (Mathf.Abs(rawScroll) < 0.0001f) return 0f;
+
+        // Windows/Input System can report one wheel notch as either 120 units
+        // or a small normalized value, depending on the mouse driver.  Always
+        // treat a non-zero wheel event as at least one full navigation step.
+        float steps = Mathf.Max(1f, Mathf.Abs(rawScroll) / 120f);
+        return Mathf.Sign(rawScroll) * steps;
     }
 
     public void FocusOn(Vector3 point, float newDistance = -1f)

@@ -383,6 +383,11 @@ MonoBehaviour:
   ySpeed: 80
   zoomSpeed: 4
   panSpeed: 8
+  zoomPercentPerStep: 0.24
+  keyboardPanSpeed: 32
+  fastNavigationMultiplier: 3
+  minDistance: 1.5
+  maxDistance: 250
 --- !u!114 &1090480712
 MonoBehaviour:
   m_ObjectHideFlags: 0
