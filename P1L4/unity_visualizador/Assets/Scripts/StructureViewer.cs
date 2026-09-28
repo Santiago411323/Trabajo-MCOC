@@ -149,6 +149,7 @@ public class StructureViewer : MonoBehaviour
         BuildColumnBaseLevels(loadedData);
         CreateColumnAndBeamElements(loadedData);
         CreateWalls(loadedData);
+        CreateSupports(loadedData);
         CreateDiaphragms(loadedData);
         CreatePointLoads(loadedData);
         CreateSimpleEnvironment();
@@ -866,8 +867,10 @@ public class StructureViewer : MonoBehaviour
         GameObject support = GameObject.CreatePrimitive(PrimitiveType.Cube);
         support.name = $"Apoyo_Empotrado_N{supportData.node}";
         support.transform.SetParent(transform);
-        support.transform.position = node + Vector3.down * 0.08f;
-        support.transform.localScale = new Vector3(0.55f, 0.14f, 0.55f);
+        // Placa visible alrededor de la base. Su cara superior sobresale unos
+        // centimetros del nivel para que la losa o el terreno no la oculten.
+        support.transform.position = node + Vector3.down * 0.05f;
+        support.transform.localScale = new Vector3(0.95f, 0.20f, 0.95f);
         support.GetComponent<Renderer>().material = SupportMaterial();
         supportObjects.Add(support);
         CreateSupportLabel(supportData, "Empotrado", node);
@@ -883,7 +886,7 @@ public class StructureViewer : MonoBehaviour
         text.text = $"N{supportData.node}\n{label}";
         text.characterSize = 0.18f;
         text.anchor = TextAnchor.MiddleCenter;
-        text.color = Color.yellow;
+        text.color = new Color(1f, 0.48f, 0.10f);
         supportObjects.Add(labelObject);
     }
 

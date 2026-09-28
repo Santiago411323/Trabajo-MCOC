@@ -106,6 +106,19 @@ public class PMCurveData
     public string interpretation;
     public PMPoint[] points;
     public DemandRecord[] demands;
+    public MomentCurvaturePoint[] momentCurvature;
+    public MomentCurvaturePoint momentCurvatureFirstYield;
+}
+
+[Serializable]
+public class MomentCurvaturePoint
+{
+    public float phi_1_m;
+    public float P_kN;
+    public float M_kN_m;
+    public float max_steel_strain;
+    public float max_concrete_strain;
+    public bool steel_yielded;
 }
 
 [Serializable]
@@ -132,6 +145,21 @@ public class SectionMaterialData
     public float barDiameter_mm;
     public float Ast_mm2;
     public float rho_percent;
+    public float effectiveDepth_mm;
+    public float Es_MPa;
+    public int topBars;
+    public int bottomBars;
+    public int sideBarsEach;
+    public float cover_mm;
+    public int concreteFibersX;
+    public int concreteFibersY;
+    public string concreteModel;
+    public float epsc0;
+    public float fcu_MPa;
+    public float epscu;
+    public string steelModel;
+    public float steelYieldStrain;
+    public float steelHardeningRatio;
     public string note;
 }
 

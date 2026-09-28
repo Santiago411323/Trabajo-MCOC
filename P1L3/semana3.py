@@ -34,9 +34,10 @@ SEISMIC_COEFF = 0.20
 # Configuracion simple de la armadura de la columna COL70/70.
 # Cambia estas lineas para modificar diametro, barras y fibras de hormigon.
 BAR_DIAMETER_MM = 25.0
-REBAR_BARS_INFERIOR = 3
-REBAR_BARS_CENTRO = 2
-REBAR_BARS_SUPERIOR = 3
+REBAR_BARS_INFERIOR = 5
+REBAR_BARS_SUPERIOR = 5
+REBAR_BARS_SIDE_EACH = 4
+REBAR_BARS_CENTRO = 0
 CONCRETE_FIBERS_X = 20
 CONCRETE_FIBERS_Y = 20
 
@@ -384,15 +385,18 @@ def evenly_spaced_positions(start, end, count):
 def rebar_coordinates(b, h, cover):
     x_left = -b / 2.0 + cover
     x_right = b / 2.0 - cover
-    rows = [
-        ("inferior", -h / 2.0 + cover, REBAR_BARS_INFERIOR),
-        ("centro", 0.0, REBAR_BARS_CENTRO),
-        ("superior", h / 2.0 - cover, REBAR_BARS_SUPERIOR),
-    ]
     coords = []
-    for row_name, y, bars in rows:
-        for x in evenly_spaced_positions(x_left, x_right, bars):
-            coords.append({"fila": row_name, "x": x, "y": y})
+    y_bot = -h / 2.0 + cover
+    y_top = h / 2.0 - cover
+    for x in evenly_spaced_positions(x_left, x_right, REBAR_BARS_INFERIOR):
+        coords.append({"fila": "inferior", "x": x, "y": y_bot})
+    for x in evenly_spaced_positions(x_left, x_right, REBAR_BARS_SUPERIOR):
+        coords.append({"fila": "superior", "x": x, "y": y_top})
+    side_step = (y_top - y_bot) / (REBAR_BARS_SIDE_EACH + 1)
+    for index in range(1, REBAR_BARS_SIDE_EACH + 1):
+        y = y_bot + index * side_step
+        coords.append({"fila": "lateral_izquierdo", "x": x_left, "y": y})
+        coords.append({"fila": "lateral_derecho", "x": x_right, "y": y})
     return coords
 
 
@@ -503,6 +507,7 @@ def fiber_section_capacity():
             "steel_bars_inferior": REBAR_BARS_INFERIOR,
             "steel_bars_centro": REBAR_BARS_CENTRO,
             "steel_bars_superior": REBAR_BARS_SUPERIOR,
+            "steel_bars_side_each": REBAR_BARS_SIDE_EACH,
             "bar_area_m2": section["bar_area_m2"],
             "bar_diameter_mm": BAR_DIAMETER_MM,
             "bar_area_mm2": section["bar_area_m2"] * 1_000_000.0,
@@ -538,28 +543,22 @@ def define_opensees_fiber_section():
     ops.section("Fiber", section_tag)
     ops.patch("rect", concrete_tag, CONCRETE_FIBERS_Y, CONCRETE_FIBERS_X, -h / 2, -b / 2, h / 2, b / 2)
     y_bot = -h / 2 + cover
-    y_mid = 0.0
     y_top = h / 2 - cover
     z_left = -b / 2 + cover
     z_right = b / 2 - cover
-    rebar_layers = [
-        (REBAR_BARS_INFERIOR, y_bot),
-        (REBAR_BARS_CENTRO, y_mid),
-        (REBAR_BARS_SUPERIOR, y_top),
-    ]
-    for bars, y in rebar_layers:
-        if bars <= 0:
-            continue
-        if bars == 1:
-            ops.layer("straight", steel_tag, bars, bar_area, y, 0.0, y, 0.0)
-        else:
-            ops.layer("straight", steel_tag, bars, bar_area, y, z_left, y, z_right)
+    ops.layer("straight", steel_tag, REBAR_BARS_INFERIOR, bar_area, y_bot, z_left, y_bot, z_right)
+    ops.layer("straight", steel_tag, REBAR_BARS_SUPERIOR, bar_area, y_top, z_left, y_top, z_right)
+    side_step = (y_top - y_bot) / (REBAR_BARS_SIDE_EACH + 1)
+    side_y0 = y_bot + side_step
+    side_y1 = y_top - side_step
+    ops.layer("straight", steel_tag, REBAR_BARS_SIDE_EACH, bar_area, side_y0, z_left, side_y1, z_left)
+    ops.layer("straight", steel_tag, REBAR_BARS_SIDE_EACH, bar_area, side_y0, z_right, side_y1, z_right)
     return {
         "section_tag": section_tag,
         "concrete_material_tag": concrete_tag,
         "steel_material_tag": steel_tag,
         "patch": f"rect concrete {CONCRETE_FIBERS_X}x{CONCRETE_FIBERS_Y}",
-        "reinforcement": f"{REBAR_BARS_INFERIOR} abajo, {REBAR_BARS_CENTRO} centro, {REBAR_BARS_SUPERIOR} arriba; diametro {BAR_DIAMETER_MM:g} mm",
+        "reinforcement": f"{REBAR_BARS_INFERIOR} abajo, {REBAR_BARS_SUPERIOR} arriba y {REBAR_BARS_SIDE_EACH} por cada lado; diametro {BAR_DIAMETER_MM:g} mm",
     }
 
 

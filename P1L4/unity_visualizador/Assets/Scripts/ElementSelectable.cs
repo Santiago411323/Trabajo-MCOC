@@ -37,7 +37,12 @@ public class ElementSelectable : MonoBehaviour
                 originalColor = renderer.material.color;
                 hasOriginalColor = true;
             }
-            renderer.material.color = Color.yellow;
+
+            // Las columnas conservan su material original al seleccionarlas.
+            // La selección sigue activa en el inspector y en el panel de
+            // resultados, sin introducir una columna amarilla en el modelo.
+            bool isColumn = data != null && data.type == "columna";
+            renderer.material.color = isColumn ? originalColor : Color.yellow;
         }
     }
 

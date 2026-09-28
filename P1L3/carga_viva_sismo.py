@@ -78,9 +78,10 @@ _WALL_S = 0.20             # espaciamiento @200 mm por capa
 # Configuracion simple de la armadura de la columna COL70/70.
 # Cambia estas lineas para modificar diametro, barras y fibras de hormigon.
 BAR_DIAMETER_MM = 25.0
-REBAR_BARS_INFERIOR = 3
-REBAR_BARS_CENTRO = 2
-REBAR_BARS_SUPERIOR = 3
+REBAR_BARS_INFERIOR = 5
+REBAR_BARS_SUPERIOR = 5
+REBAR_BARS_SIDE_EACH = 4
+REBAR_BARS_CENTRO = 0  # compatibilidad con reportes antiguos
 CONCRETE_FIBERS_X = 20
 CONCRETE_FIBERS_Y = 20
 
@@ -1768,15 +1769,19 @@ def evenly_spaced_positions(start, end, count):
 def rebar_coordinates(b, h, cover):
     x_left = -b / 2.0 + cover
     x_right = b / 2.0 - cover
-    rows = [
-        ("inferior", -h / 2.0 + cover, REBAR_BARS_INFERIOR),
-        ("centro", 0.0, REBAR_BARS_CENTRO),
-        ("superior", h / 2.0 - cover, REBAR_BARS_SUPERIOR),
-    ]
     coords = []
-    for row_name, y, bars in rows:
-        for x in evenly_spaced_positions(x_left, x_right, bars):
-            coords.append({"fila": row_name, "x": x, "y": y})
+    y_bot = -h / 2.0 + cover
+    y_top = h / 2.0 - cover
+    for x in evenly_spaced_positions(x_left, x_right, REBAR_BARS_INFERIOR):
+        coords.append({"fila": "inferior", "x": x, "y": y_bot})
+    for x in evenly_spaced_positions(x_left, x_right, REBAR_BARS_SUPERIOR):
+        coords.append({"fila": "superior", "x": x, "y": y_top})
+    # Las barras laterales no repiten las cuatro barras de esquina.
+    side_step = (y_top - y_bot) / (REBAR_BARS_SIDE_EACH + 1)
+    for index in range(1, REBAR_BARS_SIDE_EACH + 1):
+        y = y_bot + index * side_step
+        coords.append({"fila": "lateral_izquierdo", "x": x_left, "y": y})
+        coords.append({"fila": "lateral_derecho", "x": x_right, "y": y})
     return coords
 
 
@@ -1833,28 +1838,22 @@ def define_opensees_fiber_section():
     ops.section("Fiber", section_tag)
     ops.patch("rect", concrete_tag, CONCRETE_FIBERS_Y, CONCRETE_FIBERS_X, -h / 2, -b / 2, h / 2, b / 2)
     y_bot = -h / 2 + cover
-    y_mid = 0.0
     y_top = h / 2 - cover
     z_left = -b / 2 + cover
     z_right = b / 2 - cover
-    rebar_layers = [
-        ("inferior", REBAR_BARS_INFERIOR, y_bot),
-        ("centro", REBAR_BARS_CENTRO, y_mid),
-        ("superior", REBAR_BARS_SUPERIOR, y_top),
-    ]
-    for _, bars, y in rebar_layers:
-        if bars <= 0:
-            continue
-        if bars == 1:
-            ops.layer("straight", steel_tag, bars, bar_area, y, 0.0, y, 0.0)
-        else:
-            ops.layer("straight", steel_tag, bars, bar_area, y, z_left, y, z_right)
+    ops.layer("straight", steel_tag, REBAR_BARS_INFERIOR, bar_area, y_bot, z_left, y_bot, z_right)
+    ops.layer("straight", steel_tag, REBAR_BARS_SUPERIOR, bar_area, y_top, z_left, y_top, z_right)
+    side_step = (y_top - y_bot) / (REBAR_BARS_SIDE_EACH + 1)
+    side_y0 = y_bot + side_step
+    side_y1 = y_top - side_step
+    ops.layer("straight", steel_tag, REBAR_BARS_SIDE_EACH, bar_area, side_y0, z_left, side_y1, z_left)
+    ops.layer("straight", steel_tag, REBAR_BARS_SIDE_EACH, bar_area, side_y0, z_right, side_y1, z_right)
     return {
         "section_tag": section_tag,
         "concrete_material": {"tag": concrete_tag, "type": "Concrete01", "fc_kN_m2": fc, "epsc0": epsc0, "fcu_kN_m2": fcu, "epscu": epscu},
         "steel_material": {"tag": steel_tag, "type": "Steel01", "fy_kN_m2": fy, "Es_kN_m2": es, "b": 0.01},
         "patch": f"rect concrete {CONCRETE_FIBERS_X} x {CONCRETE_FIBERS_Y}",
-        "reinforcement": f"{REBAR_BARS_INFERIOR} barras abajo, {REBAR_BARS_CENTRO} al centro, {REBAR_BARS_SUPERIOR} arriba; diametro {BAR_DIAMETER_MM:g} mm por barra",
+        "reinforcement": f"{REBAR_BARS_INFERIOR} abajo, {REBAR_BARS_SUPERIOR} arriba y {REBAR_BARS_SIDE_EACH} por cada lado; diametro {BAR_DIAMETER_MM:g} mm",
     }
 
 
@@ -1906,10 +1905,14 @@ def steel_rows_mm(section):
     h_mm = section["h"] * 1000.0
     cover_mm = section["cover"] * 1000.0
     bar_area_mm2 = section["bar_area_m2"] * 1_000_000.0
+    grouped = {}
+    for bar in section["rebar_xy"]:
+        d_mm = round(h_mm / 2.0 - bar["y"] * 1000.0, 6)
+        grouped.setdefault(d_mm, []).append(bar)
     return [
-        {"fila": "superior", "bars": REBAR_BARS_SUPERIOR, "d_mm": cover_mm, "area_mm2": REBAR_BARS_SUPERIOR * bar_area_mm2},
-        {"fila": "media", "bars": REBAR_BARS_CENTRO, "d_mm": h_mm / 2.0, "area_mm2": REBAR_BARS_CENTRO * bar_area_mm2},
-        {"fila": "inferior_traccion", "bars": REBAR_BARS_INFERIOR, "d_mm": h_mm - cover_mm, "area_mm2": REBAR_BARS_INFERIOR * bar_area_mm2},
+        {"fila": "nivel_{:g}_mm".format(d_mm), "bars": len(bars), "d_mm": d_mm,
+         "area_mm2": len(bars) * bar_area_mm2}
+        for d_mm, bars in sorted(grouped.items())
     ]
 
 
@@ -2080,6 +2083,7 @@ def fiber_section_capacity():
             "steel_bars_inferior": REBAR_BARS_INFERIOR,
             "steel_bars_centro": REBAR_BARS_CENTRO,
             "steel_bars_superior": REBAR_BARS_SUPERIOR,
+            "steel_bars_side_each": REBAR_BARS_SIDE_EACH,
             "bar_area_m2": section["bar_area_m2"],
             "bar_area_mm2": bar_area_mm2,
             "bar_diameter_mm": bar_diameter_mm(section["bar_area_m2"]),
@@ -2165,6 +2169,19 @@ def export_capacity_for_unity(capacity):
         "rho_percent": 100.0 * section["cuantia_refuerzo"],
         "Po_kN": section["Po_kN"],
         "interpretation": capacity["interpretacion"],
+        "momentCurvature": [
+            {
+                "phi_1_m": point["phi_1_m"],
+                "P_kN": point["P_kN"],
+                "M_kN_m": point["M_kN_m"],
+                "max_steel_strain": point["max_steel_strain"],
+                "max_concrete_strain": point["max_concrete_strain"],
+                "steel_yielded": point["steel_yielded"],
+            }
+            for point in capacity["m_phi"]
+        ],
+        "momentCurvatureFirstYield": capacity.get("m_phi_first_steel_yield"),
+        "reinforcementCoordinates": capacity["reinforcement_coordinates_xy_m"],
         "pmPoints": [
             {
                 "label": point["estado"],
