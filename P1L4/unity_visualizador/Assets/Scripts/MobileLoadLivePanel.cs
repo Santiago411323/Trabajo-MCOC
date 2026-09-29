@@ -18,6 +18,7 @@ public class MobileLoadLivePanel : MonoBehaviour
     private readonly string[] scopeNames = { "AFFECTED MEMBERS", "CURRENT FLOOR", "WHOLE STRUCTURE" };
     private readonly List<ElementSelectable> members = new List<ElementSelectable>();
     private readonly Dictionary<int, ElementSelectable> membersById = new Dictionary<int, ElementSelectable>();
+    private readonly Dictionary<int, List<ElementSelectable>> pathMembersByNode = new Dictionary<int, List<ElementSelectable>>();
     private readonly Dictionary<Renderer, Color> baseColors = new Dictionary<Renderer, Color>();
     private MobileLoadController mobile;
     private DiagramController diagrams;
@@ -27,6 +28,7 @@ public class MobileLoadLivePanel : MonoBehaviour
     private int activeResult = 4;
     private int scope;
     private bool showTributaryAreas;
+    private bool showLoadPath = true;
     private bool showMovementSetup;
     private bool resultsDirty = true;
     private int lastSequence = int.MinValue;
@@ -37,6 +39,29 @@ public class MobileLoadLivePanel : MonoBehaviour
     private ElementSelectable critical;
     private float criticalValue;
     private GameObject tributaryRoot;
+    private GameObject loadPathRoot;
+    private readonly List<LoadPathPulse> loadPathPulses = new List<LoadPathPulse>();
+    private int loadPathSequence = int.MinValue;
+    private string loadPathSlab = "";
+    private bool visualsSuspended;
+
+    private sealed class LoadPathPulse
+    {
+        public Transform marker;
+        public Vector3 from;
+        public Vector3 to;
+        public float phase;
+        public float speed;
+        public float size;
+    }
+
+    private struct PathFront
+    {
+        public int node;
+        public int depth;
+        public float intensity;
+        public PathFront(int n, int d, float value) { node = n; depth = d; intensity = value; }
+    }
 
     private GUIStyle panelStyle, cardStyle, titleStyle, sectionStyle, labelStyle, valueStyle, mutedStyle;
     private GUIStyle passStyle, failStyle, statusStyle, barLabelStyle;
@@ -50,6 +75,7 @@ public class MobileLoadLivePanel : MonoBehaviour
         if (diagrams != null) diagrams.ClearMobileComponentDiagrams();
         RestoreMemberColors();
         if (tributaryRoot != null) Destroy(tributaryRoot);
+        ClearLoadPathVisuals();
         DestroyTexture(panelTexture); DestroyTexture(cardTexture); DestroyTexture(passTexture);
         DestroyTexture(failTexture); DestroyTexture(cyanTexture); DestroyTexture(trackTexture);
         panelStyle = null;
@@ -78,6 +104,18 @@ public class MobileLoadLivePanel : MonoBehaviour
     {
         Bind();
         if (mobile == null) return;
+        if (!mobile.visible || !mobile.LoadActive)
+        {
+            if (!visualsSuspended) SuspendVisuals();
+            visualsSuspended = true;
+            return;
+        }
+        if (visualsSuspended)
+        {
+            visualsSuspended = false;
+            resultsDirty = true;
+            lastSequence = int.MinValue;
+        }
         SlabData slab = mobile.CurrentSlab;
         string slabId = slab != null ? slab.id : "";
         if (slabId != currentSlabId)
@@ -94,6 +132,19 @@ public class MobileLoadLivePanel : MonoBehaviour
         if (loadState != lastLoadState) { lastLoadState = loadState; resultsDirty = true; }
         if (resultsDirty) RebuildStructuralView();
         UpdateCriticalHighlight();
+        UpdateLoadPathVisuals(sequence);
+    }
+
+    private void SuspendVisuals()
+    {
+        if (diagrams != null) diagrams.ClearMobileComponentDiagrams();
+        RestoreMemberColors();
+        critical = null;
+        if (tributaryRoot != null) Destroy(tributaryRoot);
+        tributaryRoot = null;
+        ClearLoadPathVisuals();
+        loadPathSequence = int.MinValue;
+        loadPathSlab = "";
     }
 
     private void OnGUI()
@@ -108,7 +159,7 @@ public class MobileLoadLivePanel : MonoBehaviour
         GUI.Box(panelRect, GUIContent.none, panelStyle);
         GUI.Label(new Rect(panelRect.x + 16f, panelRect.y + 8f, panelRect.width - 32f, 22f), "CARGA MÓVIL — LIVE ANALYSIS", titleStyle);
 
-        float contentHeight = showMovementSetup ? 1370f : 790f;
+        float contentHeight = showMovementSetup ? 1410f : 835f;
         Rect viewport = new Rect(panelRect.x + 10f, panelRect.y + 37f, panelRect.width - 20f, panelRect.height - 47f);
         scroll = GUI.BeginScrollView(viewport, scroll, new Rect(0f, 0f, viewport.width - 18f, contentHeight));
         float y = 2f;
@@ -178,7 +229,7 @@ public class MobileLoadLivePanel : MonoBehaviour
         float error = response != null && response.ok ? response.error : 0f;
         bool pass = response != null && response.ok && error <= Mathf.Max(1e-6f, applied * 1e-6f);
         Dictionary<int, float> loads = AggregateLoads(response);
-        float blockHeight = 116f + loads.Count * 38f;
+        float blockHeight = 146f + loads.Count * 38f;
         GUI.Box(new Rect(2f, y, width, blockHeight), GUIContent.none, cardStyle);
         InfoPair(y + 10f, "APPLIED", $"{applied:0.000} kN", 14f);
         InfoPair(y + 10f, "TRANSFERRED", $"{transferred:0.000} kN", 150f);
@@ -199,6 +250,16 @@ public class MobileLoadLivePanel : MonoBehaviour
             row += 38f;
         }
         if (loads.Count == 0) GUI.Label(new Rect(14f, row, width - 28f, 22f), "Esperando respuesta OpenSees…", mutedStyle);
+        float controlsY = y + blockHeight - 28f;
+        bool nextLoadPath = GUI.Toggle(new Rect(14f, controlsY, 180f, 22f), showLoadPath, " SHOW LOAD PATH");
+        if (nextLoadPath != showLoadPath)
+        {
+            showLoadPath = nextLoadPath;
+            loadPathSequence = int.MinValue;
+            RebuildLoadPathVisuals();
+        }
+        GUI.Label(new Rect(195f, controlsY + 1f, width - 210f, 26f),
+            "Pulsos: persona → vigas → apoyos", mutedStyle);
         y += blockHeight + 10f;
     }
 
@@ -318,16 +379,31 @@ public class MobileLoadLivePanel : MonoBehaviour
 
     private void RefreshMembers()
     {
-        members.Clear(); membersById.Clear();
+        members.Clear(); membersById.Clear(); pathMembersByNode.Clear();
         if (diagrams == null) return;
         foreach (ElementSelectable element in diagrams.StructuralElements)
-            if (element != null && element.data != null &&
-                (element.data.type == "viga" || element.data.type == "columna" || element.data.type == "enlace"))
+            if (element != null && element.data != null)
             {
-                members.Add(element); membersById[element.data.id] = element;
-                Renderer renderer = element.GetComponent<Renderer>();
-                if (renderer != null && !baseColors.ContainsKey(renderer)) baseColors[renderer] = renderer.material.color;
+                AddPathMember(element.data.nodeI, element);
+                AddPathMember(element.data.nodeJ, element);
+                if (
+                (element.data.type == "viga" || element.data.type == "columna" || element.data.type == "enlace"))
+                {
+                    members.Add(element); membersById[element.data.id] = element;
+                    Renderer renderer = element.GetComponent<Renderer>();
+                    if (renderer != null && !baseColors.ContainsKey(renderer)) baseColors[renderer] = renderer.material.color;
+                }
             }
+    }
+
+    private void AddPathMember(int node, ElementSelectable element)
+    {
+        if (!pathMembersByNode.TryGetValue(node, out List<ElementSelectable> list))
+        {
+            list = new List<ElementSelectable>();
+            pathMembersByNode[node] = list;
+        }
+        list.Add(element);
     }
 
     private void UpdateCriticalHighlight()
@@ -379,6 +455,216 @@ public class MobileLoadLivePanel : MonoBehaviour
                 line.SetPositions(new[] { beam.startPoint, beam.endPoint }); line.startWidth = line.endWidth = .13f;
                 line.material = new Material(Shader.Find("Sprites/Default")); line.startColor = line.endColor = new Color(.15f, .85f, 1f, .95f);
             }
+    }
+
+    private void UpdateLoadPathVisuals(int responseSequence)
+    {
+        string slabId = mobile != null && mobile.CurrentSlab != null ? mobile.CurrentSlab.id : "";
+        if (!showLoadPath)
+        {
+            if (loadPathRoot != null) ClearLoadPathVisuals();
+            return;
+        }
+        bool ready = mobile != null && mobile.CurrentSlab != null && mobile.CurrentResponse != null &&
+            mobile.CurrentResponse.ok && mobile.CurrentResponse.receivers != null;
+        if (!ready)
+        {
+            if (loadPathRoot != null) ClearLoadPathVisuals();
+            loadPathSequence = responseSequence;
+            loadPathSlab = slabId;
+            return;
+        }
+        if (responseSequence != loadPathSequence || slabId != loadPathSlab || loadPathRoot == null)
+            RebuildLoadPathVisuals();
+
+        float time = Time.unscaledTime;
+        foreach (LoadPathPulse pulse in loadPathPulses)
+        {
+            if (pulse.marker == null) continue;
+            float raw = Mathf.Repeat(time * pulse.speed + pulse.phase, 1f);
+            float eased = raw * raw * (3f - 2f * raw);
+            pulse.marker.position = Vector3.Lerp(pulse.from, pulse.to, eased);
+            float breathing = 1f + .22f * Mathf.Sin(raw * Mathf.PI);
+            pulse.marker.localScale = Vector3.one * pulse.size * breathing;
+        }
+    }
+
+    private void RebuildLoadPathVisuals()
+    {
+        ClearLoadPathVisuals();
+        MobileLoadController.Response response = mobile != null ? mobile.CurrentResponse : null;
+        SlabData slab = mobile != null ? mobile.CurrentSlab : null;
+        loadPathSequence = response != null && response.ok ? response.seq : int.MinValue;
+        loadPathSlab = slab != null ? slab.id : "";
+        if (!showLoadPath || response == null || !response.ok || slab == null || response.receivers == null) return;
+
+        if (pathMembersByNode.Count == 0) RefreshMembers();
+        loadPathRoot = new GameObject("Animated mobile load path");
+        loadPathRoot.transform.SetParent(transform, false);
+        DrawCurrentSlabGlow(slab);
+
+        Vector3 source = new Vector3(response.x, slab.z + 1.02f, response.y);
+        var loads = new Dictionary<int, float>();
+        var weightedStations = new Dictionary<int, float>();
+        foreach (MobileLoadController.Receiver receiver in response.receivers)
+        {
+            loads[receiver.beam] = loads.TryGetValue(receiver.beam, out float load) ? load + receiver.load : receiver.load;
+            weightedStations[receiver.beam] = weightedStations.TryGetValue(receiver.beam, out float weighted)
+                ? weighted + receiver.load * receiver.t : receiver.load * receiver.t;
+        }
+
+        var tracedElements = new HashSet<int>();
+        var markedSupports = new HashSet<int>();
+        int receiverIndex = 0;
+        foreach (KeyValuePair<int, float> pair in loads)
+        {
+            if (!membersById.TryGetValue(pair.Key, out ElementSelectable beam)) continue;
+            float ratio = response.p > 1e-8f ? Mathf.Clamp01(pair.Value / response.p) : 0f;
+            float station = pair.Value > 1e-8f ? weightedStations[pair.Key] / pair.Value : .5f;
+            Vector3 target = Vector3.Lerp(beam.startPoint, beam.endPoint, Mathf.Clamp01(station)) + Vector3.up * .055f;
+            Vector3 bend = Vector3.Lerp(source, target, .55f) + Vector3.up * (.18f + .16f * ratio);
+            Color receiverColor = Color.Lerp(new Color(.12f, .72f, 1f, .82f), new Color(1f, .68f, .08f, .98f), ratio);
+            float width = .025f + .11f * ratio;
+            CreateAnimatedPathSegment(source, bend, receiverColor, width, ratio, receiverIndex * .17f);
+            CreateAnimatedPathSegment(bend, target, receiverColor, width, ratio, receiverIndex * .17f + .43f);
+            CreateLoadPathLine(beam.startPoint + Vector3.up * .04f, beam.endPoint + Vector3.up * .04f,
+                receiverColor, .075f + .14f * ratio, "Viga receptora " + MemberTag(beam));
+            TracePathToSupports(beam, ratio, tracedElements, markedSupports);
+            receiverIndex++;
+        }
+    }
+
+    private void DrawCurrentSlabGlow(SlabData slab)
+    {
+        float x0 = Mathf.Min(slab.x0, slab.x1), x1 = Mathf.Max(slab.x0, slab.x1);
+        float y0 = Mathf.Min(slab.y0, slab.y1), y1 = Mathf.Max(slab.y0, slab.y1);
+        float z = slab.z + .065f;
+        Vector3[] corners = {
+            new Vector3(x0,z,y0), new Vector3(x1,z,y0), new Vector3(x1,z,y1),
+            new Vector3(x0,z,y1), new Vector3(x0,z,y0)
+        };
+        GameObject outline = new GameObject("Losa actual " + slab.id);
+        outline.transform.SetParent(loadPathRoot.transform, false);
+        LineRenderer line = outline.AddComponent<LineRenderer>();
+        line.useWorldSpace = true; line.positionCount = corners.Length; line.SetPositions(corners);
+        line.startWidth = line.endWidth = .085f; line.numCapVertices = 3; line.numCornerVertices = 3;
+        line.material = LoadPathMaterial(new Color(.12f, .82f, 1f, .92f));
+    }
+
+    private void TracePathToSupports(ElementSelectable receiverBeam, float receiverRatio,
+        HashSet<int> tracedElements, HashSet<int> markedSupports)
+    {
+        var queue = new Queue<PathFront>();
+        queue.Enqueue(new PathFront(receiverBeam.data.nodeI, 0, receiverRatio));
+        queue.Enqueue(new PathFront(receiverBeam.data.nodeJ, 0, receiverRatio));
+        var visitedDepth = new Dictionary<int, int>();
+        const int maxDepth = 14;
+
+        while (queue.Count > 0)
+        {
+            PathFront front = queue.Dequeue();
+            if (front.depth > maxDepth) continue;
+            if (visitedDepth.TryGetValue(front.node, out int previousDepth) && previousDepth <= front.depth) continue;
+            visitedDepth[front.node] = front.depth;
+
+            Vector3 currentPoint;
+            if (!TryNodePoint(front.node, out currentPoint)) continue;
+            if (UnityData.GetNodeSupport(front.node) != null)
+            {
+                if (markedSupports.Add(front.node)) CreateSupportMarker(currentPoint, front.node);
+                continue;
+            }
+            if (!pathMembersByNode.TryGetValue(front.node, out List<ElementSelectable> connected)) continue;
+
+            foreach (ElementSelectable element in connected)
+            {
+                if (element == null || element.data == null || element.data.id == receiverBeam.data.id) continue;
+                string type = element.data.type ?? "";
+                bool sameBeamChain = type == "viga" && !string.IsNullOrEmpty(receiverBeam.data.sourceId) &&
+                    receiverBeam.data.sourceId == element.data.sourceId;
+                if (type != "columna" && type != "muro_eq" && type != "enlace" &&
+                    type != "brazo_rigido" && !sameBeamChain) continue;
+                int other = element.data.nodeI == front.node ? element.data.nodeJ : element.data.nodeI;
+                if (!TryNodePoint(other, out Vector3 otherPoint)) continue;
+                float verticalChange = otherPoint.y - currentPoint.y;
+                bool descends = verticalChange < -.035f;
+                bool connector = (type == "enlace" || type == "brazo_rigido" || sameBeamChain) &&
+                    Mathf.Abs(verticalChange) <= .12f;
+                if (!descends && !connector) continue;
+
+                if (tracedElements.Add(element.data.id))
+                {
+                    float fade = Mathf.Clamp01(1f - front.depth / (float)(maxDepth + 2));
+                    Color pathColor = Color.Lerp(new Color(.18f, 1f, .48f, .88f),
+                        new Color(.12f, .72f, 1f, .78f), fade);
+                    float width = .035f + .04f * Mathf.Clamp01(front.intensity);
+                    CreateAnimatedPathSegment(currentPoint, otherPoint, pathColor, width,
+                        Mathf.Max(.25f, front.intensity), element.data.id * .071f);
+                }
+                queue.Enqueue(new PathFront(other, front.depth + 1, front.intensity));
+            }
+        }
+    }
+
+    private bool TryNodePoint(int node, out Vector3 point)
+    {
+        point = Vector3.zero;
+        if (!pathMembersByNode.TryGetValue(node, out List<ElementSelectable> connected) || connected.Count == 0) return false;
+        ElementSelectable element = connected[0];
+        point = element.data.nodeI == node ? element.startPoint : element.endPoint;
+        return true;
+    }
+
+    private void CreateAnimatedPathSegment(Vector3 from, Vector3 to, Color color, float width,
+        float intensity, float phase)
+    {
+        if ((to - from).sqrMagnitude < .0001f) return;
+        CreateLoadPathLine(from, to, color, width, "Ruta de carga");
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        marker.name = "Pulso de carga";
+        marker.transform.SetParent(loadPathRoot.transform, false);
+        marker.transform.position = from;
+        Collider collider = marker.GetComponent<Collider>(); if (collider != null) Destroy(collider);
+        Renderer renderer = marker.GetComponent<Renderer>(); if (renderer != null) renderer.material = LoadPathMaterial(color);
+        loadPathPulses.Add(new LoadPathPulse {
+            marker = marker.transform, from = from, to = to, phase = Mathf.Repeat(phase, 1f),
+            speed = .48f + .34f * Mathf.Clamp01(intensity), size = .075f + .085f * Mathf.Clamp01(intensity)
+        });
+    }
+
+    private void CreateLoadPathLine(Vector3 from, Vector3 to, Color color, float width, string objectName)
+    {
+        GameObject lineObject = new GameObject(objectName);
+        lineObject.transform.SetParent(loadPathRoot.transform, false);
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        line.useWorldSpace = true; line.positionCount = 2; line.SetPositions(new[] { from, to });
+        line.startWidth = line.endWidth = width; line.numCapVertices = 3;
+        line.material = LoadPathMaterial(color); line.startColor = line.endColor = color;
+    }
+
+    private void CreateSupportMarker(Vector3 point, int node)
+    {
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        marker.name = "Apoyo receptor N" + node;
+        marker.transform.SetParent(loadPathRoot.transform, false);
+        marker.transform.position = point + Vector3.up * .035f;
+        marker.transform.localScale = new Vector3(.24f, .025f, .24f);
+        Collider collider = marker.GetComponent<Collider>(); if (collider != null) Destroy(collider);
+        Renderer renderer = marker.GetComponent<Renderer>();
+        if (renderer != null) renderer.material = LoadPathMaterial(new Color(.18f, 1f, .42f, .96f));
+    }
+
+    private Material LoadPathMaterial(Color color)
+    {
+        Shader shader = Shader.Find("Sprites/Default");
+        Material material = new Material(shader); material.color = color; return material;
+    }
+
+    private void ClearLoadPathVisuals()
+    {
+        loadPathPulses.Clear();
+        if (loadPathRoot != null) Destroy(loadPathRoot);
+        loadPathRoot = null;
     }
 
     private List<Vector2> TributaryPolygon(SlabData slab, string[] sides, string target)

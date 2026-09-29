@@ -52,17 +52,24 @@ public class ElementPicker : MonoBehaviour
             RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-            // La superficie mas cercana manda. Asi el rayo no atraviesa la losa para
-            // seleccionar accidentalmente una viga o columna del piso inferior.
-            if (hits.Length > 0 && hits[0].collider.name.StartsWith("Losa_"))
+            MobileLoadController mobileLoad = MobileLoadController.Instance;
+            RaycastHit slabHit;
+            SlabSelectable clickedSlab = FindNearestSlab(hits, out slabHit);
+
+            // Las vigas y las regiones de visualizacion pueden quedar unos centimetros
+            // por encima de la losa. Con la carga movil abierta, buscar la primera losa
+            // real de todo el rayo evita que esos objetos bloqueen la colocacion. El
+            // orden por distancia sigue impidiendo escoger una losa de un piso inferior.
+            if (clickedSlab != null &&
+                (mobileLoad != null && mobileLoad.IsPanelVisible() ||
+                 hits.Length > 0 && hits[0].collider.GetComponentInParent<SlabSelectable>() != null))
             {
-                var info = hits[0].collider.GetComponentInParent<InfoSelectable>();
-                if (info != null)
+                if (mobileLoad == null || !mobileLoad.IsPanelVisible())
                 {
                     SetElementSelection(null);
-                    SetInfoSelection(info);
+                    SetInfoSelection(clickedSlab);
                 }
-                MobileLoadController.Instance?.SetLoadOnSlabPanel(hits[0].collider.gameObject, hits[0].point);
+                mobileLoad?.SetLoadOnSlabPanel(clickedSlab, slabHit.point);
                 return;
             }
 
@@ -90,7 +97,7 @@ public class ElementPicker : MonoBehaviour
                 selectable.OnSelected();
 
                 SetInfoSelection(null);
-                var mobileLoad = FindObjectOfType<MobileLoadController>();
+                mobileLoad = FindObjectOfType<MobileLoadController>();
                 if (mobileLoad != null)
                 {
                     mobileLoad.SetSelectedElement(selectedElement);
@@ -109,7 +116,7 @@ foreach (RaycastHit candidate in hits)
                 {
                     if (candidate.collider.name.StartsWith("Losa_"))
                     {
-                        var mobileLoad = FindObjectOfType<MobileLoadController>();
+                        mobileLoad = FindObjectOfType<MobileLoadController>();
                         if (mobileLoad != null && mobileLoad.IsPanelVisible())
                         {
                             // Con la carga movil activa, el click en la losa solo ubica a la
@@ -134,7 +141,7 @@ foreach (RaycastHit candidate in hits)
                 SetElementSelection(nearby);
                 nearby.OnSelected();
 
-                var mobileLoad = FindObjectOfType<MobileLoadController>();
+                mobileLoad = FindObjectOfType<MobileLoadController>();
                 if (mobileLoad != null)
                 {
                     mobileLoad.SetSelectedElement(nearby);
@@ -298,6 +305,21 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
             scroll = Vector2.zero;
             info.OnSelected();
         }
+    }
+
+    private static SlabSelectable FindNearestSlab(RaycastHit[] hits, out RaycastHit slabHit)
+    {
+        slabHit = default(RaycastHit);
+        foreach (RaycastHit candidate in hits)
+        {
+            SlabSelectable slab = candidate.collider.GetComponentInParent<SlabSelectable>();
+            if (slab == null || slab.slab == null) continue;
+            Vector2 point = new Vector2(candidate.point.x, candidate.point.z);
+            if (!slab.slab.Contains(point.x, point.y)) continue;
+            slabHit = candidate;
+            return slab;
+        }
+        return null;
     }
 
     void OnGUI()

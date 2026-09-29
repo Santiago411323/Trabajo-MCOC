@@ -87,10 +87,14 @@ public class MobileLoadController : MonoBehaviour
         if (visible == value) return;
         visible = value;
         place = chooseDestination = dragging = false;
-        if (visible)
+        if (!visible)
+        {
+            DeactivateAndHide("Carga móvil oculta. La respuesta incremental fue retirada.");
+        }
+        else
             status = slab == null
                 ? "Carga móvil activada. Seleccione una losa para colocar la persona."
-                : "Carga móvil activada en " + slab.id + ".";
+                : "Carga móvil activada. Seleccione nuevamente una losa para colocar la persona.";
     }
     public bool IsPanelReady() => active && response != null && response.ok;
     public bool IsActiveFor(ElementSelectable e) => IsPanelReady() && e != null && e.data != null;
@@ -117,8 +121,28 @@ public class MobileLoadController : MonoBehaviour
     public void SetLoadActive(bool value)
     {
         if(value==active)return;
-        active=value;selectionVersion++;ClearResponse();sentLoad=float.NaN;
+        if(!value)
+        {
+            DeactivateAndHide("Carga móvil desactivada. La persona y su respuesta fueron retiradas.");
+            return;
+        }
+        active=true;selectionVersion++;ClearResponse();sentLoad=float.NaN;
         playing=directionalWalking=false;UpdateDirectionArrowColors();
+        status=slab==null ? "Seleccione una losa para colocar la persona." : "Carga móvil activa en "+slab.id+".";
+    }
+
+    private void DeactivateAndHide(string message)
+    {
+        active=false;
+        playing=directionalWalking=place=chooseDestination=dragging=false;
+        selectionVersion++; sentLoad=float.NaN; routeComplete=false;
+        ClearResponse(); RestoreColors(); RestoreSlab();
+        slabObject=null; slabRenderer=null;
+        if(person!=null) person.SetActive(false);
+        if(directionRoot!=null) directionRoot.SetActive(false);
+        lastVisualPosition=new Vector3(float.NaN,float.NaN,float.NaN);
+        UpdateDirectionArrowColors();
+        status=message;
     }
     public void DrawMovementSetupInline()
     {
@@ -182,19 +206,36 @@ public class MobileLoadController : MonoBehaviour
     private void RestoreSlab() { if(slabRenderer!=null) slabRenderer.material.color=slabColor; }
     public void SetLoadOnSlabPanel(GameObject obj,Vector3 point)
     {
+        SetLoadOnSlabPanel(obj != null ? obj.GetComponentInParent<SlabSelectable>() : null, point);
+    }
+
+    public void SetLoadOnSlabPanel(SlabSelectable selectable,Vector3 point)
+    {
         // A slab click may still select and inspect the slab while the mobile-load
         // tool is hidden. Only place the person after the user explicitly opens it
         // from the Layers panel.
         if(!visible) return;
-        SlabData found=null;
-        foreach(var s in UnityData.Structure.slabs)
-            if(obj.name=="Losa_"+s.id+"_"+s.nivel) { found=s; break; }
-        if(found==null) return;
-        var metadata=Resources.Load<TextAsset>("slab_load_surfaces");
-        slabMetadata=null;
-        if(metadata!=null)
-            foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
-                if(row.id==found.id) {slabMetadata=row;break;}
+        if(selectable==null||selectable.slab==null)
+        {
+            status="No se pudo identificar la losa seleccionada.";
+            return;
+        }
+        SlabData found=selectable.slab;
+        GameObject obj=selectable.gameObject;
+        slabMetadata=selectable.metadata;
+        if(slabMetadata==null)
+        {
+            var metadata=Resources.Load<TextAsset>("slab_load_surfaces");
+            if(metadata!=null)
+                foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
+                    if(row.id==found.id) {slabMetadata=row;break;}
+        }
+        Vector2 p=new Vector2(point.x,point.z);
+        if(!found.Contains(p.x,p.y))
+        {
+            status="Punto fuera del contorno util de "+found.id+".";
+            return;
+        }
         if(slabObject!=obj)
         {
             RestoreSlab(); slabObject=obj; slab=found;
@@ -202,8 +243,7 @@ public class MobileLoadController : MonoBehaviour
             slabRenderer.material.color=new Color(1,0.8f,0.1f,slabColor.a);
             selectionVersion++; playing=false; directionalWalking=false; ClearResponse();
         }
-        Vector2 p=new Vector2(point.x,point.z);
-        if(Contains(p)) { position=origin=destination=p; SyncCoordinates(); }
+        position=origin=destination=p; SyncCoordinates();
         playing=directionalWalking=false;UpdateDirectionArrowColors();
         active=true; sentLoad=float.NaN; routeComplete=false;
         DrawPerson();
@@ -297,6 +337,11 @@ public class MobileLoadController : MonoBehaviour
     }
     private void Update()
     {
+        if(active && (slab==null || !slab.Contains(position.x,position.y)))
+        {
+            DeactivateAndHide("Carga móvil retirada: la posición dejó de pertenecer a una losa válida.");
+            return;
+        }
         if(slab==null) return;
         if(!active)
         {
@@ -581,7 +626,7 @@ public class MobileLoadController : MonoBehaviour
         scroll=GUILayout.BeginScrollView(scroll);
         GUILayout.BeginHorizontal();
         bool nextActive=GUILayout.Toggle(active," Persona + carga activa",GUILayout.Width(190));
-        if(nextActive!=active) { active=nextActive; selectionVersion++; ClearResponse(); sentLoad=float.NaN; playing=directionalWalking=false;UpdateDirectionArrowColors(); }
+        if(nextActive!=active) SetLoadActive(nextActive);
         GUILayout.FlexibleSpace();
         GUILayout.Label(playing?"● CAMINANDO":pending!=null?"● CALCULANDO":response!=null?"● ACTUALIZADO":"● EN ESPERA",
             playing||pending!=null?warningStyle():response!=null?successStyle():smallStyle);

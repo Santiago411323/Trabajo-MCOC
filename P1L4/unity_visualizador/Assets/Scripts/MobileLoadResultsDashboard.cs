@@ -64,6 +64,7 @@ public class MobileLoadResultsDashboard : MonoBehaviour
     private string visualSlab = "";
     private int visualResponseSequence = int.MinValue;
     private GUIStyle rank;
+    private bool visualsSuspended;
 
     private class LiveMember
     {
@@ -128,6 +129,13 @@ public class MobileLoadResultsDashboard : MonoBehaviour
     {
         if (mobile == null) mobile = MobileLoadController.Instance ?? GetComponent<MobileLoadController>();
         if (mobile == null) return;
+        if (!mobile.visible || !mobile.LoadActive)
+        {
+            if (!visualsSuspended) SuspendVisuals();
+            visualsSuspended = true;
+            return;
+        }
+        visualsSuspended = false;
         float blend = 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime);
         float targetLoad = mobile.loadKN;
         float targetTransferred = mobile.CurrentResponse != null && mobile.CurrentResponse.ok ? mobile.CurrentResponse.transferred : 0f;
@@ -161,6 +169,19 @@ public class MobileLoadResultsDashboard : MonoBehaviour
         UpdateLoadPathVisuals(responseSequence);
         if (mobile.RouteComplete && mobile.HasCurrentResults && !completionSeen) { completionSeen = true; showCompletion = true; }
         if (!mobile.RouteComplete) completionSeen = false;
+    }
+
+    private void SuspendVisuals()
+    {
+        if (tributaryRoot != null) Destroy(tributaryRoot);
+        if (transferRoot != null) Destroy(transferRoot);
+        if (trailRoot != null) Destroy(trailRoot);
+        if (maxMarker != null) Destroy(maxMarker);
+        tributaryRoot=transferRoot=trailRoot=maxMarker=null;
+        foreach (var pair in structuralBaseColors) if (pair.Key != null) pair.Key.material.color = pair.Value;
+        structuralBaseColors.Clear(); structuralTargetColors.Clear();
+        criticalMember=null; showCompletion=false; wasMoving=false;
+        lastResponseSequence=lastEnvelopeSequence=visualResponseSequence=int.MinValue;
     }
 
     private void OnGUI()
