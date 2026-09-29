@@ -14,6 +14,7 @@ Ejemplos:
 import argparse
 import json
 import math
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,6 +34,7 @@ ROOT_DIR = BASE_DIR.parent
 JSON_PATH = ROOT_DIR / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / "estructura_completo_unity.json"
 OUTPUT_PATH = BASE_DIR / "resultados" / "carga_viva_sismo.json"
 UNITY_RESULTS_PATH = ROOT_DIR / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / "semana3_resultados_unity.json"
+UNITY_P1L4_PATH = ROOT_DIR / "P1L4" / "unity_visualizador" / "Assets" / "Resources" / "estructura_p1l4_unity.json"
 
 DEFAULT_Q_Q = 4.903325
 # Torsion accidental NCh433 (metodo estatico): momento en cada piso
@@ -89,6 +91,27 @@ CONCRETE_FIBERS_Y = 20
 def load_json(path):
     with open(path, encoding="utf-8") as file:
         return json.load(file)
+
+
+def ensure_project_python():
+    """Reabre el script con el entorno local del proyecto si falta OpenSees.
+
+    De esta forma el comando habitual ``python P1L3/carga_viva_sismo.py``
+    funciona aunque el Python general de Windows no tenga openseespy.
+    """
+    if ops is not None:
+        return
+    candidates = [
+        ROOT_DIR / "P1L4" / ".venv" / "Scripts" / "python.exe",
+        ROOT_DIR / ".venv" / "Scripts" / "python.exe",
+    ]
+    current = Path(sys.executable).resolve()
+    for candidate in candidates:
+        if not candidate.exists() or candidate.resolve() == current:
+            continue
+        print(f"[entorno] OpenSees no esta en {current.name}; usando {candidate}.", flush=True)
+        completed = subprocess.run([str(candidate), str(Path(__file__).resolve()), *sys.argv[1:]])
+        raise SystemExit(completed.returncode)
 
 
 def write_json(path, data):
@@ -3273,9 +3296,24 @@ def format_row(name, unit, vi, vc, vj, vmax):
 
 
 def internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, lambdas):
-    element = find_element(data, wanted_id)
+    # El viewer P1L4 contiene la geometria finalmente mostrada (incluidas las
+    # barras partidas .1, .2, ...) y las acciones locales que Unity consume.
+    # Consultarlo primero garantiza que un elementTag copiado desde Unity
+    # entregue exactamente los mismos resultados que el diagrama del viewer.
+    unity_data = None
+    if UNITY_P1L4_PATH.exists():
+        try:
+            unity_data = load_json(UNITY_P1L4_PATH)
+        except (OSError, ValueError):
+            unity_data = None
+
+    element = find_element(unity_data, wanted_id) if unity_data else None
     if element is None:
-        wall = find_wall(data, wanted_id)
+        element = find_element(data, wanted_id)
+    if element is None:
+        wall = find_wall(unity_data, wanted_id) if unity_data else None
+        if wall is None:
+            wall = find_wall(data, wanted_id)
         if wall is not None:
             return {
                 "tipo": "muro",
@@ -3284,19 +3322,53 @@ def internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, 
             }
         return {"error": "No se encontro el elemento solicitado.", "id_buscado": wanted_id}
 
-    load_sets = {
-        "G": dead_nodal_loads(data),
-        "Q": live_load_set(live_transfer),
-        "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
-        "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
-    }
-    combined_loads = combine_nodal_loads(load_sets, lambdas)
-    result = run_and_extract(data, combined_loads)
-    force = result.get("element_forces_local", {}).get(element["id"])
+    force = None
+    result_ok = True
+    result_source = "OpenSees ejecutado desde P1L3"
+    if unity_data:
+        p1l4 = unity_data.get("p1l4") or {}
+        records = p1l4.get("elementForces") or []
+        by_case = {}
+        for record in records:
+            if record.get("id") == element.get("id") and len(record.get("f") or []) >= 12:
+                by_case[str(record.get("combo") or "").upper()] = record["f"][:12]
+
+        requested = str(combo_name or "").upper()
+        if requested in by_case:
+            force = [float(value) for value in by_case[requested]]
+        elif all(case in by_case for case in ("G", "Q", "EX", "EY")):
+            force = [
+                sum(float(lambdas.get(case, 0.0)) * float(by_case[case][index])
+                    for case in ("G", "Q", "EX", "EY"))
+                for index in range(12)
+            ]
+        if force is not None:
+            result_source = f"Mismos resultados exportados a Unity: {UNITY_P1L4_PATH.name}"
+
+    # Compatibilidad para un JSON de Unity aun no regenerado.
+    if force is None:
+        analysis_element = find_element(data, wanted_id)
+        if analysis_element is None:
+            return {
+                "error": "El elemento existe en Unity, pero no en el modelo de analisis P1L3. Regenera el JSON P1L4.",
+                "elemento": element,
+            }
+        element = analysis_element
+        load_sets = {
+            "G": dead_nodal_loads(data),
+            "Q": live_load_set(live_transfer),
+            "EX": vector_loads_from_dict(seismic["cargas_nodales_EX"]),
+            "EY": vector_loads_from_dict(seismic["cargas_nodales_EY"]),
+        }
+        combined_loads = combine_nodal_loads(load_sets, lambdas)
+        result = run_and_extract(data, combined_loads)
+        result_ok = result["ok"]
+        force = result.get("element_forces_local", {}).get(element["id"])
     if not force or len(force) < 12:
         return {"error": "No se pudieron extraer fuerzas internas para este elemento.", "elemento": element}
 
-    nodes = node_map(data)
+    geometry_data = unity_data if unity_data and find_element(unity_data, wanted_id) is not None else data
+    nodes = node_map(geometry_data)
     length = element_length(element, nodes)
     vals_i = force_values_at(force, element, 0.0, length)
     vals_c = force_values_at(force, element, 0.5, length)
@@ -3307,7 +3379,8 @@ def internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, 
         "lambdas": lambdas,
         "elemento": element,
         "largo_m": length,
-        "ok_analisis": result["ok"],
+        "ok_analisis": result_ok,
+        "fuente_resultados": result_source,
         "valores_I": vals_i,
         "valores_centro": vals_c,
         "valores_J": vals_j,
@@ -3333,6 +3406,7 @@ def print_internal_forces_report(report):
     print(f"  Tipo             = {element.get('type')} | seccion = {element.get('sectionId') or element.get('seccion')}")
     print(f"  Nodos            = I {element.get('nodeI')} | J {element.get('nodeJ')}")
     print(f"  Largo            = {report['largo_m']:.3f} m")
+    print(f"  Fuente           = {report.get('fuente_resultados', '-')}")
     print("\nTabla resumida: valores en I, centro, J y maximo absoluto")
     print("Magnitud             Nodo I         Centro         Nodo J        Max abs        x [m]    x/L [%] unidad")
     print("-" * 108)
@@ -3589,4 +3663,5 @@ def main():
 
 
 if __name__ == "__main__":
+    ensure_project_python()
     main()

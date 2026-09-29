@@ -10,6 +10,9 @@ public class ElementResultsPanel : MonoBehaviour
 
     private static ElementResultsPanel active;
     private readonly float[,] samples = new float[6, 61];
+    private readonly float[,] samplesC1 = new float[6, 61];
+    private readonly float[,] samplesC2 = new float[6, 61];
+    private readonly float[,] samplesC3 = new float[6, 61];
     private readonly string[] forceNames = { "N", "Vy", "Vz", "My", "Mz" };
     private readonly int[] forceRows = { 4, 2, 3, 0, 1 };
     private ElementPicker picker;
@@ -18,6 +21,7 @@ public class ElementResultsPanel : MonoBehaviour
     private ElementSelectable selected;
     private bool expanded;
     private int forceIndex = 4;
+    private bool compareCombinations;
     private int curvaturePresentation;
     private Vector2 resultsScroll;
     private ResultView view;
@@ -95,6 +99,7 @@ public class ElementResultsPanel : MonoBehaviour
         expanded = false;
         view = ResultView.None;
         forceIndex = 4;
+        compareCombinations = false;
         curvaturePresentation = 0;
         resultsScroll = Vector2.zero;
     }
@@ -289,10 +294,15 @@ public class ElementResultsPanel : MonoBehaviour
             DrawUnavailable(x, y, width, "DIAGRAMAS DE ESFUERZOS", "El muro no tiene fuerzas de barra N/V/M exportadas.");
             return;
         }
-        float toolbarWidth = Mathf.Min(width, 590f);
+        float comparisonWidth = Mathf.Clamp(width * .25f, 170f, 225f);
+        float toolbarWidth = Mathf.Max(280f, width - comparisonWidth - 8f);
         forceIndex = GUI.Toolbar(new Rect(x, y, toolbarWidth, 27f), forceIndex, forceNames);
-        GUI.Label(new Rect(x + toolbarWidth + 12f, y + 4f, width - toolbarWidth - 12f, 20f),
-            "LÍNEA 3D ACTIVA SOBRE LA BARRA", successStyle);
+        Color oldBackground = GUI.backgroundColor;
+        if (compareCombinations) GUI.backgroundColor = new Color(.22f, .82f, 1f);
+        if (GUI.Button(new Rect(x + toolbarWidth + 8f, y, width - toolbarWidth - 8f, 27f),
+            compareCombinations ? "COMPARANDO C1 / C2 / C3" : "COMPARAR C1 / C2 / C3"))
+            compareCombinations = !compareCombinations;
+        GUI.backgroundColor = oldBackground;
         y += 34f;
         if (diagrams == null || !diagrams.TryGetSelectedDiagramSamples(element, samples))
         {
@@ -306,33 +316,78 @@ public class ElementResultsPanel : MonoBehaviour
         diagrams.ShowSelectedComponentDiagram(element, forceNames[forceIndex]);
 
         int row = forceRows[forceIndex];
-        float min = samples[row, 0], max = samples[row, 0];
-        int minIndex = 0, maxIndex = 0;
-        for (int i = 1; i < samples.GetLength(1); i++)
+        var curves = new List<float[,]>{ samples };
+        string[] curveNames = { string.IsNullOrEmpty(UnityData.ActiveCombo) ? "ACTIVA" : UnityData.ActiveCombo };
+        Color[] curveColors = { new Color(.18f, .82f, 1f) };
+        if (compareCombinations)
         {
-            if (samples[row, i] < min) { min = samples[row, i]; minIndex = i; }
-            if (samples[row, i] > max) { max = samples[row, i]; maxIndex = i; }
+            bool available = diagrams.TryGetSelectedDiagramSamples(element, "C1", samplesC1) &&
+                diagrams.TryGetSelectedDiagramSamples(element, "C2", samplesC2) &&
+                diagrams.TryGetSelectedDiagramSamples(element, "C3", samplesC3);
+            if (!available)
+            {
+                DrawUnavailable(x, y, width, "COMPARACIÓN C1 / C2 / C3",
+                    "Falta al menos una combinación exportada para este elemento.");
+                return;
+            }
+            curves = new List<float[,]>{ samplesC1, samplesC2, samplesC3 };
+            curveNames = new[] { "C1", "C2", "C3" };
+            if (UnityData.UseBaseCaseFactors)
+            {
+                for (int c = 0; c < curveNames.Length; c++)
+                    if (curveNames[c] == UnityData.SelectedPresetCombo) curveNames[c] += "*";
+            }
+            curveColors = new[] {
+                new Color(.18f, .82f, 1f),
+                new Color(1f, .32f, .78f),
+                new Color(1f, .76f, .20f)
+            };
+        }
+
+        float min = curves[0][row, 0], max = min;
+        int minIndex = 0, maxIndex = 0, minCurve = 0, maxCurve = 0;
+        int count = samples.GetLength(1);
+        for (int c = 0; c < curves.Count; c++)
+        for (int i = 0; i < count; i++)
+        {
+            float candidate = curves[c][row, i];
+            if (candidate < min) { min = candidate; minIndex = i; minCurve = c; }
+            if (candidate > max) { max = candidate; maxIndex = i; maxCurve = c; }
         }
         string unit = forceIndex >= 3 ? "kN·m" : "kN";
         float current = samples[row, samples.GetLength(1) / 2];
         float plotWidth = width >= 650f ? width * .66f : width;
         GUI.Label(new Rect(x, y, plotWidth, 22f),
-            $"{forceNames[forceIndex]} [{unit}] · a lo largo de la barra (i → j)", valueStyle);
+            compareCombinations
+                ? $"{forceNames[forceIndex]} [{unit}] · COMPARACIÓN C1 / C2 / C3"
+                : $"{forceNames[forceIndex]} [{unit}] · a lo largo de la barra (i → j)", valueStyle);
+        if (compareCombinations)
+        {
+            float legendX = x + Mathf.Max(215f, plotWidth - 190f);
+            for (int c = 0; c < 3; c++)
+            {
+                DrawLine(new Vector2(legendX + c * 61f, y + 11f), new Vector2(legendX + 20f + c * 61f, y + 11f), curveColors[c], 3f);
+                GUI.Label(new Rect(legendX + 23f + c * 61f, y + 2f, 36f, 18f), curveNames[c], mutedStyle);
+            }
+        }
         Rect plot = new Rect(x + 10f, y + 28f, plotWidth - 20f, 118f);
         GUI.Box(plot, GUIContent.none);
         float bound = Mathf.Max(Mathf.Abs(min), Mathf.Abs(max), .000001f);
         float zero = plot.center.y;
         DrawLine(new Vector2(plot.x + 5f, zero), new Vector2(plot.xMax - 5f, zero), new Color(.45f, .5f, .58f), 1f);
-        Vector2 previous = Vector2.zero;
-        int count = samples.GetLength(1);
-        for (int i = 0; i < count; i++)
+        for (int c = 0; c < curves.Count; c++)
         {
-            Vector2 point = new Vector2(plot.x + 5f + (plot.width - 10f) * i / (count - 1),
-                zero - samples[row, i] / bound * (plot.height * .42f));
-            if (i > 0) DrawLine(previous, point, new Color(.18f, .82f, 1f), 2f);
-            if (i % 6 == 0)
-                DrawLine(new Vector2(point.x, zero), point, new Color(.18f, .82f, 1f, .35f), 1f);
-            previous = point;
+            Vector2 previous = Vector2.zero;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 point = new Vector2(plot.x + 5f + (plot.width - 10f) * i / (count - 1),
+                    zero - curves[c][row, i] / bound * (plot.height * .42f));
+                if (i > 0) DrawLine(previous, point, curveColors[c], compareCombinations ? 2.2f : 2f);
+                if (!compareCombinations && i % 6 == 0)
+                    DrawLine(new Vector2(point.x, zero), point,
+                        new Color(curveColors[c].r, curveColors[c].g, curveColors[c].b, .35f), 1f);
+                previous = point;
+            }
         }
         Vector2 minPoint = new Vector2(plot.x + 5f + (plot.width - 10f) * minIndex / (count - 1),
             zero - min / bound * (plot.height * .42f));
@@ -340,20 +395,101 @@ public class ElementResultsPanel : MonoBehaviour
             zero - max / bound * (plot.height * .42f));
         DrawMarker(minPoint, new Color(1f, .38f, .46f), 7f);
         DrawMarker(maxPoint, new Color(1f, .74f, .24f), 7f);
+
+        // Interactive reading cursor. Values are interpolated only for the
+        // presentation between the exported samples; the structural samples
+        // themselves are never modified.
+        Vector2 mouse = Event.current.mousePosition;
+        Rect interactivePlot = new Rect(plot.x + 5f, plot.y, plot.width - 10f, plot.height);
+        if (interactivePlot.Contains(mouse))
+        {
+            float t = Mathf.Clamp01((mouse.x - interactivePlot.x) / interactivePlot.width);
+            float samplePosition = t * (count - 1);
+            int lower = Mathf.Clamp(Mathf.FloorToInt(samplePosition), 0, count - 1);
+            int upper = Mathf.Min(lower + 1, count - 1);
+            float memberLength = Vector3.Distance(element.startPoint, element.endPoint);
+            float localPosition = memberLength * t;
+
+            DrawLine(new Vector2(mouse.x, plot.y + 3f), new Vector2(mouse.x, plot.yMax - 3f),
+                new Color(.92f, 1f, 1f, .52f), 1f);
+
+            float[] hoverValues = new float[curves.Count];
+            int governing = 0;
+            for (int c = 0; c < curves.Count; c++)
+            {
+                hoverValues[c] = Mathf.Lerp(curves[c][row, lower], curves[c][row, upper], samplePosition - lower);
+                if (Mathf.Abs(hoverValues[c]) > Mathf.Abs(hoverValues[governing])) governing = c;
+                float pointY = zero - hoverValues[c] / bound * (plot.height * .42f);
+                DrawMarker(new Vector2(mouse.x, pointY), curveColors[c], c == governing ? 10f : 7f);
+            }
+
+            float tooltipWidth = Mathf.Min(compareCombinations ? 225f : 205f, interactivePlot.width - 8f);
+            float tooltipX = mouse.x + 13f;
+            if (tooltipX + tooltipWidth > interactivePlot.xMax) tooltipX = mouse.x - tooltipWidth - 13f;
+            tooltipX = Mathf.Clamp(tooltipX, interactivePlot.x + 4f, interactivePlot.xMax - tooltipWidth - 4f);
+            float tooltipHeight = compareCombinations ? 96f : 55f;
+            float referenceY = zero - hoverValues[governing] / bound * (plot.height * .42f);
+            float tooltipY = Mathf.Clamp(referenceY - tooltipHeight * .5f, plot.y + 5f, plot.yMax - tooltipHeight - 5f);
+            Rect tooltip = new Rect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+            GUI.Box(tooltip, GUIContent.none, cardStyle);
+            if (compareCombinations)
+            {
+                for (int c = 0; c < 3; c++)
+                {
+                    GUIStyle comboStyle = new GUIStyle(c == governing ? valueStyle : mutedStyle);
+                    comboStyle.normal.textColor = curveColors[c];
+                    GUI.Label(new Rect(tooltip.x + 8f, tooltip.y + 4f + c * 17f, tooltip.width - 16f, 17f),
+                        $"{curveNames[c]}   {hoverValues[c]:0.###} {unit}" + (c == governing ? "  ← GOBIERNA" : ""), comboStyle);
+                }
+                GUI.Label(new Rect(tooltip.x + 8f, tooltip.y + 57f, tooltip.width - 16f, 34f),
+                    $"x = {localPosition:0.###} m  ·  {t * 100f:0.0}%\nDesde nodo i hacia nodo j", mutedStyle);
+            }
+            else
+            {
+                GUI.Label(new Rect(tooltip.x + 8f, tooltip.y + 4f, tooltip.width - 16f, 16f),
+                    $"{forceNames[forceIndex]} = {hoverValues[0]:0.###} {unit}", valueStyle);
+                GUI.Label(new Rect(tooltip.x + 8f, tooltip.y + 21f, tooltip.width - 16f, 30f),
+                    $"Posición x = {localPosition:0.###} m\nLongitud = {t * 100f:0.0}%  (i → j)", mutedStyle);
+            }
+
+            diagrams.ShowSelectedComponentCursor(element, forceNames[forceIndex], t);
+        }
+        else
+        {
+            diagrams.HideSelectedComponentCursor();
+        }
         GUI.Label(new Rect(x + 10f, y + 149f, plotWidth - 20f, 20f),
-            $"I  {samples[row, 0]:0.###}     CENTRO  {current:0.###}     J  {samples[row, count - 1]:0.###}  {unit}", textStyle);
+            compareCombinations
+                ? $"ENVOLVENTE: min {min:0.###} ({curveNames[minCurve]})  ·  max {max:0.###} ({curveNames[maxCurve]}) {unit}  ·  Mueva el mouse"
+                : $"I  {samples[row, 0]:0.###}     CENTRO  {current:0.###}     J  {samples[row, count - 1]:0.###}  {unit}     ·     Mueva el mouse sobre la curva", textStyle);
 
         if (width >= 650f)
         {
             float cardsX = x + plotWidth + 12f;
             float cardsWidth = width - plotWidth - 12f;
-            GUI.Label(new Rect(cardsX, y, cardsWidth, 22f), "LECTURA RÁPIDA", titleStyle);
-            DrawMetricCard(new Rect(cardsX, y + 28f, cardsWidth, 39f), "VALOR CENTRAL", current, unit,
-                new Color(.18f, .82f, 1f));
-            DrawMetricCard(new Rect(cardsX, y + 72f, cardsWidth, 39f), "MÁXIMO", max, unit,
-                new Color(1f, .74f, .24f));
-            DrawMetricCard(new Rect(cardsX, y + 116f, cardsWidth, 39f), "MÍNIMO", min, unit,
-                new Color(1f, .38f, .46f));
+            GUI.Label(new Rect(cardsX, y, cardsWidth, 22f),
+                compareCombinations ? "COMBINACIÓN CRÍTICA" : "LECTURA RÁPIDA", titleStyle);
+            if (compareCombinations)
+            {
+                bool maxGoverns = Mathf.Abs(max) >= Mathf.Abs(min);
+                int governingCurve = maxGoverns ? maxCurve : minCurve;
+                float governingValue = maxGoverns ? max : min;
+                DrawMetricCard(new Rect(cardsX, y + 28f, cardsWidth, 39f),
+                    $"GOBIERNA {curveNames[governingCurve]}", governingValue, unit, curveColors[governingCurve]);
+                DrawMetricCard(new Rect(cardsX, y + 72f, cardsWidth, 39f),
+                    $"MÁXIMO · {curveNames[maxCurve]}", max, unit, new Color(1f, .74f, .24f));
+                DrawMetricCard(new Rect(cardsX, y + 116f, cardsWidth, 39f),
+                    $"MÍNIMO · {curveNames[minCurve]}", min, unit, new Color(1f, .38f, .46f));
+            }
+            else
+            {
+                DrawMetricCard(new Rect(cardsX, y + 28f, cardsWidth, 39f), "VALOR CENTRAL", current, unit,
+                    new Color(.18f, .82f, 1f));
+                DrawMetricCard(new Rect(cardsX, y + 72f, cardsWidth, 39f), "MÁXIMO", max, unit,
+                    new Color(1f, .74f, .24f));
+                DrawMetricCard(new Rect(cardsX, y + 116f, cardsWidth, 39f), "MÍNIMO", min, unit,
+                    new Color(1f, .38f, .46f));
+            }
         }
     }
 

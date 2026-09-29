@@ -212,6 +212,7 @@ public class StructureViewer : MonoBehaviour
             name = "";
         }
         UnityData.ActiveCombo = name;
+        UnityData.SelectedPresetCombo = name;
         UnityData.UseBaseCaseFactors = false;
         comboIndex = index;
 

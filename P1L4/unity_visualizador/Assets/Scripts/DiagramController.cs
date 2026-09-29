@@ -41,6 +41,12 @@ public class DiagramController : MonoBehaviour
     private readonly List<GameObject> mobileDiagramObjects = new List<GameObject>();
     private readonly List<GameObject> selectedComponentDiagramObjects = new List<GameObject>();
     private string selectedComponentSignature = string.Empty;
+    private Vector3[] selectedComponentBaseline;
+    private Vector3[] selectedComponentCurve;
+    private int selectedComponentElementId = -1;
+    private string selectedComponentName = string.Empty;
+    private GameObject selectedComponentCursor;
+    private LineRenderer selectedComponentCursorOrdinate;
     private DiagramMode currentMode = DiagramMode.None;
     private sealed class DeformedSegment
     {
@@ -318,6 +324,11 @@ public class DiagramController : MonoBehaviour
             curve[i] = baseline[i] + direction * (drawSign * values[i] / bound * visualExtent);
         }
 
+        selectedComponentBaseline = baseline;
+        selectedComponentCurve = curve;
+        selectedComponentElementId = element.data.id;
+        selectedComponentName = component;
+
         Color color = ComponentDiagramColor(component);
         CreateSelectedOverlayLine(baseline, new Color(.72f, .78f, .84f, .72f), .035f,
             $"Resultado3D_Eje_{component}_E{element.data.id}");
@@ -333,6 +344,72 @@ public class DiagramController : MonoBehaviour
                 $"Resultado3D_Ordenada_{component}_E{element.data.id}_{i}");
     }
 
+    /// <summary>
+    /// Moves a lightweight cursor over the already drawn 3D result curve.
+    /// t is the normalized local position from node i (0) to node j (1).
+    /// </summary>
+    public void ShowSelectedComponentCursor(ElementSelectable element, string component, float t)
+    {
+        if (element == null || element.data == null || selectedComponentCurve == null ||
+            selectedComponentBaseline == null || selectedComponentCurve.Length < 2 ||
+            selectedComponentElementId != element.data.id || selectedComponentName != component)
+        {
+            HideSelectedComponentCursor();
+            return;
+        }
+
+        t = Mathf.Clamp01(t);
+        float sample = t * (selectedComponentCurve.Length - 1);
+        int lower = Mathf.Clamp(Mathf.FloorToInt(sample), 0, selectedComponentCurve.Length - 1);
+        int upper = Mathf.Min(lower + 1, selectedComponentCurve.Length - 1);
+        float blend = sample - lower;
+        Vector3 curvePoint = Vector3.Lerp(selectedComponentCurve[lower], selectedComponentCurve[upper], blend);
+        Vector3 basePoint = Vector3.Lerp(selectedComponentBaseline[lower], selectedComponentBaseline[upper], blend);
+
+        if (selectedComponentCursor == null)
+        {
+            selectedComponentCursor = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            selectedComponentCursor.name = "Resultado3D_Cursor";
+            selectedComponentCursor.transform.SetParent(transform);
+            selectedComponentCursor.hideFlags = HideFlags.DontSave;
+            Collider collider = selectedComponentCursor.GetComponent<Collider>();
+            if (collider != null)
+            {
+                if (Application.isPlaying) Destroy(collider);
+                else DestroyImmediate(collider);
+            }
+            Renderer renderer = selectedComponentCursor.GetComponent<Renderer>();
+            if (renderer != null) renderer.material = CreateMaterial(new Color(.92f, 1f, 1f, 1f));
+
+            GameObject ordinate = new GameObject("Resultado3D_Cursor_Ordenada");
+            ordinate.transform.SetParent(transform);
+            ordinate.hideFlags = HideFlags.DontSave;
+            selectedComponentCursorOrdinate = ordinate.AddComponent<LineRenderer>();
+            selectedComponentCursorOrdinate.useWorldSpace = true;
+            selectedComponentCursorOrdinate.positionCount = 2;
+            selectedComponentCursorOrdinate.startWidth = selectedComponentCursorOrdinate.endWidth = .045f;
+            selectedComponentCursorOrdinate.numCapVertices = 3;
+            selectedComponentCursorOrdinate.material = CreateMaterial(new Color(.92f, 1f, 1f, .9f));
+        }
+
+        float memberLength = Vector3.Distance(element.startPoint, element.endPoint);
+        selectedComponentCursor.SetActive(true);
+        selectedComponentCursor.transform.position = curvePoint;
+        selectedComponentCursor.transform.localScale = Vector3.one * Mathf.Clamp(memberLength * .024f, .13f, .25f);
+        if (selectedComponentCursorOrdinate != null)
+        {
+            selectedComponentCursorOrdinate.gameObject.SetActive(true);
+            selectedComponentCursorOrdinate.SetPosition(0, basePoint);
+            selectedComponentCursorOrdinate.SetPosition(1, curvePoint);
+        }
+    }
+
+    public void HideSelectedComponentCursor()
+    {
+        if (selectedComponentCursor != null) selectedComponentCursor.SetActive(false);
+        if (selectedComponentCursorOrdinate != null) selectedComponentCursorOrdinate.gameObject.SetActive(false);
+    }
+
     public void ClearSelectedComponentDiagram()
     {
         foreach (GameObject diagram in selectedComponentDiagramObjects)
@@ -343,6 +420,23 @@ public class DiagramController : MonoBehaviour
         }
         selectedComponentDiagramObjects.Clear();
         selectedComponentSignature = string.Empty;
+        selectedComponentBaseline = null;
+        selectedComponentCurve = null;
+        selectedComponentElementId = -1;
+        selectedComponentName = string.Empty;
+        if (selectedComponentCursor != null)
+        {
+            if (Application.isPlaying) Destroy(selectedComponentCursor);
+            else DestroyImmediate(selectedComponentCursor);
+            selectedComponentCursor = null;
+        }
+        if (selectedComponentCursorOrdinate != null)
+        {
+            GameObject cursorLine = selectedComponentCursorOrdinate.gameObject;
+            selectedComponentCursorOrdinate = null;
+            if (Application.isPlaying) Destroy(cursorLine);
+            else DestroyImmediate(cursorLine);
+        }
     }
 
     private bool TryComponentValue(ElementSelectable element, string component, float t, out float value)
@@ -774,13 +868,29 @@ public class DiagramController : MonoBehaviour
     // The selected panel uses the active combination, including the factor sliders.
     public bool TryGetSelectedDiagramSamples(ElementSelectable element, float[,] samples)
     {
+        return TryGetSelectedDiagramSamples(element, UnityData.ActiveCombo, samples, false);
+    }
+
+    // Explicit-combination overload used by the C1/C2/C3 comparison. It uses
+    // the same local OpenSees actions and FrameForces evaluator as Unity's
+    // ordinary diagram, so comparison and single-combination views agree.
+    public bool TryGetSelectedDiagramSamples(ElementSelectable element, string combo, float[,] samples)
+    {
+        return TryGetSelectedDiagramSamples(element, combo, samples, true);
+    }
+
+    private bool TryGetSelectedDiagramSamples(ElementSelectable element, string combo, float[,] samples,
+        bool comparisonCurve)
+    {
         if (element == null || element.data == null ||
             (element.data.type != "viga" && element.data.type != "columna" && element.data.type != "enlace") ||
             samples == null || samples.GetLength(0) != 6 || samples.GetLength(1) < 2 ||
             (element.endPoint - element.startPoint).sqrMagnitude < 0.000001f)
             return false;
 
-        float[] raw = UnityData.GetElementForces(UnityData.ActiveCombo, element.data.id);
+        float[] raw = comparisonCurve
+            ? UnityData.GetElementForcesForComparison(combo, element.data.id)
+            : UnityData.GetElementForces(combo, element.data.id);
         if (raw == null || raw.Length < 12) return false;
         foreach (float value in raw)
             if (float.IsNaN(value) || float.IsInfinity(value)) return false;

@@ -5,6 +5,10 @@ public static class UnityData
 {
     public static StructureData Structure;
     public static string ActiveCombo;
+    // Preset (C1/C2/C3) selected before the user edits G/Q/EX/EY.  ActiveCombo
+    // becomes SUPER while editing, but this value identifies which comparison
+    // curve must be replaced by the customized superposition.
+    public static string SelectedPresetCombo;
     public static bool UseBaseCaseFactors;
     public static float FactorG = 1f;
     public static float FactorQ = 0f;
@@ -28,6 +32,7 @@ public static class UnityData
         Structure = data;
         MobileForces.Clear(); MobileDisplacements.Clear();
         ActiveCombo = null;
+        SelectedPresetCombo = null;
         UseBaseCaseFactors = false;
         BuildModelGeometry(data);
         localForces.Clear();
@@ -192,6 +197,23 @@ public static class UnityData
     public static float[] GetElementForcesForCase(string combo, int elementId)
     {
         return GetElementForcesForCombo(combo, elementId);
+    }
+
+    public static float[] GetElementForcesForComparison(string combo, int elementId)
+    {
+        // Only the preset that was selected in the top bar is replaced by the
+        // edited G/Q/EX/EY superposition. The other named combinations must
+        // remain independent; otherwise C1, C2 and C3 collapse to one curve.
+        if (UseBaseCaseFactors && !string.IsNullOrEmpty(SelectedPresetCombo) && combo == SelectedPresetCombo)
+            return GetElementForces(ActiveCombo, elementId);
+
+        float[] source = GetElementForcesForCombo(combo, elementId);
+        if (source == null) return null;
+        float[] extra = MobileForces.TryGetValue(elementId, out var increment) ? increment : null;
+        if (extra == null) return source;
+        float[] total = (float[])source.Clone();
+        for (int i = 0; i < Mathf.Min(total.Length, extra.Length); i++) total[i] += extra[i];
+        return total;
     }
 
     private static bool AddScaledForces(float[] target, float[] source, float factor)
