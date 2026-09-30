@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -64,6 +65,15 @@ public sealed partial class StructuralARController : MonoBehaviour
     private Vector2 panelScroll;
     private float uiScale = 1f;
     private bool menuExpanded = true;
+    private ARCameraManager cameraManager;
+    private ARSession arSession;
+    private bool cameraStarting;
+    private bool cameraDenied;
+    private bool cameraRestricted;
+    private bool cameraReady;
+    private float lastCameraFrame = -1f;
+    private float cameraStartTime;
+    private string cameraStatus = "Iniciando camara AR...";
     private enum CalibrationStage { Idle, FindI, FindJ, ChooseFace, ConfirmAnchor, Locked }
     private CalibrationStage calibrationStage;
     private Vector3 measuredI;
@@ -106,6 +116,14 @@ public sealed partial class StructuralARController : MonoBehaviour
             ? anchorManager
             : FindAnyObjectByType<ARAnchorManager>();
         arCamera = arCamera != null ? arCamera : Camera.main;
+        cameraManager = arCamera != null ? arCamera.GetComponent<ARCameraManager>() : null;
+        arSession = FindAnyObjectByType<ARSession>();
+        if (cameraManager != null) cameraManager.frameReceived += OnCameraFrame;
+#if UNITY_IOS && !UNITY_EDITOR
+        // Wait for the explicit permission request before starting camera capture.
+        if (cameraManager != null) cameraManager.enabled = false;
+        if (arSession != null) arSession.enabled = false;
+#endif
         structureJson = structureJson != null
             ? structureJson
             : Resources.Load<TextAsset>("estructura_p1l4_unity");
@@ -116,8 +134,126 @@ public sealed partial class StructuralARController : MonoBehaviour
             "Elige un ID y apunta al nodo I para comenzar.");
     }
 
+    private IEnumerator Start() => StartCamera();
+
+    private IEnumerator StartCamera()
+    {
+        if (cameraStarting) yield break;
+        cameraStarting = true;
+        cameraReady = false;
+        lastCameraFrame = -1f;
+        cameraStatus = "Verificando permiso de camara...";
+#if UNITY_IOS && !UNITY_EDITOR
+        if (cameraManager != null) cameraManager.enabled = false;
+        if (arSession != null) arSession.enabled = false;
+        Debug.Log("[MCOC Camera v2] Estado antes de solicitar: " + IOSCameraPermission.Current);
+        if (IOSCameraPermission.Current == IOSCameraPermission.State.NotDetermined)
+        {
+            cameraStatus = "Esperando tu respuesta al permiso de camara de iOS...";
+            IOSCameraPermission.Request();
+            float requestTime = Time.realtimeSinceStartup;
+            while (IOSCameraPermission.Pending && Time.realtimeSinceStartup - requestTime < 90f)
+                yield return null;
+        }
+        Debug.Log("[MCOC Camera v2] Estado tras solicitar: " + IOSCameraPermission.Current);
+        if (!ReadCameraAuthorization())
+        {
+            cameraStarting = false;
+            yield break;
+        }
+#endif
+        if (cameraManager == null || arSession == null)
+        {
+            cameraStatus = "ERROR: faltan componentes de camara o sesion AR.";
+            cameraStarting = false;
+            yield break;
+        }
+        if (ARSession.state == ARSessionState.None || ARSession.state == ARSessionState.CheckingAvailability)
+            yield return ARSession.CheckAvailability();
+        if (ARSession.state == ARSessionState.Unsupported)
+        {
+            cameraStatus = "Este dispositivo no ofrece soporte AR.";
+            cameraStarting = false;
+            yield break;
+        }
+        cameraManager.requestedFacingDirection = CameraFacingDirection.World;
+        cameraManager.enabled = true;
+        ARCameraBackground background = arCamera.GetComponent<ARCameraBackground>();
+        if (background != null) background.enabled = true;
+        arSession.enabled = true;
+        cameraStartTime = Time.realtimeSinceStartup;
+        cameraStatus = Application.isEditor ? "Iniciando entorno XR Simulation..." : "Iniciando ARKit...";
+        cameraStarting = false;
+    }
+
+    private void OnCameraFrame(ARCameraFrameEventArgs frame)
+    {
+        if (frame.textures == null || frame.textures.Count == 0) return;
+        lastCameraFrame = Time.realtimeSinceStartup;
+    }
+
+    private void OnApplicationFocus(bool focused)
+    {
+#if UNITY_IOS && !UNITY_EDITOR
+        if (!focused || cameraStarting) return;
+        bool previouslyBlocked = cameraDenied || cameraRestricted;
+        if (!ReadCameraAuthorization())
+        {
+            cameraReady = false;
+            if (cameraManager != null) cameraManager.enabled = false;
+            if (arSession != null) arSession.enabled = false;
+        }
+        else if (previouslyBlocked)
+        {
+            StartCoroutine(StartCamera());
+        }
+#endif
+    }
+
+    private bool ReadCameraAuthorization()
+    {
+        IOSCameraPermission.State permission = IOSCameraPermission.Current;
+        cameraDenied = permission == IOSCameraPermission.State.Denied;
+        cameraRestricted = permission == IOSCameraPermission.State.Restricted;
+        switch (permission)
+        {
+            case IOSCameraPermission.State.Authorized: return true;
+            case IOSCameraPermission.State.Denied:
+                cameraStatus = "Permiso DENEGADO por iOS. Permite Camara en Ajustes de esta app.";
+                break;
+            case IOSCameraPermission.State.Restricted:
+                cameraStatus = "Camara RESTRINGIDA por iOS. Revisa restricciones o administracion del dispositivo.";
+                break;
+            case IOSCameraPermission.State.NotDetermined:
+                cameraStatus = "Permiso SIN DECIDIR. Pulsa Solicitar permiso de camara.";
+                break;
+            default:
+                cameraStatus = "ERROR de compilacion: falta NSCameraUsageDescription en la app instalada.";
+                break;
+        }
+        return false;
+    }
+
+    private void UpdateCameraStatus()
+    {
+        if (cameraStarting || cameraDenied || cameraRestricted || cameraManager == null || arSession == null) return;
+#if UNITY_IOS && !UNITY_EDITOR
+        if (IOSCameraPermission.Current != IOSCameraPermission.State.Authorized) return;
+#endif
+        ARCameraBackground background = arCamera.GetComponent<ARCameraBackground>();
+        cameraReady = lastCameraFrame >= 0f && Time.realtimeSinceStartup - lastCameraFrame < 3f &&
+            background != null && background.backgroundRenderingEnabled;
+        if (cameraReady)
+            cameraStatus = Application.isEditor ? "XR Simulation: imagen activa" : "Camara: imagen activa";
+        else if (ARSession.state == ARSessionState.Unsupported)
+            cameraStatus = "Dispositivo sin soporte AR.";
+        else if (Time.realtimeSinceStartup - cameraStartTime > 15f)
+            cameraStatus = "Sin imagen. Pulsa Reintentar camara. AR: " + ARSession.state;
+    }
+
     private void Update()
     {
+        UpdateCameraStatus();
         UpdateFreeAimMarker();
         UpdateCalibrationGuide();
         UpdateAnchorState();
@@ -129,6 +265,7 @@ public sealed partial class StructuralARController : MonoBehaviour
     private void OnDestroy()
     {
         ReleaseOtherPlacements();
+        if (cameraManager != null) cameraManager.frameReceived -= OnCameraFrame;
         if (diagramMaterial != null) Destroy(diagramMaterial);
         if (baselineMaterial != null) Destroy(baselineMaterial);
         if (guideMaterial != null) Destroy(guideMaterial);
@@ -236,7 +373,7 @@ public sealed partial class StructuralARController : MonoBehaviour
     {
         if (freeAimMarker == null) return;
         Vector3 point = default;
-        bool show = calibrationStage == CalibrationStage.FindI &&
+        bool show = calibrationStage == CalibrationStage.FindI && cameraReady &&
             TryGetPlacementPoint(out point, out _);
         freeAimMarker.SetActive(show);
         if (show) freeAimMarker.transform.position = point;
@@ -244,6 +381,7 @@ public sealed partial class StructuralARController : MonoBehaviour
 
     private void BeginCalibration()
     {
+        if (!cameraReady) { SetStatus("Espera a que la camara AR entregue imagen antes de fijar I."); return; }
         if (placementInProgress) return;
         ElementData requested = FindElement(elementSearch);
         if (requested == null)
@@ -300,6 +438,7 @@ public sealed partial class StructuralARController : MonoBehaviour
 
     private void CaptureJ()
     {
+        if (!cameraReady) { SetStatus("Espera a que vuelva la imagen de camara antes de fijar J."); return; }
         if (calibrationStage != CalibrationStage.FindJ) return;
         UpdateCalibrationGuide();
         float span = Vector3.Distance(measuredI, candidateJ);
@@ -362,6 +501,7 @@ public sealed partial class StructuralARController : MonoBehaviour
 
     private void ConfirmCalibration()
     {
+        if (!cameraReady) { SetStatus("Espera a que vuelva la imagen de camara antes de anclar."); return; }
         if (calibrationStage != CalibrationStage.ConfirmAnchor || !AnchorSupported) return;
         uniformScale = 1f;
         positionOffsetMeters = Vector3.zero;

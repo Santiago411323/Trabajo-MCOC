@@ -28,3 +28,14 @@ P1L2/Builds/
 *.csproj
 *.slnx
 .vsconfig
+
+# Copia independiente para iPhone y entregables regenerables
+P1L4/unity_visualizador_ios/Library/
+P1L4/unity_visualizador_ios/Logs/
+P1L4/unity_visualizador_ios/UserSettings/
+P1L4/unity_visualizador_ios/Temp/
+P1L4/unity_visualizador_ios/Obj/
+P1L4/unity_visualizador_ios/Build/
+P1L4/unity_visualizador_ios/Builds/
+P1L4/unity_visualizador_ios/Entregables/
+P1L4/entregables_ios/

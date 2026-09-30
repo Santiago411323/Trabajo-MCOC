@@ -1,9 +1,7 @@
 # Structural AR sin marcador: colocacion libre I-J
 
-El panel AR v3 comienza con la selección del elemento en la parte inferior y
-se contrae al iniciar la colocación; `Menu` abre los controles y `Contraer`
-vuelve a dejar libre la vista. Respeta el área segura. La acción para avanzar
-queda fija al pie del panel, aunque las instrucciones tengan scroll.
+El panel comienza contraido en la parte inferior; `Menu / resultados` abre
+los controles y `Contraer` vuelve a dejar libre la vista. Respeta el area segura.
 Una vez anclado, el volumen virtual es invisible: se muestran la linea I-J y
 el diagrama OpenSees sin cubrir la viga fisica. El collider invisible conserva
 la seleccion por toque y el mismo `elementTag`.
@@ -43,7 +41,7 @@ tramo elegido entre I y J. El panel distingue el **largo visual marcado**
 del **largo original del modelo OpenSees**. Si no son iguales, la longitud
 del dibujo se ajusta para encajar entre los puntos; los esfuerzos y el
 elementTag siguen siendo los datos originales, sin reanalisis estructural.
-Si desactivas `useFreePlacement` en el Inspector, la mira intentará primero detectar una
+Si desactivas `freePlacement` en el Inspector, la mira intentará primero detectar una
 superficie; si no la encuentra, volvera a usar la profundidad libre.
 Al desplazarse la camara simulada, el anchor conserva la superposicion en el
 espacio XR mientras el seguimiento permanezca activo. Si se pierde tracking,
@@ -53,39 +51,21 @@ Los diagramas usan 41 muestras de `UnityData.TryGetSectionForces`. Los valores
 son los exportados por OpenSees; solo se normaliza la altura grafica del
 diagrama. La calibracion no modifica cargas, resultados ni deformaciones.
 
-## Ajustes, comparación y varios elementos
+En `Resultados` puedes superponer C1/C2/C3 con una escala común y consultar sus
+extremos. `Ajuste` permite mover todo el elemento o corregir I/J en pasos de 1/2/5 cm;
+los giros actúan sobre el elemento completo. `+ Agregar otro elemento` conserva los
+anteriores. Cada colocación se selecciona por su número en `Sector` o tocándola en AR.
+El volumen sólido es invisible; se muestra la línea con su diagrama. El sector dura
+esta sesión y no se guarda al cerrar. Consulta README_IOS.md para los límites y pruebas.
 
-`Ajuste` permite mover Todo, Nodo I o Nodo J en pasos de 1/2/5 cm. Corregir
-un extremo conserva fijo el otro. Los giros de 5° y los giros de cara actúan
-sobre el elemento completo. Se mantiene el anchor, el elementTag y el modelo
-OpenSees original: estos ajustes solo cambian la representación visual.
+## Telefono iPhone (copia independiente)
 
-Los botones C1/C2/C3 cambian la combinación seleccionada. En `Resultados`
-puedes superponer sus curvas con una escala común (C1 amarillo, C2 verde,
-C3 magenta), consultar mínimos/máximos y el caso de mayor esfuerzo absoluto
-entre las muestras. En vigas, My/Mz positivos se dibujan debajo y negativos
-arriba usando la vertical AR, independientemente de la cámara y del sentido I→J.
-En miembros verticales se utiliza una dirección fija de la cara local.
-Los signos numéricos y las combinaciones de carga permanecen intactos.
-
-`+ Agregar otro elemento` conserva los anteriores. Cada colocación tiene su
-propio anchor, número, combinación y componente. Selecciona tocando el elemento
-en AR o usando la lista `Sector`. Quitar uno conserva los demás. El sector
-se mantiene durante la sesión y no se restaura después de cerrar la app.
-
-Fuera de Play, `MCOC > AR > Validar sector, ajuste y comparacion` comprueba
-la selección independiente, los ajustes I/J, la escala común y la orientación
-de momentos con E1_72/E1_94. La validación no sustituye una prueba física.
-
-## Telefono
-
-El proyecto declara ARCore 6.6.2 para Android. Se requiere Android Build
-Support y un telefono compatible con ARCore. En el lugar real hay que
+Esta copia declara Apple ARKit XR Plugin 6.6.2. Se requiere iOS Build
+Support y un iPhone compatible con ARKit. Sigue README_IOS.md en la raiz
+de esta copia para obtener el ZIP exportado y abrirlo en Xcode. En el lugar real hay que
 identificar correctamente el elemento y sus nodos I/J, ajustar manualmente
 la profundidad cuando no hay superficie detectada, y validar la precision del
 anchor caminando alrededor. La colocacion manual no es una certificacion de
-precision metrologica. No hay prueba
-física en Android todavía. La copia iPhone está en `P1L4/unity_visualizador_ios`
-y se mantiene de forma independiente. Esta actualización conserva el inicio
-automático de XR y la configuración de cámara de Android, sin trasladar las
-solicitudes de permisos nativas de iOS.
+precisión metrológica. La cámara de la versión anterior fue confirmada por el usuario
+en iPhone. Los ajustes y el sector de esta versión deben comprobarse en el teléfono
+después de compilar el ZIP en Xcode.

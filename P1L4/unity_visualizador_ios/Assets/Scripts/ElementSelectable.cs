@@ -1,0 +1,389 @@
+using UnityEngine;
+
+public class ElementSelectable : MonoBehaviour
+{
+    public ElementData data;
+    public Vector3 startPoint;
+    public Vector3 endPoint;
+    public string customLabel;
+    public string visualFloor;
+    public bool isWall;
+    public int wallId;
+    public float wallThickness;
+    public float wallLength;
+    public string wallBottom;
+    public string wallTop;
+    public string wallSourceBuilding;
+    public string wallSourceId;
+
+    public string pmSectionId;
+    public DemandRecord[] pmDemands;
+
+    public SupportData nodeISupport;
+    public SupportData nodeJSupport;
+    public int nodeIId;
+    public int nodeJId;
+
+    private Color originalColor;
+    private bool hasOriginalColor;
+
+    public void OnSelected()
+    {
+        Renderer renderer = GetComponent<Renderer>();
+        if (renderer != null && renderer.material != null)
+        {
+            if (!hasOriginalColor)
+            {
+                originalColor = renderer.material.color;
+                hasOriginalColor = true;
+            }
+
+            // El color amarillo identifica siempre el elemento que alimenta el
+            // inspector y el panel de resultados, incluidas las columnas. Al
+            // cambiar o limpiar la seleccion se restaura el material original.
+            renderer.material.color = Color.yellow;
+        }
+    }
+
+    public void OnDeselected()
+    {
+        Renderer renderer = GetComponent<Renderer>();
+        if (renderer != null && renderer.material != null && hasOriginalColor)
+        {
+            renderer.material.color = originalColor;
+        }
+    }
+
+    public string GetValuesAt(Vector3 hitPoint)
+    {
+        if (isWall)
+        {
+            return GetWallValuesAt(hitPoint);
+        }
+
+        if (!string.IsNullOrEmpty(customLabel))
+        {
+            string customResult = customLabel;
+            if (!string.IsNullOrEmpty(pmSectionId))
+            {
+                customResult += $"\nCurva P-M: {pmSectionId}";
+            }
+            DemandRecord demand = GetActiveWallDemand();
+            if (demand != null)
+            {
+                customResult += $"\nDemanda {demand.combo}: P={demand.P_kN:0.##} kN | M={demand.M_kN_m:0.##} kN*m";
+            }
+            return customResult;
+        }
+
+        if (data == null)
+        {
+            return "Elemento sin datos.";
+        }
+
+        Vector3 axis = endPoint - startPoint;
+        float t = axis.sqrMagnitude > 0.0001f
+            ? Mathf.Clamp01(Vector3.Dot(hitPoint - startPoint, axis) / axis.sqrMagnitude)
+            : 0.5f;
+        float length = UnityData.TryGetFrameGeometry(data.id, out var frame) ? (float)frame.Length : axis.magnitude;
+        float localS = t * length;
+
+        string tag = !string.IsNullOrEmpty(data.elementTag) ? data.elementTag : data.id.ToString();
+        string secId = !string.IsNullOrEmpty(data.sectionId) ? data.sectionId : data.seccion;
+        string building = !string.IsNullOrEmpty(data.sourceBuilding) ? data.sourceBuilding : "?";
+        string floor = !string.IsNullOrEmpty(visualFloor)
+            ? visualFloor
+            : string.IsNullOrEmpty(data.piso) ? "Sin piso" : data.piso;
+        Vector3 midPoint = (startPoint + endPoint) * 0.5f;
+
+        float n, vy, vz, my, mz, torsion;
+        GetForces(t, length, out n, out vy, out vz, out my, out mz, out torsion);
+
+        string result =
+            $"=== Elemento {tag} ({data.type}) ===\n" +
+            $"ID Unity: {gameObject.name}\n" +
+            $"elementTag OpenSees: {tag}\n" +
+            (StructuralModelEditor.ResultsStale ? "ESTADO: MODELO EDITADO — RESULTADOS PENDIENTES DE REANÁLISIS\n" : "") +
+            $"\n--- Ubicacion ---\n" +
+            $"Piso / nivel: {floor}\n" +
+            $"Edificio: {building}\n" +
+            $"Nodo I: {data.nodeI}  Nodo J: {data.nodeJ}\n" +
+            $"Centro aprox.: X={midPoint.x:0.###}, Y={midPoint.z:0.###}, Z={midPoint.y:0.###} m\n" +
+            $"\n--- Seccion y Material ---\n" +
+            $"Seccion: {secId} ({data.width_m:0.00} x {data.height_m:0.00} m)\n";
+
+        var mat = UnityData.GetMaterial(secId);
+        if (mat != null)
+        {
+            result += $"Material: {mat.materialName}\n" +
+                      $"fc' = {mat.fc_MPa:0.0} MPa | fy = {mat.fy_MPa:0.0} MPa\n";
+            if (mat.steelBars > 0)
+            {
+                result += $"Acero: {mat.steelBars} barras phi {mat.barDiameter_mm:0.0} mm\n" +
+                          $"Ast = {mat.Ast_mm2:0.0} mm2 | rho = {mat.rho_percent:0.###}%\n";
+            }
+        }
+
+        result += $"\n--- Restricciones ---\n";
+        result += FormatSupport("Nodo I", nodeISupport);
+        result += FormatSupport("Nodo J", nodeJSupport);
+
+        result += $"\n--- Ejes Locales ---\n";
+        Vector3 localX = frame != null ? UnityData.AxisToUnity(frame.X) : Vector3.zero;
+        Vector3 localY = frame != null ? UnityData.AxisToUnity(frame.Y) : Vector3.zero;
+        Vector3 localZ = frame != null ? UnityData.AxisToUnity(frame.Z) : Vector3.zero;
+        result += $"X' (axial): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n" +
+                  $"Y': {localY.x:0.000}, {localY.z:0.000}, {localY.y:0.000} (global)\n" +
+                  $"Z': {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
+
+        if (float.IsNaN(n)) return result + "\n--- Fuerzas ---\nSin fuerzas disponibles para esta combinacion.\n";
+        result += $"\n--- Fuerzas en {t * 100f:0.0}% ({localS:0.00} m de {length:0.00} m) ---\n" +
+                  $"N  = {n:0.###} kN (traccion+)\n" +
+                  $"Vy = {vy:0.###} kN\n" +
+                  $"Vz = {vz:0.###} kN\n" +
+                  $"T  = {torsion:0.###} kN*m\n" +
+                  $"My = {my:0.###} kN*m\n" +
+                  $"Mz = {mz:0.###} kN*m\n";
+
+        MobileLoadController mobile = MobileLoadController.Instance;
+        result += mobile != null && mobile.IsActiveFor(this)
+            ? "Incluye incremento global OpenSees por carga movil sobre losa.\n"
+            : "Carga movil sin respuesta activa.\n";
+
+        if (data.type == "viga" && data.areaTributaria > 0f)
+        {
+            result += $"\n--- Cargas Tributarias ---\n" +
+                      $"Area: {data.areaTributaria:0.###} m2\n" +
+                      $"D: {data.deadLoad:0.###} kN | L: {data.liveLoad:0.###} kN\n" +
+                      $"U=1.4D: {data.factoredLoad14D:0.###} kN\n" +
+                      $"U=1.2D+1.6L: {data.factoredLoad12D16L:0.###} kN\n";
+        }
+
+        if (UnityData.ActiveCombo != null)
+        {
+            result += $"\n--- Demanda-capacidad ({UnityData.GetActiveLoadLabel()}) ---\n";
+            Vector2 pmDemand = !string.IsNullOrEmpty(pmSectionId)
+                ? GetPMDemandForCase(UnityData.ActiveCombo)
+                : new Vector2(-n, Mathf.Sqrt(my * my + mz * mz));
+            float cRatio = GetCapacityRatio(pmDemand);
+            result += $"P = {pmDemand.x:0.###} kN (compresion+)\n" +
+                      $"M = {pmDemand.y:0.###} kN*m (resultante)\n" +
+                      (cRatio >= UnityData.OutOfCurveRatio ? "C = FUERA DE LA CURVA (no cumple)\n" : $"C = {cRatio:0.###} (M/Mcap)\n");
+
+            if (!string.IsNullOrEmpty(pmSectionId))
+            {
+                result += $"Curva P-M: {pmSectionId}\n";
+            }
+        }
+
+        if (!string.IsNullOrEmpty(pmSectionId))
+        {
+            result += GetComboBreakdownText();
+        }
+
+        result += $"\n--- Trazabilidad ---\n" +
+                  $"OpenSees tag: {tag}\n" +
+                  $"Unity obj: {gameObject.name}\n" +
+                  "Resultado: " + UnityData.GetActiveLoadLabel() + "\n" +
+                  $"Seccion/Capacidad: {secId} -> {pmSectionId ?? "sin curva"}\n";
+
+        return result;
+    }
+
+    private string GetComboBreakdownText()
+    {
+        if (data == null)
+        {
+            return "";
+        }
+
+        string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
+        Vector2 g = GetPMDemandForCase("G");
+        Vector2 q = GetPMDemandForCase("Q");
+        Vector2 ex = GetPMDemandForCase("EX");
+        Vector2 ey = GetPMDemandForCase("EY");
+        Vector2 total = GetPMDemandForCase(combo);
+        float cRatio = GetCapacityRatio(total);
+        ComboInfo info = UnityData.GetComboInfo(combo);
+        float fg = UnityData.UseBaseCaseFactors ? UnityData.FactorG : info != null ? info.G : 0f;
+        float fq = UnityData.UseBaseCaseFactors ? UnityData.FactorQ : info != null ? info.Q : 0f;
+        float fex = UnityData.UseBaseCaseFactors ? UnityData.FactorEX : info != null ? info.EX : 0f;
+        float fey = UnityData.UseBaseCaseFactors ? UnityData.FactorEY : info != null ? info.EY : 0f;
+
+        return $"\n--- Valores P-M de {UnityData.GetActiveLoadLabel()} ---\n" +
+               $"Resultado: P={total.x:0.##} kN | M={total.y:0.##} kN*m | C={(cRatio >= UnityData.OutOfCurveRatio ? "fuera de curva" : cRatio.ToString("0.###"))}\n" +
+               $"G  x {fg:0.##}: P={g.x:0.##}, M={g.y:0.##}\n" +
+               $"Q  x {fq:0.##}: P={q.x:0.##}, M={q.y:0.##}\n" +
+               $"EX x {fex:0.##}: P={ex.x:0.##}, M={ex.y:0.##}\n" +
+               $"EY x {fey:0.##}: P={ey.x:0.##}, M={ey.y:0.##}\n";
+    }
+
+    private float GetCapacityRatio(Vector2 demand)
+    {
+        if (string.IsNullOrEmpty(pmSectionId)) return 0f;
+        return UnityData.CapacityRatio(UnityData.GetPMCurve(pmSectionId), demand.x, demand.y);
+    }
+
+    private Vector2 GetPMDemandForCase(string caseName)
+    {
+        if (data == null || string.IsNullOrEmpty(caseName))
+        {
+            return Vector2.zero;
+        }
+        float[] forces = UnityData.UseBaseCaseFactors && caseName != UnityData.ActiveCombo
+            ? UnityData.GetElementForcesForCase(caseName, data.id)
+            : UnityData.GetElementForces(caseName, data.id);
+        if (forces == null || forces.Length < 6)
+        {
+            return Vector2.zero;
+        }
+        float pComp = forces[0];
+        float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
+        return new Vector2(pComp, mTotal);
+    }
+
+    private string GetWallValuesAt(Vector3 hitPoint)
+    {
+        Vector3 axis = endPoint - startPoint;
+        Vector3 localX = axis.sqrMagnitude > 0.0001f ? axis.normalized : Vector3.right;
+        Vector3 localY = Vector3.up;
+        Vector3 localZ = Vector3.Cross(localX, localY).normalized;
+        if (localZ.sqrMagnitude < 0.0001f)
+        {
+            localZ = Vector3.forward;
+        }
+
+        DemandRecord demand = GetActiveWallDemand();
+        float n = demand != null ? demand.P_kN : 0f;
+        float vy = 0f;
+        float vz = 0f;
+        float torsion = 0f;
+        float my = demand != null ? demand.M_kN_m : 0f;
+        float mz = 0f;
+
+        string source = !string.IsNullOrEmpty(wallSourceBuilding) ? wallSourceBuilding : "?";
+        string sourceId = !string.IsNullOrEmpty(wallSourceId) ? wallSourceId : wallId.ToString();
+        string secId = !string.IsNullOrEmpty(pmSectionId) ? pmSectionId : "MURO_EQ";
+        Vector3 wallMid = (startPoint + endPoint) * 0.5f;
+        string result =
+            $"=== Muro {wallId} ===\n" +
+            $"ID Unity: {gameObject.name}\n" +
+            $"ID origen: {sourceId}\n" +
+            (StructuralModelEditor.ResultsStale ? "ESTADO: MODELO EDITADO — RESULTADOS PENDIENTES DE REANÁLISIS\n" : "") +
+            $"\n--- Ubicacion ---\n" +
+            $"Piso / tramo: {wallBottom} -> {wallTop}\n" +
+            $"Edificio: {source}\n" +
+            $"Nodo I: {nodeIId}  Nodo J: {nodeJId}\n" +
+            $"Centro aprox.: X={wallMid.x:0.###}, Y={wallMid.z:0.###}, Z={wallMid.y:0.###} m\n" +
+            $"\n--- Seccion y Material ---\n" +
+            $"Seccion: {secId}\n" +
+            $"Geometria: t={wallThickness:0.###} m | L={wallLength:0.###} m\n" +
+            $"Material: H-30 / Acero A630-420 (muro equivalente)\n" +
+            $"fc' = 30.0 MPa | fy = 420.0 MPa\n";
+
+        PMCurveData curve = UnityData.GetPMCurve(pmSectionId);
+        if (curve != null)
+        {
+            result += $"Acero ref.: {curve.steelBars} barras phi {curve.barDiameter_mm:0.0} mm\n" +
+                      $"Ast = {curve.Ast_mm2:0.0} mm2 | rho = {curve.rho_percent:0.###}%\n";
+        }
+
+        result += $"\n--- Restricciones ---\n";
+        result += FormatSupport("Nodo I", nodeISupport);
+        result += FormatSupport("Nodo J", nodeJSupport);
+
+        result += $"\n--- Ejes Locales ---\n" +
+                  $"X' (largo/base): {localX.x:0.000}, {localX.z:0.000}, {localX.y:0.000} (global)\n" +
+                  $"Y' (vertical): {localY.x:0.000}, {localY.z:0.000}, {localY.y:0.000} (global)\n" +
+                  $"Z' (espesor): {localZ.x:0.000}, {localZ.z:0.000}, {localZ.y:0.000} (global)\n";
+
+        string combo = string.IsNullOrEmpty(UnityData.ActiveCombo) ? "C1" : UnityData.ActiveCombo;
+        result += $"\n--- Demanda-capacidad ({UnityData.GetActiveLoadLabel()}) ---\n" +
+                  $"N  = {n:0.###} kN (compresion+)\n" +
+                  $"Vy = {vy:0.###} kN\n" +
+                  $"Vz = {vz:0.###} kN\n" +
+                  $"T  = {torsion:0.###} kN*m\n" +
+                  $"My = {my:0.###} kN*m\n" +
+                  $"Mz = {mz:0.###} kN*m\n";
+
+        if (!string.IsNullOrEmpty(pmSectionId))
+        {
+            result += $"\nCurva P-M: {pmSectionId}\n";
+        }
+        if (demand != null && !string.IsNullOrEmpty(demand.note))
+        {
+            result += $"Nota demanda: {demand.note}\n";
+        }
+
+        result += $"\n--- Trazabilidad ---\n" +
+                  $"OpenSees/JSON origen: {sourceId}\n" +
+                  $"Unity obj: {gameObject.name}\n" +
+                  $"Resultado: {UnityData.GetActiveLoadLabel()}\n" +
+                  $"Seccion/Capacidad: {secId}\n";
+        return result;
+    }
+
+    private void GetForces(float t, float length, out float n, out float vy, out float vz, out float my, out float mz, out float torsion)
+    {
+        bool available = UnityData.TryGetSectionForces(data.id, UnityData.ActiveCombo, t, out var f);
+        n = available ? f.N : float.NaN; vy = available ? f.Vy : float.NaN;
+        vz = available ? f.Vz : float.NaN; my = available ? f.My : float.NaN;
+        mz = available ? f.Mz : float.NaN; torsion = available ? f.T : float.NaN;
+    }
+
+    public Vector3 GetDemandPoint()
+    {
+        if (data == null)
+        {
+            DemandRecord wallDemand = GetActiveWallDemand();
+            return wallDemand == null ? Vector3.zero : new Vector2(wallDemand.P_kN, wallDemand.M_kN_m);
+        }
+
+        if (data == null || string.IsNullOrEmpty(UnityData.ActiveCombo) || UnityData.ElementForcesByCombo == null)
+        {
+            return Vector3.zero;
+        }
+
+        float[] forces = UnityData.GetElementForces(UnityData.ActiveCombo, data.id);
+        if (forces == null || forces.Length < 6)
+        {
+            return Vector3.zero;
+        }
+
+        float pComp = forces[0];
+        float mTotal = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
+        return new Vector2(pComp, mTotal);
+    }
+
+    public DemandRecord GetActiveWallDemand()
+    {
+        if (pmDemands == null || pmDemands.Length == 0)
+        {
+            return null;
+        }
+        string active = string.IsNullOrEmpty(UnityData.ActiveCombo) ? pmDemands[0].combo : UnityData.ActiveCombo;
+        foreach (DemandRecord demand in pmDemands)
+        {
+            if (demand != null && demand.combo == active)
+            {
+                return demand;
+            }
+        }
+        return pmDemands[0];
+    }
+
+    private string FormatSupport(string label, SupportData support)
+    {
+        if (support == null)
+        {
+            return $"{label}: sin restriccion al suelo registrada (no implica articulacion)\n";
+        }
+
+        bool fixedAll = support.ux == 1 && support.uy == 1 && support.uz == 1 &&
+            support.rx == 1 && support.ry == 1 && support.rz == 1;
+        string type = support.type != null && support.type.Contains("inferido") ? support.type :
+            fixedAll ? "Empotrado registrado" : "Restricciones registradas";
+        return $"{label} (N{support.node}): {type}\n" +
+            $"ux={support.ux} uy={support.uy} uz={support.uz} rx={support.rx} ry={support.ry} rz={support.rz}\n";
+    }
+}
