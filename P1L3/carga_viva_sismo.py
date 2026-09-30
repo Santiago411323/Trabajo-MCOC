@@ -12,11 +12,14 @@ Ejemplos:
 """
 
 import argparse
+import html
 import json
 import math
 import subprocess
 import sys
 from pathlib import Path
+
+from unity_results_validation import UnityResultsValidator
 
 try:
     import openseespy.opensees as ops
@@ -35,6 +38,7 @@ JSON_PATH = ROOT_DIR / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / 
 OUTPUT_PATH = BASE_DIR / "resultados" / "carga_viva_sismo.json"
 UNITY_RESULTS_PATH = ROOT_DIR / "P1L2" / "unity_visualizador" / "Assets" / "Resources" / "semana3_resultados_unity.json"
 UNITY_P1L4_PATH = ROOT_DIR / "P1L4" / "unity_visualizador" / "Assets" / "Resources" / "estructura_p1l4_unity.json"
+UNITY_SLAB_SURFACES_PATH = ROOT_DIR / "P1L4" / "unity_visualizador" / "Assets" / "Resources" / "slab_load_surfaces.json"
 
 DEFAULT_Q_Q = 4.903325
 # Torsion accidental NCh433 (metodo estatico): momento en cada piso
@@ -1586,7 +1590,7 @@ def supported_components(adjacency, support_nodes):
             yield node_id
 
 
-def verify_building(data, live_transfer, seismic, lambdas):
+def verify_building(data, live_transfer, seismic, lambdas, combination_name="PERSONALIZADA"):
     if ops is None:
         raise RuntimeError("Falta instalar openseespy para correr la verificacion.")
     nodes = node_map(data)
@@ -1660,6 +1664,7 @@ def verify_building(data, live_transfer, seismic, lambdas):
     ast = len(section["rebar_xy"]) * section["bar_area_m2"]
     po = 0.85 * section["fc"] * (ag - ast) + section["fy"] * ast
     pm_points = simplified_pm_points(section, po)
+    nominal_points = [{"phiPn_kN": point["Pn_kN"], "phiMn_kN_m": point["Mn_kN_m"]} for point in pm_points]
     phi_points = [{"phiPn_kN": point["phiPn_kN"], "phiMn_kN_m": point["phiMn_kN_m"]} for point in pm_points]
     phi_po = max(point["phiPn_kN"] for point in phi_points)
 
@@ -1687,32 +1692,45 @@ def verify_building(data, live_transfer, seismic, lambdas):
             continue
         if not force or len(force) < 12:
             continue
-        p_compression = max(force[0], -force[6], 0.0)
-        m_demand = max(math.hypot(force[4], force[5]), math.hypot(force[10], force[11]))
-        m_allow = phi_moment_at(phi_points, p_compression)
-        axial_util = p_compression / phi_po if phi_po else 0.0
-        if m_allow is None or m_allow <= 0.0:
-            flex_util = 0.0 if m_demand == 0.0 else float("inf")
-        else:
-            flex_util = m_demand / m_allow
-        ratio = max(axial_util, flex_util) if flex_util != float("inf") else float("inf")
+        # Misma demanda que Unity: un unico punto coherente del extremo I,
+        # usando las acciones locales [P, My, Mz]. Antes se combinaba P de un
+        # extremo con M del otro y se creaba una demanda que no existia.
+        p_compression = float(force[0])
+        m_demand = math.hypot(force[4], force[5])
+        nominal_allow = phi_moment_at(nominal_points, p_compression)
+        design_allow = phi_moment_at(phi_points, p_compression)
+
+        def utilization(moment_capacity):
+            if moment_capacity is None or moment_capacity <= 0.0:
+                return 0.0 if m_demand <= 1e-9 else float("inf")
+            return m_demand / moment_capacity
+
+        # El veredicto principal replica exactamente el diagrama nominal que
+        # muestra Unity. La capacidad reducida por phi se conserva como chequeo
+        # de diseno independiente y queda claramente identificada.
+        nominal_ratio = utilization(nominal_allow)
+        design_ratio = utilization(design_allow)
         column_rows.append({
             "element_id": element["id"],
             "element_tag": element_tag(element),
             "piso_z_m": element_mid_z(element, nodes),
             "P_demanda_kN": round(p_compression, 2),
             "M_demanda_kN_m": round(m_demand, 2),
-            "phiMn_disponible_kN_m": None if m_allow is None else round(m_allow, 2),
-            "utilizacion_axial": round(axial_util, 3),
-            "utilizacion_flexion": None if flex_util == float("inf") else round(flex_util, 3),
-            "utilizacion_total": None if ratio == float("inf") else round(ratio, 3),
-            "cumple": ratio <= 1.0,
+            "Mn_disponible_nominal_kN_m": None if nominal_allow is None else round(nominal_allow, 2),
+            "phiMn_disponible_kN_m": None if design_allow is None else round(design_allow, 2),
+            "utilizacion_nominal": None if nominal_ratio == float("inf") else round(nominal_ratio, 3),
+            "utilizacion_diseno_phi": None if design_ratio == float("inf") else round(design_ratio, 3),
+            "utilizacion_total": None if nominal_ratio == float("inf") else round(nominal_ratio, 3),
+            "cumple": nominal_ratio <= 1.0,
+            "cumple_diseno_phi": design_ratio <= 1.0,
         })
 
     failing = [row for row in column_rows if not row["cumple"]]
+    failing_design = [row for row in column_rows if not row["cumple_diseno_phi"]]
     worst = max(column_rows, key=lambda row: row["utilizacion_total"] if row["utilizacion_total"] is not None else float("inf"), default=None)
     return {
         "lambdas": lambdas,
+        "nombre_combinacion": combination_name,
         "combinacion": "R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY",
         "control_node": control_node,
         "desplazamiento_control_m": displacement,
@@ -1724,16 +1742,19 @@ def verify_building(data, live_transfer, seismic, lambdas):
         "otro_edificio_artefacto": any(building != main_building for building in building_columns),
         "columnas_evaluadas": len(column_rows),
         "columnas_no_cumplen": len(failing),
+        "columnas_no_cumplen_diseno_phi": len(failing_design),
         "peor_columna": worst,
         "detalle_columnas": column_rows,
         "veredicto": "NO CUMPLE" if failing else ("CUMPLE" if column_rows else "SIN DATOS"),
+        "veredicto_diseno_phi": "NO CUMPLE" if failing_design else ("CUMPLE" if column_rows else "SIN DATOS"),
     }
 
 
 def print_verification(verdict, q_q, seismic_coeff):
     print("\nParte E - Verificacion: aguanta?")
     print(f"q_Q = {q_q:.4f} kN/m2 | Coef sismico = {seismic_coeff}")
-    print("Combinacion: R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY")
+    print(f"Combinacion seleccionada: {verdict.get('nombre_combinacion', 'PERSONALIZADA')}")
+    print("R = lambda_G G + lambda_Q Q + lambda_EX EX + lambda_EY EY")
     for case, factor in verdict["lambdas"].items():
         print(f"  lambda_{case} = {factor:.3f}")
 
@@ -1746,7 +1767,9 @@ def print_verification(verdict, q_q, seismic_coeff):
         print("  ATENCION: |u| es grande para un modelo lineal; verificar rigideces/soportes. Demandas referenciales.")
     print(f"  Reacciones Fx, Fy, Fz [kN] = {[round(value, 1) for value in verdict['reacciones_globales_Fx_Fy_Fz_kN']]}")
 
-    print(f"\nColumnas evaluadas (edificio 1) = {verdict['columnas_evaluadas']} | No cumplen = {verdict['columnas_no_cumplen']}")
+    print(f"\nColumnas evaluadas (edificio 1) = {verdict['columnas_evaluadas']}")
+    print(f"  Fuera de envolvente nominal (mismo criterio de Unity) = {verdict['columnas_no_cumplen']}")
+    print(f"  Fuera de capacidad reducida por phi = {verdict['columnas_no_cumplen_diseno_phi']}")
     if verdict.get("columnas_excluidas_otros_edificios"):
         print(f"  Columnas de otro edificio excluidas del chequeo: {verdict['columnas_excluidas_otros_edificios']} (modelo lineal no fisico: se deforma decenas de metros)")
     if verdict.get("columnas_edificio_1_excluidas_no_apoyadas"):
@@ -1756,19 +1779,23 @@ def print_verification(verdict, q_q, seismic_coeff):
     if worst:
         print("Peor columna:")
         print(f"  {worst['element_tag']} en z={worst['piso_z_m']:.2f} m: P demanda = {worst['P_demanda_kN']:.1f} kN, M demanda = {worst['M_demanda_kN_m']:.1f} kN*m")
+        if worst["Mn_disponible_nominal_kN_m"] is not None:
+            nominal_text = "fuera de curva" if worst["utilizacion_nominal"] is None else f"{worst['utilizacion_nominal']:.3f}"
+            print(f"  Mn nominal disponible = {worst['Mn_disponible_nominal_kN_m']:.1f} kN*m | C nominal = {nominal_text}")
         if worst["phiMn_disponible_kN_m"] is not None:
-            print(f"  phiMn disponible = {worst['phiMn_disponible_kN_m']:.1f} kN*m | M/phiMn = {worst['utilizacion_flexion']:.3f}")
-        print(f"  Utilizacion total = {worst['utilizacion_total']}  (<= 1.0 significa que aguanta)")
+            design_text = "fuera de curva" if worst["utilizacion_diseno_phi"] is None else f"{worst['utilizacion_diseno_phi']:.3f}"
+            print(f"  phiMn de diseno = {worst['phiMn_disponible_kN_m']:.1f} kN*m | C diseno = {design_text}")
 
-    print(f"\n==> VEREDICTO: {verdict['veredicto']}")
+    print(f"\n==> VEREDICTO NOMINAL (COINCIDE CON UNITY): {verdict['veredicto']}")
     if verdict["veredicto"] == "CUMPLE":
-        print("  Todas las columnas quedan dentro del diagrama P-M con esta combinacion.")
+        print("  Todas las columnas quedan dentro del diagrama P-M nominal con esta combinacion.")
     elif verdict["veredicto"] == "NO CUMPLE":
-        print("  Columnas que sobrepasan el diagrama P-M:")
+        print("  Columnas que sobrepasan el diagrama P-M nominal:")
         for row in verdict["detalle_columnas"]:
             if not row["cumple"]:
                 print(f"    {row['element_tag']} (z={row['piso_z_m']:.2f} m): P={row['P_demanda_kN']:.0f} kN, M={row['M_demanda_kN_m']:.0f} kN*m, utilizacion={row['utilizacion_total']}")
         print("  Soluciones: reducir cargas (SC/coef), agrandar la seccion, o aumentar el refuerzo.")
+    print(f"  Chequeo adicional con reduccion phi: {verdict['veredicto_diseno_phi']} (no es la curva nominal mostrada por Unity).")
 
 
 def concrete_stress(eps, fc):
@@ -2123,9 +2150,129 @@ def fiber_section_capacity():
     }
 
 
+def _write_svg_plot(path, title, xlabel, ylabel, curves, markers=None, equal_axes=False):
+    """Genera un grafico SVG sin dependencias externas.
+
+    Se usa como respaldo cuando matplotlib no esta instalado. ``curves`` es una
+    lista de (puntos, color, nombre) y ``markers`` agrega puntos rotulados.
+    """
+    markers = markers or []
+    all_points = [point for points, _, _ in curves for point in points]
+    all_points.extend((x, y) for x, y, _, _, _ in markers)
+    if not all_points:
+        raise ValueError("No hay puntos para generar el grafico SVG.")
+
+    xs = [point[0] for point in all_points]
+    ys = [point[1] for point in all_points]
+    xmin, xmax, ymin, ymax = min(xs), max(xs), min(ys), max(ys)
+    if equal_axes:
+        span = max(xmax - xmin, ymax - ymin, 1e-9)
+        xmid, ymid = (xmin + xmax) * 0.5, (ymin + ymax) * 0.5
+        xmin, xmax = xmid - span * 0.55, xmid + span * 0.55
+        ymin, ymax = ymid - span * 0.55, ymid + span * 0.55
+    else:
+        xpad = max((xmax - xmin) * 0.06, 1e-9)
+        ypad = max((ymax - ymin) * 0.08, 1e-9)
+        xmin, xmax, ymin, ymax = xmin - xpad, xmax + xpad, ymin - ypad, ymax + ypad
+
+    width, height = 900, 600
+    left, right, top, bottom = 92, 32, 62, 78
+    plot_w, plot_h = width - left - right, height - top - bottom
+
+    def sx(value):
+        return left + (value - xmin) / (xmax - xmin) * plot_w
+
+    def sy(value):
+        return top + plot_h - (value - ymin) / (ymax - ymin) * plot_h
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="#ffffff"/>',
+        '<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#172033}.title{font-size:22px;font-weight:700}.axis{font-size:15px}.tick{font-size:12px;fill:#536173}.legend{font-size:13px}</style>',
+        f'<text class="title" x="{width/2}" y="34" text-anchor="middle">{html.escape(title)}</text>',
+    ]
+    for step in range(7):
+        ratio = step / 6.0
+        gx, gy = left + ratio * plot_w, top + ratio * plot_h
+        xv, yv = xmin + ratio * (xmax - xmin), ymax - ratio * (ymax - ymin)
+        parts.append(f'<line x1="{gx:.2f}" y1="{top}" x2="{gx:.2f}" y2="{top+plot_h}" stroke="#dbe3ec" stroke-width="1"/>')
+        parts.append(f'<line x1="{left}" y1="{gy:.2f}" x2="{left+plot_w}" y2="{gy:.2f}" stroke="#dbe3ec" stroke-width="1"/>')
+        parts.append(f'<text class="tick" x="{gx:.2f}" y="{top+plot_h+21}" text-anchor="middle">{xv:.4g}</text>')
+        parts.append(f'<text class="tick" x="{left-10}" y="{gy+4:.2f}" text-anchor="end">{yv:.4g}</text>')
+    parts.append(f'<rect x="{left}" y="{top}" width="{plot_w}" height="{plot_h}" fill="none" stroke="#334155" stroke-width="1.5"/>')
+
+    legend_y = top + 18
+    for points, color, name in curves:
+        if len(points) == 1:
+            x, y = points[0]
+            parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="3" fill="{color}"/>')
+        else:
+            coords = " ".join(f"{sx(x):.2f},{sy(y):.2f}" for x, y in points)
+            parts.append(f'<polyline points="{coords}" fill="none" stroke="{color}" stroke-width="2.5" stroke-linejoin="round"/>')
+        if name:
+            parts.append(f'<line x1="{left+14}" y1="{legend_y-4}" x2="{left+42}" y2="{legend_y-4}" stroke="{color}" stroke-width="3"/>')
+            parts.append(f'<text class="legend" x="{left+49}" y="{legend_y}">{html.escape(name)}</text>')
+            legend_y += 20
+
+    for x, y, color, label, radius in markers:
+        px, py = sx(x), sy(y)
+        parts.append(f'<circle cx="{px:.2f}" cy="{py:.2f}" r="{radius}" fill="{color}" stroke="#ffffff" stroke-width="1.5"/>')
+        if label:
+            parts.append(f'<text class="legend" x="{px+8:.2f}" y="{py-8:.2f}">{html.escape(label)}</text>')
+
+    parts.extend([
+        f'<text class="axis" x="{left+plot_w/2}" y="{height-22}" text-anchor="middle">{html.escape(xlabel)}</text>',
+        f'<text class="axis" x="22" y="{top+plot_h/2}" text-anchor="middle" transform="rotate(-90 22 {top+plot_h/2})">{html.escape(ylabel)}</text>',
+        '</svg>',
+    ])
+    path.write_text("\n".join(parts), encoding="utf-8")
+
+
+def _plot_capacity_svg(capacity):
+    output_dir = OUTPUT_PATH.parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+    section = make_column_fibers()
+    concrete = [fiber for fiber in section["fibers"] if fiber["type"] == "concrete"]
+    steel = [fiber for fiber in section["fibers"] if fiber["type"] == "steel"]
+
+    fiber_path = output_dir / "fiber_COL70_70.svg"
+    fiber_markers = [(f["x"], f["y"], "#8fb3ff", "", 2.2) for f in concrete]
+    fiber_markers.extend((f["x"], f["y"], "#cc3333", "", 5) for f in steel)
+    _write_svg_plot(
+        fiber_path, "Discretizacion Fiber COL70/70", "x [m]", "y [m]",
+        [([(concrete[0]["x"], concrete[0]["y"])], "#8fb3ff", "Hormigon"),
+         ([(steel[0]["x"], steel[0]["y"])], "#cc3333", "Acero")],
+        fiber_markers, equal_axes=True,
+    )
+
+    yield_point = capacity.get("m_phi_first_steel_yield")
+    mphi_path = output_dir / "M_phi_COL70_70.svg"
+    yield_markers = [] if not yield_point else [(
+        yield_point["phi_1_m"], yield_point["M_kN_m"], "#dc2626", "Primera fluencia", 6
+    )]
+    _write_svg_plot(
+        mphi_path, "M-phi COL70/70 fiber completa (P=0 aprox.)", "Curvatura phi [1/m]", "Momento [kN m]",
+        [([(point["phi_1_m"], point["M_kN_m"]) for point in capacity["m_phi"]], "#1677c8", "M-phi")],
+        yield_markers,
+    )
+
+    pm_path = output_dir / "P_M_COL70_70.svg"
+    pm_points = [(point["Mn_kN_m"], point["Pn_kN"]) for point in capacity["p_m_points"]]
+    pm_markers = [
+        (point["Mn_kN_m"], point["Pn_kN"], "#dc2626", point["estado"].split(")")[0], 5)
+        for point in capacity["p_m_points"]
+    ]
+    _write_svg_plot(pm_path, "P-M simplificado COL70/70", "M [kN m]", "P [kN]",
+                    [(pm_points, "#dc2626", "Capacidad nominal")], pm_markers)
+    return [fiber_path, mphi_path, pm_path]
+
+
 def plot_capacity(capacity):
     if plt is None:
-        raise RuntimeError("Falta instalar matplotlib para generar los graficos de capacidad HA.")
+        paths = _plot_capacity_svg(capacity)
+        capacity["graficos"] = [str(path) for path in paths]
+        print("[graficos] matplotlib no esta instalado; se generaron archivos SVG equivalentes.")
+        return paths
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     section = make_column_fibers()
@@ -2172,6 +2319,13 @@ def plot_capacity(capacity):
     plt.tight_layout()
     plt.savefig(OUTPUT_PATH.parent / "P_M_COL70_70.png", dpi=160)
     plt.close()
+    paths = [
+        OUTPUT_PATH.parent / "fiber_COL70_70.png",
+        OUTPUT_PATH.parent / "M_phi_COL70_70.png",
+        OUTPUT_PATH.parent / "P_M_COL70_70.png",
+    ]
+    capacity["graficos"] = [str(path) for path in paths]
+    return paths
 
 
 def export_capacity_for_unity(capacity):
@@ -2259,9 +2413,8 @@ def print_capacity(capacity):
         print(f"  Deformacion de fluencia acero    = {section['steel_yield_strain']:.6f}")
         print(f"  Primera fluencia del acero       = phi {first_yield['phi_1_m']:.6f} 1/m, M {first_yield['M_kN_m']:.3f} kN*m")
     print("\nGraficos generados")
-    print(f"  {OUTPUT_PATH.parent / 'fiber_COL70_70.png'}")
-    print(f"  {OUTPUT_PATH.parent / 'M_phi_COL70_70.png'}")
-    print(f"  {OUTPUT_PATH.parent / 'P_M_COL70_70.png'}")
+    for path in capacity.get("graficos", []):
+        print(f"  {path}")
 
 
 # ==================================================================
@@ -3216,8 +3369,8 @@ def find_wall(data, wanted_id):
     return None
 
 
-def ask_load_combination():
-    print("\nCaso/combinacion para fuerzas internas")
+def ask_load_combination(purpose="fuerzas internas"):
+    print(f"\nCaso/combinacion para {purpose}")
     print("  G  = carga permanente")
     print("  Q  = carga viva")
     print("  EX = sismo en X")
@@ -3467,28 +3620,27 @@ def print_internal_forces_at_position(data, live_transfer, seismic, wanted_id, c
 
 
 def interactive_menu():
-    data = load_model_data()
-    sc_kg_m2 = ask_float("Sobrecarga SC en kg/m2", 500.0)
-    seismic_coeff = ask_float("Coeficiente sismico pseudoestatico", DEFAULT_SEISMIC_COEFF)
-    q_q = kg_m2_to_kn_m2(sc_kg_m2)
-    live_transfer, seismic, _ = build_result(data, q_q, seismic_coeff)
+    # El menu es un validador del visualizador. Lee el mismo JSON de P1L4 que
+    # Unity y no vuelve a analizar silenciosamente un modelo/base diferente.
+    validator = UnityResultsValidator(UNITY_P1L4_PATH, UNITY_SLAB_SURFACES_PATH)
+    validator.print_source()
 
     while True:
-        print("\nSemana 3 - Que resultado quieres ver?")
-        print("1. Resumen global Q + sismo              (sin ID)")
-        print("2. Area tributaria y Q de una viga       (con ID de viga)")
-        print("3. Area y Q superficial de una losa      (con ID de losa)")
-        print("4. Sismo EX/EY por piso                  (sin ID)")
-        print("5. Superposicion R y verificacion        (sin ID, pide lambdas)")
-        print("6. Capacidad HA Fiber Section            (sin ID)")
-        print("7. Ejemplos de IDs disponibles           (sin ID)")
-        print("8. Ruta del JSON completo de resultados  (sin ID)")
-        print("9. Verificacion: aguanta? (demanda P-M)  (sin ID, pide lambdas)")
-        print("10. Caso G numerico (carga permanente)     (sin ID)")
-        print("11. Tablas sismo por piso EX/EY explicito  (sin ID)")
-        print("12. Superposicion 3 combinaciones C1/C2/C3 (sin ID)")
-        print("13. Sensibilidad M-phi 10x10/20x20/40x40   (sin ID)")
-        print("14. Capacidad P-M del muro                 (sin ID)")
+        print("\nVALIDACION UNITY - Que resultado quieres ver?")
+        print("1. Resumen global G/Q/EX/EY              (JSON Unity)")
+        print("2. Area tributaria y cargas de una viga  (con ID/tag)")
+        print("3. Losa, cargas y vigas receptoras       (con ID de losa)")
+        print("4. Respuesta sismica EX/EY por piso      (JSON Unity)")
+        print("5. Respuesta de un caso/combinacion      (G/Q/EX/EY/C1/C2/C3/P)")
+        print("6. Capacidad HA y M-phi exportada        (misma curva Unity)")
+        print("7. Ejemplos de IDs disponibles           (mismos IDs Unity)")
+        print("8. Fuente exacta de resultados           (ruta JSON Unity)")
+        print("9. Verificacion P-M igual a Unity        (misma demanda y curva)")
+        print("10. Caso G numerico                        (JSON Unity)")
+        print("11. Tablas sismo por piso EX/EY            (sin reanalizar)")
+        print("12. Auditoria C1/C2/C3 vs G/Q/EX/EY        (superposicion)")
+        print("13. Momento-curvatura visible en Unity     (curva exportada)")
+        print("14. Capacidad P-M de un muro Unity         (registro/seccion)")
         print("15. Fuerzas internas N/V/M/T de elemento   (con ID/tag)")
         print("16. Fuerzas internas en una posicion x     (con ID/tag)")
         print("0. Salir")
@@ -3497,67 +3649,57 @@ def interactive_menu():
         if option == "0":
             return
         if option == "1":
-            print_global_summary(live_transfer, seismic)
+            validator.summary()
         elif option == "2":
             wanted_id = input("ID de la viga, ej. B3002_V60/80 o 359: ").strip()
-            print(json.dumps(query_beam(live_transfer, wanted_id) or query_item(data, live_transfer, q_q, wanted_id), indent=2, ensure_ascii=False))
+            validator.beam_report(wanted_id)
         elif option == "3":
-            wanted_id = input("ID de la losa, ej. L1, L2 o D101: ").strip()
-            print(json.dumps(query_slab(data, q_q, wanted_id) or query_item(data, live_transfer, q_q, wanted_id), indent=2, ensure_ascii=False))
+            wanted_id = input("ID de la losa, ej. DS01: ").strip()
+            validator.slab_report(wanted_id)
         elif option == "4":
-            print_seismic_by_floor(seismic)
+            validator.seismic_report(detailed=False)
         elif option == "5":
-            lambdas = ask_lambdas()
-            superposition = superposition_check(data, live_transfer, seismic, lambdas)
-            with open(OUTPUT_PATH, encoding="utf-8") as file:
-                result = json.load(file)
-            result["parte_C_superposicion"] = superposition
-            write_json(OUTPUT_PATH, result)
-            print_superposition(superposition)
+            combo_name, lambdas = ask_load_combination("respuesta global")
+            custom = lambdas if combo_name == "PERSONALIZADA" else None
+            validator.combination_report(combo_name, custom)
         elif option == "6":
-            capacity = fiber_section_capacity()
-            plot_capacity(capacity)
-            export_capacity_for_unity(capacity)
-            with open(OUTPUT_PATH, encoding="utf-8") as file:
-                result = json.load(file)
-            result["parte_D_capacidad_HA"] = capacity
-            write_json(OUTPUT_PATH, result)
-            print_capacity(capacity)
+            section_id = input("Seccion de capacidad [COL70/70_FIBER]: ").strip() or "COL70/70_FIBER"
+            validator.capacity_report(section_id)
         elif option == "7":
-            print_id_examples(data, live_transfer)
+            validator.print_ids()
         elif option == "8":
-            print(f"\nJSON completo: {OUTPUT_PATH}")
+            validator.print_source()
         elif option == "9":
-            lambdas = ask_lambdas()
-            verdict = verify_building(data, live_transfer, seismic, lambdas)
-            print_verification(verdict, q_q, seismic_coeff)
+            combo_name, lambdas = ask_load_combination("verificacion P-M")
+            custom = lambdas if combo_name == "PERSONALIZADA" else None
+            validator.pm_verification(combo_name, custom)
         elif option == "10":
-            report = gravity_case_report(data)
-            save_result_section("parte_G_caso_gravedad", report)
-            print_gravity(report)
+            validator.gravity_report()
         elif option == "11":
-            report = seismic_floor_tables(data, live_transfer, seismic)
-            save_result_section("parte_B_tablas_sismo_por_piso", report)
-            print_seismic_tables(report)
+            validator.seismic_report(detailed=True)
         elif option == "12":
-            report = superposition_check_multi(data, live_transfer, seismic, COMBINACIONES_NCH433)
-            save_result_section("parte_C_superposicion_3_combinaciones", report)
-            print_superposition_multi(report)
+            validator.superposition_report()
         elif option == "13":
-            report = sensitivity_mphi()
-            save_result_section("parte_D2_sensibilidad_M_phi", report)
+            validator.capacity_report("COL70/70_FIBER")
         elif option == "14":
-            report = wall_pm_curve()
-            save_result_section("parte_E2_muro_PM", report)
+            wanted_id = input("Registro de muro o sectionId [1]: ").strip() or "1"
+            validator.wall_capacity_report(wanted_id)
         elif option == "15":
             wanted_id = input("ID/tag del elemento, ej. B3002_V60/80, 359 o COL...: ").strip()
             combo_name, lambdas = ask_load_combination()
-            report = internal_forces_report(data, live_transfer, seismic, wanted_id, combo_name, lambdas)
-            print_internal_forces_report(report)
+            custom = lambdas if combo_name == "PERSONALIZADA" else None
+            validator.internal_force_report(wanted_id, combo_name, custom)
         elif option == "16":
             wanted_id = input("ID/tag del elemento, ej. B3002_V60/80, 359 o COL...: ").strip()
             combo_name, lambdas = ask_load_combination()
-            print_internal_forces_at_position(data, live_transfer, seismic, wanted_id, combo_name, lambdas)
+            element = validator.resolve_element(wanted_id)
+            if element:
+                length = validator.element_length(element)
+                position = ask_float(f"Posicion x desde nodo I [0..{length:.3f} m]", 0.5 * length)
+                custom = lambdas if combo_name == "PERSONALIZADA" else None
+                validator.internal_force_report(wanted_id, combo_name, custom, position)
+            else:
+                print(f"No existe un elemento Unity con ID/tag '{wanted_id}'.")
         else:
             print("Opcion no valida.")
 
@@ -3616,7 +3758,7 @@ def main():
 
     if args.verifica:
         lambdas = {"G": args.lambdaG, "Q": args.lambdaQ, "EX": args.lambdaEX, "EY": args.lambdaEY}
-        verdict = verify_building(data, live_transfer, seismic, lambdas)
+        verdict = verify_building(data, live_transfer, seismic, lambdas, "PERSONALIZADA")
         print_verification(verdict, q_q, args.coef_sismo)
         return
 
