@@ -29,18 +29,14 @@ public static class StructuralARValidation
     {
         Require(AssetDatabase.LoadAssetAtPath<SceneAsset>(StructuralARSceneSetup.ScenePath) != null,
             "Falta StructuralARScene.");
-        XRReferenceImageLibrary library = AssetDatabase.LoadAssetAtPath<XRReferenceImageLibrary>(StructuralARSceneSetup.ImageLibraryPath);
-        Require(library != null && library.count == 1, "Reference Image Library invalida.");
-        Require(library[0].name == StructuralARSceneSetup.MarkerName, "Nombre de imagen de referencia incorrecto.");
-        Require(library[0].specifySize && Vector2.Distance(library[0].size, new Vector2(0.18f, 0.18f)) < 0.0001f,
-            "Dimension fisica del marcador incorrecta.");
-
         GameObject environment = AssetDatabase.LoadAssetAtPath<GameObject>(StructuralARSceneSetup.EnvironmentPath);
         Require(environment != null, "Falta el prefab de entorno XR Simulation.");
         Require(environment.GetComponents<Component>().Any(component => component != null && component.GetType().Name == "SimulationEnvironment"),
             "El prefab no tiene SimulationEnvironment.");
-        Require(environment.GetComponentsInChildren<Component>(true).Any(component => component != null && component.GetType().Name == "SimulatedTrackedImage"),
-            "El entorno no tiene SimulatedTrackedImage.");
+        Require(environment.GetComponentsInChildren<Collider>(true).Length >= 2,
+            "El entorno no contiene la viga y columna fisicas de practica.");
+        Require(!environment.GetComponentsInChildren<Component>(true).Any(component => component != null && component.GetType().Name == "SimulatedTrackedImage"),
+            "El entorno sigue dependiendo de una imagen de referencia.");
 
         XRGeneralSettings general = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
         Require(general != null && general.Manager != null &&
@@ -49,37 +45,73 @@ public static class StructuralARValidation
         Require(general.InitManagerOnStart,
             "El inicio automatico de XR Simulation no esta habilitado para Play Mode.");
 
+        XRGeneralSettings android = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
+        bool arCoreReady = android != null && android.Manager != null &&
+                           android.Manager.activeLoaders.Any(loader => loader != null && loader.GetType().FullName == "UnityEngine.XR.ARCore.ARCoreLoader");
+        if (!arCoreReady)
+            Debug.LogWarning("[StructuralARValidation] XR Simulation puede validarse, pero ARCore debe resolverse y " +
+                             "habilitarse antes de probar la camara del telefono.");
+
         Scene previous = SceneManager.GetActiveScene();
-        Scene scene = EditorSceneManager.OpenScene(StructuralARSceneSetup.ScenePath, OpenSceneMode.Additive);
+        bool alreadyOpen = previous.IsValid() && previous.path == StructuralARSceneSetup.ScenePath;
+        Scene scene = alreadyOpen ? previous :
+            EditorSceneManager.OpenScene(StructuralARSceneSetup.ScenePath, OpenSceneMode.Additive);
         StructuralARController controller = scene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<StructuralARController>(true)).FirstOrDefault();
-        ARTrackedImageManager images = scene.GetRootGameObjects()
-            .SelectMany(root => root.GetComponentsInChildren<ARTrackedImageManager>(true)).FirstOrDefault();
+        ARRaycastManager raycasts = scene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<ARRaycastManager>(true)).FirstOrDefault();
         ARAnchorManager anchors = scene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<ARAnchorManager>(true)).FirstOrDefault();
-        Require(controller != null && images != null && anchors != null, "Faltan componentes AR en la escena.");
-        Require(ReferenceEquals(images.referenceLibrary, library), "La escena no usa la biblioteca MCOC.");
+        Require(controller != null && raycasts != null && anchors != null, "Faltan raycast/anchor AR en la escena.");
+        Require(scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<ARTrackedImageManager>(true)).Count() == 0,
+            "La escena todavia tiene un manager de imagenes.");
         Require(controller.preferredElementTag == StructuralARSceneSetup.ElementTag, "El elementTag configurado cambio.");
-        EditorSceneManager.CloseScene(scene, true);
-        if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
+        Require(controller.useFreePlacement && controller.fallbackDistanceMeters >= 0.3f,
+            "La escena debe iniciar permitiendo fijar I y J sin puntos AR.");
+        if (!alreadyOpen) EditorSceneManager.CloseScene(scene, true);
+        if (!alreadyOpen && previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
 
         TextAsset json = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/estructura_p1l4_unity.json");
         Require(json != null, "Falta el JSON exportado por OpenSees.");
         StructureData data = JsonUtility.FromJson<StructureData>(json.text);
-        ElementData column = (data.elements ?? new ElementData[0]).FirstOrDefault(element =>
-            element != null && element.type == "columna" && element.elementTag == StructuralARSceneSetup.ElementTag);
-        Require(column != null, "El elementTag AR no corresponde a una columna real.");
-        Require((data.nodes ?? new NodeData[0]).Any(node => node.id == column.nodeI) &&
-                (data.nodes ?? new NodeData[0]).Any(node => node.id == column.nodeJ),
-            "La columna AR no conserva nodos reales.");
-
         UnityData.LoadData(data);
-        foreach (string combo in new[] { "C1", "C2", "C3" })
-            Require(UnityData.TryGetSectionForces(column.id, combo, 0.5f, out _),
-                "Faltan fuerzas OpenSees " + combo + " para " + column.elementTag + ".");
+        ElementData beam = (data.elements ?? new ElementData[0]).FirstOrDefault(element =>
+            element != null && element.type == "viga" && element.elementTag == StructuralARSceneSetup.ElementTag);
+        ElementData column = (data.elements ?? new ElementData[0]).FirstOrDefault(element =>
+            element != null && element.type == "columna" &&
+            (data.nodes ?? new NodeData[0]).Any(node => node.id == element.nodeI) &&
+            (data.nodes ?? new NodeData[0]).Any(node => node.id == element.nodeJ));
+        Require(beam != null && column != null, "Faltan viga E1_72 o columna real.");
+        foreach (ElementData member in new[] { beam, column })
+        {
+            NodeData i = data.nodes.FirstOrDefault(node => node.id == member.nodeI);
+            NodeData j = data.nodes.FirstOrDefault(node => node.id == member.nodeJ);
+            Require(i != null && j != null, "Faltan nodos I/J de " + member.elementTag + ".");
+            Vector3 realI = new Vector3(i.x, i.z, i.y);
+            Vector3 realJ = new Vector3(j.x, j.z, j.y);
+            float realLength = Vector3.Distance(realI, realJ);
+            Require(realLength > 0.05f,
+                "El modelo no tiene una longitud util para " + member.elementTag + ".");
+            string practiceName = member.type == "columna"
+                ? "Columna fisica de practica (sin ID automatico)"
+                : "Viga fisica de practica (sin ID automatico)";
+            Transform practice = environment.transform.Find(practiceName);
+            Require(practice != null, "Falta el objeto de practica para " + member.elementTag + ".");
+            float practiceLength = member.type == "columna"
+                ? practice.localScale.y : practice.localScale.x;
+            Require(Mathf.Abs(practiceLength - realLength) < 0.0001f,
+                "La longitud del objeto de practica no coincide con el JSON en " + member.elementTag + ".");
+        }
+        foreach (ElementData member in new[] { beam, column })
+        {
+            foreach (string combo in new[] { "C1", "C2", "C3" })
+                foreach (float t in new[] { 0f, 0.5f, 1f })
+                    Require(UnityData.TryGetSectionForces(member.id, combo, t, out _),
+                        "Faltan fuerzas OpenSees " + combo + " en " + t + " para " + member.elementTag + ".");
+        }
 
-        Debug.Log("[StructuralARValidation][PASS] REFERENCE IMAGE -> SIMULATED TRACKED IMAGE -> " +
-                  "AR SCENE -> ANCHOR MANAGER -> " + column.elementTag + " -> OPENSEES C1/C2/C3");
+        Debug.Log("[StructuralARValidation][PASS] I + J USER POINTS -> FACE -> AR ANCHOR -> " +
+                  beam.elementTag + " / " + column.elementTag + " -> DIAGRAMS -> OPENSEES C1/C2/C3");
     }
 
     private static void Require(bool condition, string message)

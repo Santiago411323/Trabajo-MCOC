@@ -22,7 +22,7 @@ public static class StructuralARSceneSetup
     public const string EnvironmentPath = "Assets/StructuralAR/Simulation/MCOCStructuralSimulationEnvironment.prefab";
     public const string PreferencesPath = "Assets/XR/UserSimulationSettings/Resources/XRSimulationPreferences.asset";
     public const string MarkerName = "MCOC_STRUCTURAL_MARKER";
-    public const string ElementTag = "E1_229";
+    public const string ElementTag = "E1_72";
 
     [InitializeOnLoadMethod]
     private static void BootstrapMissingAssets()
@@ -54,7 +54,7 @@ public static class StructuralARSceneSetup
         CreateAll(false);
         EditorUtility.DisplayDialog(
             "Structural AR listo",
-            "Se crearon la escena independiente, la biblioteca de imagenes y el entorno XR Simulation.\n\n" +
+            "Se crearon la escena independiente y el entorno XR Simulation sin marcador.\n\n" +
             "Abre Assets/Scenes/StructuralARScene y presiona Play.",
             "Aceptar");
     }
@@ -69,15 +69,14 @@ public static class StructuralARSceneSetup
         Directory.CreateDirectory("Assets/XR/UserSimulationSettings/Resources");
 
         EnableXRSimulationLoader();
-        Texture2D marker = CreateOrLoadMarkerTexture();
-        XRReferenceImageLibrary library = CreateOrUpdateImageLibrary(marker);
-        GameObject environment = CreateOrUpdateSimulationEnvironment(marker);
+        EnableAndroidARCoreLoader();
+        GameObject environment = CreateOrUpdateSimulationEnvironment();
         SetActiveSimulationEnvironment(environment);
-        CreateOrUpdateScene(library);
+        CreateOrUpdateScene();
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[StructuralARSetup] Escena, biblioteca, entorno y XR Simulation configurados.");
+        Debug.Log("[StructuralARSetup] Escena sin marcador, entorno y XR Simulation configurados.");
         if (batch) StructuralARValidation.ValidateOrThrow();
     }
 
@@ -114,6 +113,40 @@ public static class StructuralARSceneSetup
         // before the AR scene begins.
         general.InitManagerOnStart = true;
 
+        EditorUtility.SetDirty(general);
+        EditorUtility.SetDirty(general.Manager);
+    }
+
+    private static void EnableAndroidARCoreLoader()
+    {
+        const string settingsDirectory = "Assets/XR/Settings";
+        const string settingsPath = settingsDirectory + "/XRGeneralSettingsPerBuildTarget.asset";
+        Directory.CreateDirectory(settingsDirectory);
+
+        XRGeneralSettings general = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
+        if (general == null)
+        {
+            XRGeneralSettingsPerBuildTarget perTarget = AssetDatabase.LoadAssetAtPath<XRGeneralSettingsPerBuildTarget>(settingsPath);
+            if (perTarget == null)
+                throw new InvalidOperationException("Faltan los settings XR compartidos.");
+            if (!perTarget.HasManagerSettingsForBuildTarget(BuildTargetGroup.Android))
+                perTarget.CreateDefaultManagerSettingsForBuildTarget(BuildTargetGroup.Android);
+            general = perTarget.SettingsForBuildTarget(BuildTargetGroup.Android);
+        }
+        if (general == null || general.Manager == null)
+            throw new InvalidOperationException("XR Plug-in Management no creo sus settings para Android.");
+
+        const string loaderType = "UnityEngine.XR.ARCore.ARCoreLoader";
+        bool alreadyAssigned = general.Manager.activeLoaders.Any(loader => loader != null && loader.GetType().FullName == loaderType);
+        if (!alreadyAssigned && !XRPackageMetadataStore.AssignLoader(general.Manager, loaderType, BuildTargetGroup.Android))
+        {
+            Debug.LogWarning("[StructuralARSetup] ARCore aun no esta disponible. Package Manager debe resolver " +
+                             "com.unity.xr.arcore 6.6.2 antes de crear el build Android.");
+            return;
+        }
+
+        general.InitManagerOnStart = true;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
         EditorUtility.SetDirty(general);
         EditorUtility.SetDirty(general.Manager);
     }
@@ -188,23 +221,40 @@ public static class StructuralARSceneSetup
         return library;
     }
 
-    private static GameObject CreateOrUpdateSimulationEnvironment(Texture2D marker)
+    private static GameObject CreateOrUpdateSimulationEnvironment()
     {
         Type environmentType = FindComponentType("SimulationEnvironment");
-        Type trackedImageType = FindComponentType("SimulatedTrackedImage");
-        if (environmentType == null || trackedImageType == null)
-            throw new InvalidOperationException("AR Foundation no expuso SimulationEnvironment/SimulatedTrackedImage.");
+        if (environmentType == null)
+            throw new InvalidOperationException("AR Foundation no expuso SimulationEnvironment.");
 
         GameObject root = new GameObject("MCOC Structural XR Environment");
         Component simulationEnvironment = root.AddComponent(environmentType);
         ConfigureSimulationEnvironment(simulationEnvironment);
 
-        GameObject markerObject = new GameObject(MarkerName);
-        markerObject.transform.SetParent(root.transform, false);
-        markerObject.transform.localPosition = Vector3.zero;
-        markerObject.transform.localRotation = Quaternion.identity;
-        Component simulatedImage = markerObject.AddComponent(trackedImageType);
-        ConfigureSimulatedTrackedImage(simulatedImage, marker);
+        // The practice members have the same dimensions as their exported
+        // counterparts. Otherwise a 1:1 I-J calibration cannot be completed
+        // in XR Simulation.
+        TextAsset json = AssetDatabase.LoadAssetAtPath<TextAsset>(
+            "Assets/Resources/estructura_p1l4_unity.json");
+        if (json == null) throw new InvalidOperationException("Falta el JSON estructural para el entorno AR.");
+        StructureData data = JsonUtility.FromJson<StructureData>(json.text);
+        ElementData beam = data.elements.FirstOrDefault(e => e != null && e.elementTag == ElementTag);
+        ElementData column = data.elements.FirstOrDefault(e => e != null && e.elementTag == "E1_229");
+        if (beam == null || column == null)
+            throw new InvalidOperationException("Faltan E1_72 o E1_229 para practicar la calibracion.");
+        float beamLength = MemberLength(data, beam);
+        float columnLength = MemberLength(data, column);
+
+        GameObject sampleBeam = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        sampleBeam.name = "Viga fisica de practica (sin ID automatico)";
+        sampleBeam.transform.SetParent(root.transform, false);
+        sampleBeam.transform.localPosition = Vector3.zero;
+        sampleBeam.transform.localScale = new Vector3(beamLength, beam.height_m, beam.width_m);
+        GameObject sampleColumn = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        sampleColumn.name = "Columna fisica de practica (sin ID automatico)";
+        sampleColumn.transform.SetParent(root.transform, false);
+        sampleColumn.transform.localPosition = new Vector3(beamLength * 0.5f, -columnLength * 0.5f, 0f);
+        sampleColumn.transform.localScale = new Vector3(column.width_m, columnLength, column.height_m);
 
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, EnvironmentPath);
         UnityEngine.Object.DestroyImmediate(root);
@@ -212,50 +262,38 @@ public static class StructuralARSceneSetup
         return prefab;
     }
 
+    private static float MemberLength(StructureData data, ElementData member)
+    {
+        NodeData i = data.nodes.FirstOrDefault(n => n.id == member.nodeI);
+        NodeData j = data.nodes.FirstOrDefault(n => n.id == member.nodeJ);
+        if (i == null || j == null)
+            throw new InvalidOperationException("Faltan nodos de " + member.elementTag + ".");
+        float length = Vector3.Distance(new Vector3(i.x, i.y, i.z), new Vector3(j.x, j.y, j.z));
+        if (length < 0.01f) throw new InvalidOperationException("Longitud invalida en " + member.elementTag + ".");
+        return length;
+    }
+
     private static void ConfigureSimulationEnvironment(Component component)
     {
-        // The simulated camera starts looking down at a horizontal marker. This
-        // keeps the AR column vertical and resting on the marker, as it will on
-        // a table or floor during the later physical test.
-        Pose start = new Pose(new Vector3(0f, 0.65f, -1.1f), Quaternion.Euler(25f, 0f, 0f));
-        PropertyInfo property = component.GetType().GetProperty(
-            "cameraStartingPose", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (property != null && property.CanWrite && property.PropertyType == typeof(Pose))
-        {
-            property.SetValue(component, start);
-            return;
-        }
-
+        // The simulated camera starts facing a beam and a column. They are
+        // visual practice objects, never automatically identified as model IDs.
+        Pose start = new Pose(new Vector3(0f, 0f, -8f), Quaternion.identity);
         SerializedObject serialized = new SerializedObject(component);
-        SerializedProperty iterator = serialized.GetIterator();
-        SerializedProperty poseProperty = null;
-        if (iterator.NextVisible(true))
-        {
-            do
-            {
-                string key = (iterator.name + " " + iterator.displayName).ToLowerInvariant();
-                if (key.Contains("camera") && key.Contains("starting") && key.Contains("pose"))
-                {
-                    poseProperty = iterator.Copy();
-                    break;
-                }
-            } while (iterator.NextVisible(false));
-        }
-
-        if (poseProperty != null)
-        {
-            SerializedProperty position = poseProperty.FindPropertyRelative("m_Position") ??
-                                          poseProperty.FindPropertyRelative("position");
-            SerializedProperty rotation = poseProperty.FindPropertyRelative("m_Rotation") ??
-                                          poseProperty.FindPropertyRelative("rotation");
-            if (position != null) position.vector3Value = start.position;
-            if (rotation != null) rotation.quaternionValue = start.rotation;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-        else
-        {
-            Debug.LogWarning("[StructuralARSetup] Se usara la pose inicial por defecto del entorno XR Simulation.");
-        }
+        SerializedProperty bounds = serialized.FindProperty("m_CameraMovementBounds");
+        SerializedProperty pose = serialized.FindProperty("m_CameraStartingPose");
+        if (bounds == null || pose == null)
+            throw new InvalidOperationException("XR Simulation no expuso los limites o pose inicial de camara.");
+        // Wide enough to stand at either node and walk around the 7.51 m beam.
+        bounds.boundsValue = new Bounds(new Vector3(0f, -1f, -2f), new Vector3(16f, 12f, 20f));
+        SerializedProperty position = pose.FindPropertyRelative("position") ??
+                                      pose.FindPropertyRelative("m_Position");
+        SerializedProperty rotation = pose.FindPropertyRelative("rotation") ??
+                                      pose.FindPropertyRelative("m_Rotation");
+        if (position == null || rotation == null)
+            throw new InvalidOperationException("XR Simulation no expuso la pose inicial de camara.");
+        position.vector3Value = start.position;
+        rotation.quaternionValue = start.rotation;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void ConfigureSimulatedTrackedImage(Component component, Texture2D marker)
@@ -310,10 +348,11 @@ public static class StructuralARSceneSetup
             throw new InvalidOperationException("XRSimulationPreferences no expuso Environment Prefab.");
     }
 
-    private static void CreateOrUpdateScene(XRReferenceImageLibrary library)
+    private static void CreateOrUpdateScene()
     {
         Scene previous = SceneManager.GetActiveScene();
-        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,
+            string.IsNullOrEmpty(previous.path) ? NewSceneMode.Single : NewSceneMode.Additive);
         scene.name = "StructuralARScene";
         SceneManager.SetActiveScene(scene);
 
@@ -324,9 +363,9 @@ public static class StructuralARSceneSetup
 
         GameObject originObject = new GameObject("XR Origin (Structural AR)");
         XROrigin origin = originObject.AddComponent<XROrigin>();
-        ARTrackedImageManager imageManager = originObject.AddComponent<ARTrackedImageManager>();
-        imageManager.referenceLibrary = library;
-        imageManager.requestedMaxNumberOfMovingImages = 1;
+        ARRaycastManager raycastManager = originObject.AddComponent<ARRaycastManager>();
+        originObject.AddComponent<ARPointCloudManager>();
+        originObject.AddComponent<ARPlaneManager>();
         ARAnchorManager anchorManager = originObject.AddComponent<ARAnchorManager>();
 
         GameObject cameraObject = new GameObject("Main Camera");
@@ -346,12 +385,13 @@ public static class StructuralARSceneSetup
         GameObject controllerObject = new GameObject("Structural AR Controller");
         StructuralARController controller = controllerObject.AddComponent<StructuralARController>();
         controller.structureJson = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/estructura_p1l4_unity.json");
-        controller.trackedImageManager = imageManager;
+        controller.raycastManager = raycastManager;
         controller.anchorManager = anchorManager;
         controller.arCamera = camera;
-        controller.markerName = MarkerName;
+        controller.useFreePlacement = true;
+        controller.fallbackDistanceMeters = 3f;
         controller.preferredElementTag = ElementTag;
-        controller.uniformScale = 0.12f;
+        controller.uniformScale = 1f;
         controller.positionOffsetMeters = Vector3.zero;
         controller.rotationOffsetEuler = Vector3.zero;
 

@@ -33,6 +33,19 @@
         "com.unity.modules.physics": "1.0.0"
       }
     },
+    "com.unity.xr.arcore": {
+      "version": "6.6.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.xr.core-utils": "2.6.0",
+        "com.unity.xr.management": "4.4.0",
+        "com.unity.xr.arfoundation": "6.6.2",
+        "com.unity.modules.androidjni": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.xr.arfoundation": {
       "version": "6.6.2",
       "depth": 0,
@@ -80,6 +93,14 @@
         "com.unity.xr.legacyinputhelpers": "2.1.11"
       },
       "url": "https://packages.unity.com"
+    },
+    "com.unity.modules.androidjni": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.jsonserialize": "1.0.0"
+      }
     },
     "com.unity.modules.animation": {
       "version": "1.0.0",

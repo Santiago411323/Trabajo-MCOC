@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.unity.xr.arcore": "6.6.2",
     "com.unity.xr.arfoundation": "6.6.2",
     "com.unity.xr.management": "4.5.3",
     "com.unity.modules.animation": "1.0.0",
