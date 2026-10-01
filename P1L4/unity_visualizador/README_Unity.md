@@ -133,3 +133,33 @@ Muros: los 75 paneles muestran su demanda P/M del analisis (combo activo) sobre 
 - Ver `reports/correccion_modelo_semana5.md` para el detalle y la verificacion.
 - Carga movil: boton **Caminar automatico** (sobre una viga seleccionada recorre la viga de I a J y vuelve; si no, recorre la losa). Los botones `-`/`+` ya no saltan a 0 %/100 %. La carga de la persona sobre la losa se reparte a los apoyos que la rodean (viga o muro mas cercano en +X, -X, +Z, -Z; reparto por franjas cruzadas, suave con la distancia) y la viga seleccionada recibe su fraccion aunque la persona no la pise; el panel muestra el reparto completo.
 - El panel "Diagramas de ..." acepta vigas, columnas y enlaces.
+## Entorno visual del edificio
+
+El visualizador incorpora dos plataformas de pasto bajo los grupos de apoyos empotrados
+de los niveles 0 y −4 m. Un talud de roca une las plataformas en el espacio libre entre
+ambas. Las superficies quedan por debajo de las vigas del nivel base y pequeñas bases
+de piedra completan la separación hasta los símbolos de apoyo.
+
+Las plataformas se extienden 12 m hacia el fondo y el terreno exterior. Una terraza
+alta a Y=4 (vertical de Unity), junto al extremo +X del voladizo, toca la cara exterior
+del edificio y ocupa el mismo ancho en Z que la plataforma del nivel 0. El talud rocoso
+desciende en dirección −X a lo largo de todo ese ancho. Puede cubrir parte de los
+marcos inferiores; se oculta junto con la terraza mediante `Terraza Y=4`.
+
+Los cerramientos salmón se generan dentro de los marcos exteriores entre columnas y
+vigas, incluyendo los tramos que se unen a los extremos de los muros estructurales
+exteriores. Los paneles existentes se conservan y los voladizos en Z quedan libres.
+Estos muros decorativos también respetan el filtro por piso.
+
+En `Capas y filtro`, `Terreno`, `Terraza Y=4` y `Muros salmon` permiten ocultar los
+grupos por separado. `Techo gris` muestra una cubierta plana sobre las losas superiores
+y otras áreas de techo expuestas que no tienen una losa encima. Respeta la huella de
+las losas y el filtro por piso. L96 tiene una cubierta completa, incluso bajo L99.
+`Escaleras` muestra dos tramos grises decorativos: E1_207 → E1_218 y E1_220 → terraza Y=4.
+Se ubican usando las coordenadas de las vigas, tienen descansos y respetan el filtro
+por piso. No se incorporan a la lista de elementos analíticos ni a la selección.
+`Solo estructura` oculta los cinco grupos decorativos
+y `Mostrar todo` los restablece.
+El entorno es decorativo: no tiene colliders ni elementos seleccionables y no modifica
+geometría analítica, apoyos, cargas ni resultados OpenSees. Se genera al abrir el modelo;
+no se agrega a la escena AR.
