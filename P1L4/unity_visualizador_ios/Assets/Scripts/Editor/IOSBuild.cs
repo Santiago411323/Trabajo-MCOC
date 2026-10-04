@@ -40,7 +40,7 @@ public static class IOSBuild
         PlayerSettings.iOS.cameraUsageDescription =
             "La camara permite colocar elementos estructurales y consultar sus resultados en realidad aumentada.";
         PlayerSettings.iOS.targetOSVersionString = "15.0";
-        PlayerSettings.iOS.buildNumber = "4";
+        PlayerSettings.iOS.buildNumber = "10";
         PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly;
         PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.iOS, ScriptingImplementation.IL2CPP);
@@ -67,6 +67,11 @@ public static class IOSBuild
         if (!assigned && !XRPackageMetadataStore.AssignLoader(general.Manager, LoaderType, BuildTargetGroup.iOS))
             throw new InvalidOperationException(
                 "ARKit no pudo activarse. Resuelve ARKit 6.6.2 e instala iOS Build Support en Unity Hub.");
+        if (!general.Manager.activeLoaders.Any(loader => loader is Google.XR.Cardboard.XRLoader) &&
+            !XRPackageMetadataStore.AssignLoader(general.Manager, "Google.XR.Cardboard.XRLoader", BuildTargetGroup.iOS))
+            throw new InvalidOperationException("No se pudo registrar el proveedor Cardboard iOS.");
+        // ARKit remains first at startup. Cardboard is started explicitly after AR is stopped.
+        general.Manager.TrySetLoaders(general.Manager.activeLoaders.OrderBy(loader => loader.GetType().FullName == LoaderType ? 0 : 1).ToList());
         general.InitManagerOnStart = true;
         EditorUtility.SetDirty(settings);
         EditorUtility.SetDirty(general);
@@ -150,7 +155,10 @@ public static class IOSBuild
         ValidateIOS();
         StructuralARValidation.ValidateOrThrow();
         StructuralARSectorValidation.Validate();
-        string folder = Path.Combine(ProjectRoot, "Builds", "iOS", "MCOC_Xcode_" + Stamp());
+        // ARKit's generated image catalog exceeds Windows' legacy path limit in a dated project subfolder.
+        string folder = Path.GetFullPath(Path.Combine(ProjectRoot, "..", "..", "xc"));
+        if (Directory.Exists(folder) && !Directory.Exists(Path.Combine(folder,"Unity-iPhone.xcodeproj")))
+            throw new BuildFailedException("La carpeta xc ya existe y no es una exportacion Xcode; se conserva sin cambios.");
         LastPackagedBuildPath = null;
         BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
             scenes = new[] { StructuralARSceneSetup.ScenePath },

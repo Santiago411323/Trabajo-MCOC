@@ -1,5 +1,90 @@
 # MCOC — copia independiente para iPhone
 
+## Modo VR del edificio (build 10)
+
+El build 10 elimina el diagnóstico Bluetooth y sus botones en AR y VR. El
+recorrido por mirada avanza a 1,8 m/s. El ambiente utiliza un shader explícito
+en Resources, sin iluminación, compatible con estéreo y con caras visibles
+desde ambos lados. Conserva texturas y colores del modelo y comprueba la
+activación de las tres plataformas, ambos tramos de escalera, todos los muros
+salmón y techos. `Ambiente` oculta/restaura estos grupos completos. Los objetos
+siguen siendo decorativos y no cambian el análisis ni el proyecto Android.
+
+El build 9 añade cruceta por mirada: `Avanzar`, `Retroceder`, `Izquierda` y
+`Derecha`. Mirar una flecha durante 0,8 s inicia movimiento a 1,8 m/s, con un
+anillo de progreso; apartar la mirada detiene inmediatamente el avance. La
+dirección queda fijada al apuntar, en el marco horizontal del menú, para que el
+gesto de mirar un control no cambie el rumbo durante la marcha. Cambiar de piso,
+seleccionar un elemento detiene la marcha. `Detener` reemplaza
+el antiguo avance automático. Se comprueban losas, aberturas y obstáculos al moverse.
+
+El menú acompaña siempre la posición y se recoloca tras giros de más de 35 grados;
+permanece estable mientras se apunta a sus controles para poder alcanzarlos con
+la mira central. Seleccionar vigas o columnas dibuja su eje y el diagrama en una
+capa visible por la cámara, sobre la geometría para evitar oclusión. Se muestran
+I/J, el mismo elementTag/ID y valores I/centro/J. `N/V/M` recorre N, Vy, Vz, My y
+Mz, `C1/C2/C3` cambia combinación y `Diagrama` oculta/restaura la gráfica. La altura
+del gráfico está normalizada: no es una deformada ni cambia valores de OpenSees.
+Los momentos positivos en vigas se dibujan debajo del eje. El editor valida las
+cuatro direcciones, activación y parada, dirección fija, límites/obstáculos, menú
+y diagramas de viga/columna. La experiencia del visor requiere prueba en iPhone.
+
+El build 7 permite autorrotación horizontal a izquierda y derecha para insertar el
+iPhone en el visor por cualquiera de los dos lados sin dejar la imagen boca abajo.
+Se espera a que iOS resuelva la orientación antes de iniciar Cardboard, que sigue
+recibiendo la orientación real cada frame. Al salir se restauran la orientación
+y las cuatro preferencias de autorrotación que tenía AR. Validar ambos lados en
+el iPhone: el editor no reproduce la rotación física de la pantalla ni sus sensores.
+
+El build 6 conecta la cámara a `TrackedPoseDriver` y `<XRHMD>/centerEyeRotation`,
+como el ejemplo oficial de Cardboard. Actualiza la orientación durante cada frame
+y antes de renderizar; los cambios de piso y el recorrido conservan el control de
+la posición. Se verifica que el subsistema de entrada Cardboard también esté activo.
+La prueba del editor inyecta giros de yaw, pitch y roll y comprueba que la cámara
+gira sin desplazar los ojos. El seguimiento de sensores nativos requiere probar
+este build en el iPhone.
+
+La misma aplicación ofrece `Modo VR · edificio` desde AR. Cardboard se integra
+mediante el plugin oficial `com.google.xr.cardboard` 1.35.0, fijado al commit
+`36ac9815b8f191fe11e149b7f323368fa86655a6`; ARKit sigue siendo el proveedor de inicio.
+Al entrar, la sesión AR y su cámara se pausan antes de iniciar Cardboard. `Salir AR`
+detiene Cardboard y recupera AR y su cámara. La transición nativa debe comprobarse
+en iPhone: la simulación del editor no certifica el seguimiento ni el render estéreo.
+
+El teléfono se coloca horizontal dentro de un visor compatible. Si no hay perfil
+guardado, se solicita el QR del visor; la rueda de Cardboard permite cambiarlo.
+El modo VR muestra el edificio a escala en metros, con los ojos a 1,60 m sobre el
+piso visual. Sigue la orientación de la cabeza; el avance es virtual, no se obtiene
+la posición mediante caminar físicamente.
+
+Los controles son objetos dentro del espacio VR, visibles para ambos ojos:
+
+- `Piso -` / `Piso +`: cambian entre las elevaciones de losas del modelo, con límites
+  inferior/superior. Conservan X/Z cuando hay losa en el destino y, de lo contrario,
+  ubican al usuario en el centro de una losa del piso elegido. Detienen la marcha.
+- Cruceta: mantener la mirada 0,8 s activa la dirección; apartarla detiene el avance.
+  `Detener` también para la marcha. Se respetan losas, aberturas y obstáculos.
+- Mira una viga o columna y mantén la mira 1,2 segundos, o pulsa el botón del visor,
+  para resaltarla. El panel muestra el mismo `elementTag`, ID, nodos I/J y fuerzas
+  en I/centro/J. La selección detiene la marcha.
+- `C1/C2/C3` alterna el caso; `N/V/M` alterna N, Vy, Vz, My y Mz. La línea del elemento
+  y el diagrama se muestran sobre la geometría. La altura gráfica está normalizada.
+- `Ambiente`: oculta/restaura pasto, terraza Y=4, talud hacia −X, muros salmón,
+  techos grises —incluido L96 completo— y escaleras decorativas.
+- `Centrar`: detiene el avance, recentra la orientación y coloca el menú delante.
+- `Salir AR`: vuelve a la cámara AR. También se admite el botón de salida de Cardboard.
+
+Los controles se activan por mirada o pulsador. Para repetir una acción por mirada,
+aparta primero la mira del botón y vuelve a apuntar. Los pisos interiores tienen
+superficies visuales opacas para el recorrido. Todo el entorno es decorativo; no
+agrega cargas, apoyos ni elementos al análisis, y conserva el JSON de OpenSees.
+
+`StructuralVRValidation.ValidateBatch` prueba en editor dos ciclos AR/VR/AR, cambio
+de piso y límites, ambiente y correspondencia E1_94/C1. En editor se mira con botón
+derecho del mouse; la vista es una previsualización de un ojo. El estéreo, QR, cámara
+al regresar y seguimiento de cabeza se validan al compilar el ZIP Xcode en el Mac
+y ejecutar en el iPhone con el visor.
+
 Esta carpeta es un proyecto Unity separado de `P1L4/unity_visualizador` (Android). Sus Assets, Packages y ProjectSettings son copias independientes. Los scripts de exportación iOS sólo existen aquí. Conserva la escena AR de colocación libre I–J, el JSON estructural y los mismos `elementTag`.
 
 Unity: **6000.6.0f1**. AR Foundation y Apple ARKit XR Plugin: **6.6.2**. iOS mínimo configurado: **15.0**, sujeto a compatibilidad del teléfono con ARKit y a requisitos de la versión de Xcode utilizada. Los scripts se compilaron y la exportación iOS terminó correctamente en Windows. La validación de configuración y datos pasó. Quedan pendientes la compilación y firma en Xcode y la prueba física en iPhone.
@@ -20,7 +105,7 @@ El ZIP de Unity **no se abre directamente en Xcode**. El ZIP de Xcode se genera 
 3. La copia intenta configurar ARKit automáticamente al abrirse. Comprueba **Edit > Project Settings > XR Plug-in Management > iOS > ARKit**. Si faltaba el módulo iOS, instálalo y ejecuta **MCOC > iPhone > Configurar ARKit**.
 4. En **Player Settings > iOS**, ajusta tu identificador de aplicación para que sea único. El valor inicial es `com.mcoc.structuralar.ios`. No contiene tu cuenta ni certificados de Apple.
 5. Ejecuta **MCOC > iPhone > Exportar Xcode y ZIP**. Si Unity acaba de cambiar a la plataforma iOS, espera la importación y vuelve a ejecutar ese menú.
-6. Cada exportación correcta crea un ZIP nuevo, con fecha UTC y sufijo único, dentro de `unity_visualizador_ios/Entregables/`. El proyecto Xcode sin comprimir queda en `Builds/iOS/`.
+6. Cada exportación correcta crea un ZIP nuevo, con fecha UTC y sufijo único, dentro de `unity_visualizador_ios/Entregables/`. El proyecto Xcode sin comprimir queda en `xc/` en la raíz del repositorio: esta ruta corta evita el límite de rutas de Windows al copiar catálogos ARKit. La siguiente exportación reutiliza esa carpeta; los ZIP se generan con nombres únicos.
 
 El empaquetado también se ejecuta después de una compilación iOS normal desde la ventana Build de Unity. Una exportación fallida no debe considerarse entregada. Si falla el empaquetado, Unity informa el error; no entrega un ZIP parcial como válido.
 

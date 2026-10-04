@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -17,6 +18,17 @@ public class StructureViewer : MonoBehaviour
     public Material beamMaterial;
     public Material columnMaterial;
     public Material supportMaterial;
+
+    [Header("Entorno visual (sin efecto en OpenSees)")]
+    public bool showVisualTerrain = true;
+    public bool showUpperTerrace = true;
+    public bool showVisualFacades = true;
+    public bool showVisualRoof = true;
+    public bool showVisualStairs = true;
+    private GameObject visualTerrain;
+    private readonly List<GameObject> visualFacadeObjects = new List<GameObject>();
+    private readonly List<GameObject> visualRoofObjects = new List<GameObject>();
+    private readonly List<GameObject> visualStairObjects = new List<GameObject>();
 
     private Material defaultBeamMaterial;
     private Material defaultColumnMaterial;
@@ -147,6 +159,9 @@ public class StructureViewer : MonoBehaviour
         nodeMarkerObjects.Clear();
         idLabelObjects.Clear();
         localAxisObjects.Clear();
+        visualFacadeObjects.Clear();
+        visualRoofObjects.Clear();
+        visualStairObjects.Clear();
         objectFloor.Clear();
 
         CreateNodes(loadedData);
@@ -158,6 +173,9 @@ public class StructureViewer : MonoBehaviour
         CreateDiaphragms(loadedData);
         CreatePointLoads(loadedData);
         CreateSimpleEnvironment();
+        CreateVisualFacades();
+        CreateVisualRoof();
+        CreateVisualStairs();
         CreateGlobalAxes();
         CreateDiagramController();
         CreatePMPanel();
@@ -944,6 +962,10 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateSimpleEnvironment()
     {
+        visualTerrain = new GameObject("Terreno_visual_pasto_y_roca");
+        visualTerrain.transform.SetParent(transform, false);
+        visualTerrain.AddComponent<VisualSiteTerrain>().Build(loadedData, selectables.Select(s => s.GetComponent<Renderer>()));
+        UpdateVisualTerrainVisibility();
         Camera mainCamera = Camera.main;
         if (mainCamera != null)
         {
@@ -967,6 +989,38 @@ public class StructureViewer : MonoBehaviour
 
         Renderer renderer = axis.GetComponent<Renderer>();
         renderer.material = CreateMaterial(color);
+    }
+
+    private void CreateVisualFacades()
+    {
+        GameObject root = new GameObject("Muros_salmon_solo_visuales");
+        root.transform.SetParent(transform, false);
+        VisualFrameFacade facade = root.AddComponent<VisualFrameFacade>();
+        facade.Build(selectables, loadedData, (panel, floor) => RegisterFloor(panel, floor));
+        visualFacadeObjects.AddRange(facade.Panels);
+    }
+
+    private void UpdateVisualTerrainVisibility()
+    {
+        if (visualTerrain != null) visualTerrain.GetComponent<VisualSiteTerrain>().SetVisibility(showVisualTerrain, showUpperTerrace);
+    }
+
+    private void CreateVisualRoof()
+    {
+        GameObject root=new GameObject("Techos_grises_solo_visuales");root.transform.SetParent(transform,false);
+        VisualFlatRoof roof=root.AddComponent<VisualFlatRoof>();
+        roof.Build(loadedData,(piece,floor)=>RegisterFloor(piece,floor));
+        visualRoofObjects.AddRange(roof.Pieces);
+    }
+
+    private void CreateVisualStairs()
+    {
+        GameObject root = new GameObject("Escaleras_solo_visuales");
+        root.transform.SetParent(transform,false);
+        VisualStairs stairs = root.AddComponent<VisualStairs>();
+        float terraceX = visualTerrain.GetComponent<VisualSiteTerrain>().TerraceContactX;
+        stairs.Build(loadedData,terraceX,(piece,floor)=>RegisterFloor(piece,floor));
+        visualStairObjects.AddRange(stairs.Pieces);
     }
 
     // Metodos de visualizacion opcional (nodulos, IDs, ejes locales)
@@ -1102,6 +1156,10 @@ public class StructureViewer : MonoBehaviour
         SetGroupVisible(nodeMarkerObjects, showNodeMarkers);
         SetGroupVisible(idLabelObjects, showIds);
         SetGroupVisible(localAxisObjects, showLocalAxes);
+        SetGroupVisible(visualFacadeObjects, showVisualFacades);
+        SetGroupVisible(visualRoofObjects, showVisualRoof);
+        SetGroupVisible(visualStairObjects, showVisualStairs);
+        UpdateVisualTerrainVisibility();
     }
 
     private void SetGroupVisible(List<GameObject> group, bool visible)
@@ -1303,7 +1361,7 @@ public class StructureViewer : MonoBehaviour
         float innerY = y + 26f;
         float innerW = w - 24f;
         leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, h - 34f), leftScroll,
-            new Rect(x + 4f, innerY, w - 24f, 570f));
+            new Rect(x + 4f, innerY, w - 24f, 650f));
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Visibilidad");
         innerY += 22f;
@@ -1317,7 +1375,22 @@ public class StructureViewer : MonoBehaviour
         innerY += 22f;
         showIds = GUI.Toggle(new Rect(innerX, innerY, 105f, 20f), showIds, "IDs");
         showLocalAxes = GUI.Toggle(new Rect(innerX + 110f, innerY, 120f, 20f), showLocalAxes, "Ejes locales");
+        bool terrainVisible = GUI.Toggle(new Rect(innerX + 230f, innerY, 85f, 20f), showVisualTerrain, "Terreno");
+        if (terrainVisible != showVisualTerrain)
+        {
+            showVisualTerrain = terrainVisible;
+            UpdateVisualTerrainVisibility();
+        }
         innerY += 34f;
+
+        GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Entorno visual");
+        innerY += 22f;
+        showUpperTerrace = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showUpperTerrace, "Terraza Y=4");
+        showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Muros salmon");
+        innerY += 24f;
+        showVisualRoof = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showVisualRoof, "Techo gris");
+        showVisualStairs = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualStairs, "Escaleras");
+        innerY += 32f;
 
         bool mobilePanelVisible = mobileLoadController != null && mobileLoadController.IsPanelVisible();
         string mobileButtonLabel = mobilePanelVisible ? "OCULTAR CARGA MÓVIL" : "ACTIVAR CARGA MÓVIL";
@@ -1346,6 +1419,7 @@ public class StructureViewer : MonoBehaviour
         if (GUI.Button(new Rect(innerX, innerY, 102f, 24f), "Mostrar todo"))
         {
             showColumns = showBeams = showWalls = showSupports = showDiaphragms = true;
+            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = true;
             showNodeMarkers = showIds = showLocalAxes = false;
             floorIndex = 0;
             statusMessage = "Vista restablecida.";
@@ -1354,6 +1428,7 @@ public class StructureViewer : MonoBehaviour
         {
             showColumns = showBeams = showWalls = true;
             showSupports = showDiaphragms = showNodeMarkers = showIds = showLocalAxes = false;
+            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = false;
             statusMessage = "Capas auxiliares ocultas.";
         }
         innerY += 34f;
