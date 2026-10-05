@@ -13,6 +13,7 @@
     "com.unity.modules.physics": "1.0.0",
     "com.unity.modules.ui": "1.0.0",
     "com.unity.modules.uielements": "1.0.0",
-    "com.unity.modules.unitywebrequest": "1.0.0"
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.google.xr.cardboard": "https://github.com/googlevr/cardboard-xr-plugin.git#36ac9815b8f191fe11e149b7f323368fa86655a6"
   }
 }

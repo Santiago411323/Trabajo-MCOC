@@ -303,6 +303,7 @@ def corregir_conectividad(data, tol=TOL_CONECTIVIDAD_M):
 
     # 3) union entre edificios en x=-10 (extremos libres que apoyan en otro edificio)
     junction = _unir_extremos_libres(data, xyz, tol, splits)
+    beam_fix = corregir_vigas_revisadas(data)
 
     report = {
         "tolerancia_m": tol,
@@ -314,10 +315,86 @@ def corregir_conectividad(data, tol=TOL_CONECTIVIDAD_M):
         "union_entre_edificios": junction,
         "columnas_duplicadas_eliminadas": duplicates,
         "niveles_edificio2_alineados": levels_snap,
+        "correccion_vigas": beam_fix,
         "detalle": splits,
     }
     data["connectivityFix"] = {k: v for k, v in report.items() if k != "detalle"}
     return data, report
+
+
+def corregir_vigas_revisadas(data):
+    """Corrige los nueve casos auditados sin renumerar las otras barras.
+
+    Se ejecuta después de las particiones para conservar sus IDs. Cada unión
+    exige un nodo de grado dos y cargas por metro iguales: no elimina un apoyo,
+    una conexión transversal ni una discontinuidad de carga.
+    """
+    nodes = node_map(data)
+    xyz = {i: (n['x'], n['y'], n['z']) for i, n in nodes.items()}
+    removed, merged = [], []
+    for original, duplicate in (("E1_64.1", "E1_209"),
+                                ("E1_93.1", "E1_210"),
+                                ("E1_112.1", "E1_205")):
+        lookup = {element_tag(e): e for e in data['elements']}
+        if duplicate not in lookup:
+            continue
+        a, b = lookup[original], lookup[duplicate]
+        if (a['type'] != 'viga' or b['type'] != 'viga'
+                or {a['nodeI'], a['nodeJ']} != {b['nodeI'], b['nodeJ']}
+                or any(a.get(k) != b.get(k) for k in
+                       ('sectionId', 'width_m', 'height_m', 'sourceBuilding'))
+                or any(abs(float(b.get(k) or 0)) > 1e-9 for k in _CAMPOS_ESCALABLES)):
+            raise ValueError(f'Duplicado auditado cambió: {duplicate}')
+        a.setdefault('duplicateElementTagsRemoved', []).append(duplicate)
+        data['elements'] = [e for e in data['elements'] if e['id'] != b['id']]
+        removed.append({'conservada': original, 'eliminada': duplicate, 'id': b['id']})
+
+    pairs = (("E1_105", "E1_106", "E1_105"),
+             ("E1_113", "E1_114", "E1_113"),
+             ("E1_149", "E1_150", "E1_149"),
+             ("E1_157", "E1_158", "E1_157"),
+             ("E1_64.1", "E1_64.2", "E1_64"),
+             ("E1_93.1", "E1_93.2", "E1_93"))
+    for first, second, result_tag in pairs:
+        lookup = {element_tag(e): e for e in data['elements']}
+        if result_tag in lookup and second not in lookup:
+            continue  # permite aplicar la corrección nuevamente
+        a, b = lookup[first], lookup[second]
+        shared = {a['nodeI'], a['nodeJ']} & {b['nodeI'], b['nodeJ']}
+        if len(shared) != 1:
+            raise ValueError(f'Unión auditada cambió: {first}, {second}')
+        joint = shared.pop()
+        incident = [e for e in data['elements'] if joint in (e['nodeI'], e['nodeJ'])]
+        if len(incident) != 2 or any(s['node'] == joint for s in data.get('supports', [])):
+            raise ValueError(f'No se puede eliminar la conexión del nodo {joint}')
+        if any(a.get(k) != b.get(k) for k in
+               ('type', 'sectionId', 'width_m', 'height_m', 'sourceBuilding', 'piso')):
+            raise ValueError(f'Propiedades distintas: {first}, {second}')
+        end_a = a['nodeJ'] if a['nodeI'] == joint else a['nodeI']
+        end_b = b['nodeJ'] if b['nodeI'] == joint else b['nodeI']
+        la, lb = math.dist(xyz[end_a], xyz[joint]), math.dist(xyz[end_b], xyz[joint])
+        if abs(math.dist(xyz[end_a], xyz[end_b]) - la - lb) > 1e-7:
+            raise ValueError(f'Vigas no colineales: {first}, {second}')
+        for field in _CAMPOS_ESCALABLES:
+            va, vb = float(a.get(field) or 0), float(b.get(field) or 0)
+            if abs(va / la - vb / lb) > 1e-7:
+                raise ValueError(f'Carga discontinua {field}: {first}, {second}')
+            if field in a or field in b:
+                a[field] = va + vb
+        if a['nodeI'] == joint:
+            a['nodeI'] = end_b
+        else:
+            a['nodeJ'] = end_b
+        a['elementTag'] = result_tag
+        a['mergedElementTags'] = [first, second]
+        a['mergedElementIds'] = [a['id'], b['id']]
+        for field in _CAMPOS_LEGADO_POR_BARRA:
+            a.pop(field, None)
+        data['elements'] = [e for e in data['elements'] if e['id'] != b['id']]
+        merged.append({'originales': [first, second], 'resultado': result_tag,
+                       'id': a['id'], 'nodeI': a['nodeI'], 'nodeJ': a['nodeJ'],
+                       'nodo_intermedio_eliminado': joint, 'longitud_m': la + lb})
+    return {'duplicadas_eliminadas': removed, 'pares_unidos': merged}
 
 
 

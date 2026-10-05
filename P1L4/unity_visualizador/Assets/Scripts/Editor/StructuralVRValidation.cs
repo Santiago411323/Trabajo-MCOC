@@ -14,7 +14,7 @@ public static class StructuralVRValidation
     static StructuralVRValidation(){EditorApplication.update+=Tick;}
     public static void ValidateBatch()
     {
-        IOSBuild.ConfigureIOS();StructuralARValidation.ValidateOrThrow();StructuralARSectorValidation.Validate();
+        AndroidVRBuild.ConfigureAndroid();StructuralARValidation.ValidateOrThrow();StructuralARSectorValidation.Validate();
         EditorSceneManager.OpenScene(StructuralARSceneSetup.ScenePath);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
         SessionState.SetInt("MCOCVRValidation",1);EditorApplication.isPlaying=true;
@@ -119,7 +119,7 @@ public static class StructuralVRValidation
             if(phase==3){vr.StartCoroutine(vr.EnterVR());}
             if(phase==4){Require(vr.IsVR,"Second VR entry failed");var flags=BindingFlags.Instance|BindingFlags.NonPublic;var cam=(Camera)typeof(StructuralVRController).GetField("vrCamera",flags).GetValue(vr);var menu=(Transform)typeof(StructuralVRController).GetField("menu",flags).GetValue(vr);menu.gameObject.SetActive(false);cam.transform.position=new Vector3(20,38,-80);cam.transform.LookAt(new Vector3(20,4,4));}
             if(phase==5)ScreenCapture.CaptureScreenshot(System.IO.Path.GetFullPath("Logs/iphone-vr-ambiente.png"));
-            if(phase==6){vr.ExitVR();Debug.Log("[Structural VR Validation] PASS: AR/VR/AR twice; floors and bounds; environment; E1_94 ID/nodes/C1 conserved. Native stereo and tracking require iPhone.");SessionState.SetInt("MCOCVRValidation",0);EditorApplication.Exit(0);return;}
+            if(phase==6){vr.ExitVR();Debug.Log("[Structural VR Validation] PASS: AR/VR/AR twice; floors and bounds; environment; E1_94 ID/nodes/C1 conserved. Native stereo and tracking require an Android phone.");SessionState.SetInt("MCOCVRValidation",0);EditorApplication.Exit(0);return;}
             SessionState.SetInt("MCOCVRValidation",phase+1);next=EditorApplication.timeSinceStartup+3;
         }
         catch(Exception error){SessionState.SetInt("MCOCVRValidation",0);Debug.LogException(error);EditorApplication.Exit(1);}

@@ -151,7 +151,7 @@ public static class UnityForceChecks
         UnityData.UseBaseCaseFactors = false;
         UnityData.TryGetSectionForces(84, "C1", .5f, out var beam);
         Near(beam.Mz, 0.0, "E1_84 center Mz (diafragma rigido: sin flexion en el plano)");
-        Near(beam.My, 71.7036110959, "E1_84 center My (parabolic span moment)");
+        Near(beam.My, 77.5901678645, "E1_84 center My (parabolic span moment)");
         float[] baseForces=(float[])UnityData.GetElementForces("C1",84).Clone();
         var extra=new float[12];extra[0]=-2;extra[6]=2;
         UnityData.MobileForces[84]=extra;
@@ -161,7 +161,7 @@ public static class UnityForceChecks
         UnityData.MobileForces.Clear();
         Near(UnityData.GetElementForces("C1",84)[0],baseForces[0],"deactivation restores baseline");
         UnityData.TryGetSectionForces(272, "C1", .5f, out var column);
-        Near(column.N, -4064.5462725412, "E1_272 compression");
+        Near(column.N, -4064.5162790325, "E1_272 compression");
 
         // Uniform-load reference beam: only legitimate end actions generate curvature.
         var fixedBeam = new float[12];

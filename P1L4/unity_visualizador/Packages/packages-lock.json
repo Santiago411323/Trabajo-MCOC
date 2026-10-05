@@ -1,5 +1,16 @@
 {
   "dependencies": {
+    "com.google.xr.cardboard": {
+      "version": "https://github.com/googlevr/cardboard-xr-plugin.git#36ac9815b8f191fe11e149b7f323368fa86655a6",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0",
+        "com.unity.xr.management": "3.2.9",
+        "com.unity.xr.legacyinputhelpers": "2.1.4"
+      },
+      "hash": "36ac9815b8f191fe11e149b7f323368fa86655a6"
+    },
     "com.unity.editorcoroutines": {
       "version": "6.6.0",
       "depth": 1,

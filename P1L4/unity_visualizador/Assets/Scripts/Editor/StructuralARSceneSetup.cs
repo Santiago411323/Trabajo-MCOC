@@ -70,6 +70,7 @@ public static class StructuralARSceneSetup
 
         EnableXRSimulationLoader();
         EnableAndroidARCoreLoader();
+        AndroidVRBuild.ConfigureAndroid();
         GameObject environment = CreateOrUpdateSimulationEnvironment();
         SetActiveSimulationEnvironment(environment);
         CreateOrUpdateScene();
