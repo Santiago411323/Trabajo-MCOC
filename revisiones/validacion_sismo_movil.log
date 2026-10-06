@@ -1,0 +1,43 @@
+PROGRESS 0/400 t=0.000s max=7.640mm
+PROGRESS 100/400 t=1.000s max=12.978mm
+PROGRESS 200/400 t=2.000s max=63.802mm
+PROGRESS 300/400 t=3.000s max=97.341mm
+PROGRESS 400/400 t=4.000s max=97.341mm
+COMPLETE C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\seismic\validation\el_centro_1940_ns_X_i100.json (5.7s)
+PROGRESS 0/50 t=0.000s max=7.640mm
+PROGRESS 50/50 t=1.000s max=7.640mm
+COMPLETE C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\seismic\validation\verification_zero_X_i100.json (0.7s)
+{
+  "scalingAndContract": {
+    "status": "PASS",
+    "cases": 4,
+    "framesPerCase": 1660,
+    "maximumScalingErrors": [
+      1.862645149230957e-09,
+      0.00048828125,
+      3.725290298461914e-09,
+      0.0009765625,
+      0.0,
+      0.0,
+      1.4901161193847656e-08,
+      0.00390625
+    ],
+    "periods_s": [
+      0.6126714860868702,
+      0.5848049013046962,
+      0.40867769449676994,
+      0.16204082722957253,
+      0.15737906382641392,
+      0.15478367586727731
+    ]
+  },
+  "shortRuns": {
+    "zeroExcitation": "PASS",
+    "stepSensitivity": "PASS",
+    "dt_s": 0.02,
+    "refinedDt_s": 0.01,
+    "maxDisplacementDifference_m": 0.0026783528737723827,
+    "relativeDisplacementDifference": 0.029230938911102053
+  }
+}
+PASS: contrato, masas, equilibrio gravitacional, apoyos, intensidad real, entrada nula y sensibilidad temporal.

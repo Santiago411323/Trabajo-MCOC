@@ -59,8 +59,8 @@ public class StructuralModelEditor : MonoBehaviour
     private string stirrupCountText, stirrupDiameterText, stirrupSpacingText, stirrupLegsText;
 
     private string ConfigPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "model_edits.json"));
-    private string ResultsPath => Path.GetFullPath(Path.Combine(Application.dataPath, "Resources", "estructura_p1l4_unity.json"));
-    private string ExporterPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "exportar_resultados_unity.py"));
+    private string ResultsPath => DesktopModelFile.ActivePath;
+    private string ExporterPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", DesktopModelFile.Available ? "actualizar_hueco_muros_desktop.py" : "exportar_resultados_unity.py"));
     private string RootPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", ".."));
 
     private void OnEnable()

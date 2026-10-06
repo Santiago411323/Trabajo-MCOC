@@ -80,8 +80,8 @@ public static class FrameForces
     // Input: local OpenSees resisting end actions, NOT section values.
     // N is tension-positive. Vy,Vz,T,My,Mz use the I-face convention;
     // their corresponding section values at J are the negatives of the J actions.
-    // P1L3 applies nodal loads only: N,V,T are constant and M is linear.
-    // The transverse-load terms also reproduce equilibrium for uniform eleLoads.
+    // P1L3 applies G/Q through uniform eleLoads; seismic and mobile increments
+    // can be nodal. The transverse-load terms recover the resulting equilibrium.
     // Never add ElementData.uniformLoad: it is not a load of the active analysis.
     public static FrameSectionForces Evaluate(float[] f, double length, float t)
     {

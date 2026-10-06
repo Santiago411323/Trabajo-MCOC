@@ -7,6 +7,13 @@ public sealed class VisualStairs : MonoBehaviour
 {
     public readonly List<GameObject> Pieces = new List<GameObject>();
     public int FlightCount { get; private set; }
+    public sealed class FlightPath
+    {
+        public string Name, Floor;
+        public Vector3 Start, End;
+        public float Width;
+    }
+    public readonly List<FlightPath> Paths=new List<FlightPath>();
     private Material material;
 
     public void Build(StructureData data, float terraceX, System.Action<GameObject,string> register)
@@ -28,7 +35,13 @@ public sealed class VisualStairs : MonoBehaviour
         if (exit != null)
         {
             Vector3 a = BeamLanding(exit,nodes);
-            Flight("Escalera_E1_220_Terraza_Y4",a,new Vector3(terraceX+.4f,4.03f,a.z),exit.piso,register);
+            float arrivalX=terraceX+.4f;
+            if(VisualCafe.UseDesktopLayout)
+            {
+                var column=data.elements.FirstOrDefault(e=>e.elementTag=="E1_281" && e.type=="columna");
+                if(column!=null)arrivalX=nodes[column.nodeI].x;
+            }
+            Flight("Escalera_E1_220_Terraza_Y4",a,new Vector3(arrivalX,4.03f,a.z),exit.piso,register);
         }
     }
 
@@ -60,6 +73,37 @@ public sealed class VisualStairs : MonoBehaviour
             center.y=top-(riser+.18f)*.5f;
             Box(name+"_peldaño_"+(i+1),center,new Vector3(width,riser+.18f,tread+.005f),rotation,floor,register);
         }
+        FlightCount++;
+        Paths.Add(new FlightPath{Name=name,Floor=floor,Start=start,End=end,Width=width});
+    }
+
+    public void BuildTerraceAccess(VisualSiteTerrain terrain, System.Action<GameObject,string> register)
+    {
+        Bounds b=terrain.CantileverExtension;
+        if(!VisualCafe.UseDesktopLayout || b.size.x<=0)return;
+        const float run=12f, normalWidth=1.8f;
+        float width=Mathf.Min(9.3f,b.size.z-1.2f), minZ=b.min.z+.6f;
+        float normalZ=minZ+width-normalWidth/2, wideWidth=width-normalWidth;
+        float wideZ=minZ+wideWidth/2;
+        SolidFlight("Escalera_Y4_cafeteria_normal",new Vector3(b.min.x+.2f,4.03f,normalZ),
+            new Vector3(b.min.x+.2f-run,.03f,normalZ),normalWidth,24,-terrain.Clearance-.05f,register);
+        SolidFlight("Gradas_Y4_cafeteria_rectas",new Vector3(b.min.x+.2f,4.03f,wideZ),
+            new Vector3(b.min.x+.2f-run,.03f,wideZ),wideWidth,8,-terrain.Clearance-.05f,register);
+    }
+
+    private void SolidFlight(string name,Vector3 start,Vector3 end,float width,int steps,float bottom,System.Action<GameObject,string> register)
+    {
+        const string floor="CIELO_1S";
+        float tread=(start.x-end.x)/steps;
+        for(int i=0;i<steps;i++)
+        {
+            float top=Mathf.Lerp(start.y,end.y,(i+1f)/steps);
+            Box(name+"_peldaño_"+(i+1),new Vector3(start.x-(i+.5f)*tread,(top+bottom)/2,start.z),
+                new Vector3(tread+.005f,top-bottom,width),Quaternion.identity,floor,register);
+        }
+        Box(name+"_descanso_superior",start+new Vector3(.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
+        Box(name+"_descanso_inferior",end+new Vector3(-.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
+        Paths.Add(new FlightPath{Name=name,Floor=floor,Start=start,End=end,Width=width});
         FlightCount++;
     }
 

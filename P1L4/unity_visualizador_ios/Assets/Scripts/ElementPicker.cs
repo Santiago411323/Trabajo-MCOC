@@ -23,6 +23,12 @@ public class ElementPicker : MonoBehaviour
     private GUIStyle titleStyle;
     private GUIStyle headerStyle;
     private Vector2 scroll;
+    private readonly SlabLoadPathGuide loadPathGuide = new SlabLoadPathGuide();
+
+    private void OnDestroy()
+    {
+        loadPathGuide.Clear();
+    }
 
     void Awake()
     {
@@ -202,6 +208,7 @@ foreach (RaycastHit candidate in hits)
     public bool IsMouseOverViewerGui()
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        if (SeismicPlaybackController.BlocksPointer(guiMouse)) return true;
 
         SelectedBeamDiagramPanel beamDiagrams = FindObjectOfType<SelectedBeamDiagramPanel>();
         if (beamDiagrams != null && beamDiagrams.ContainsMouse(guiMouse))
@@ -300,6 +307,7 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
             selectedInfo.OnDeselected();
         }
         selectedInfo = info;
+        loadPathGuide.Select(info as SlabSelectable);
         if (info != null)
         {
             scroll = Vector2.zero;
@@ -340,12 +348,17 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
 
         GUI.Box(new Rect(px, py, panelW, panelH), GUIContent.none, boxStyle);
 
+        float guideHeight = selectedInfo is SlabSelectable ? 158f : 0f;
+        if (guideHeight > 0f)
+            loadPathGuide.Draw(new Rect(px + 8f, py + 8f, panelW - 16f, guideHeight - 8f),
+                titleStyle, labelStyle);
+
         float innerW = panelW - panelPaddingX * 2f;
         float contentH = CalculateContentHeight(info, innerW);
-        if (contentH < panelH - 60f) contentH = panelH - 60f;
+        if (contentH < panelH - 60f - guideHeight) contentH = panelH - 60f - guideHeight;
 
         var rect = new Rect(panelPaddingX, 0f, innerW, contentH);
-        scroll = GUI.BeginScrollView(new Rect(px, py + 8f, panelW, panelH - 16f), scroll,
+        scroll = GUI.BeginScrollView(new Rect(px, py + 8f + guideHeight, panelW, panelH - 16f - guideHeight), scroll,
             new Rect(0f, 0f, panelW - 20f, contentH + 80f));
 
         int prevSize = labelStyle.fontSize;

@@ -52,7 +52,7 @@ public sealed class SeismicPlaybackController : MonoBehaviour
         { transform=t; renderer=r; nodeI=i; nodeJ=j; member=e; width=w; height=h; }
     }
     private string SeismicPath => Path.GetFullPath(Path.Combine(Application.dataPath,"..","..","seismic"));
-    private string ModelPath => Path.Combine(Application.dataPath,"Resources","estructura_p1l4_unity.json");
+    private string ModelPath => DesktopModelFile.ActivePath;
     private string CurrentId => catalog.records[recordIndex].id+"_"+directionNames[directionIndex]+"_i"+
         Mathf.RoundToInt(factors[factorIndex]*100).ToString("000");
     public Rect PanelRect
@@ -144,7 +144,7 @@ public sealed class SeismicPlaybackController : MonoBehaviour
     {
         if (catalog == null) return;
         if (StructuralModelEditor.ResultsStale) { status="Hay cambios de sección pendientes: ejecute primero el análisis del editor del modelo."; return; }
-        string path=Path.Combine(SeismicPath,"results",CurrentId+".json");
+        string path=Path.Combine(DesktopModelFile.ResultsDirectory(SeismicPath),CurrentId+".json");
         if (!File.Exists(path)) { status="No hay respuesta calculada para esta intensidad/dirección. Pulse EJECUTAR OPENSEES."; return; }
         try
         {
@@ -171,7 +171,7 @@ public sealed class SeismicPlaybackController : MonoBehaviour
                 FileName=executable,
                 Arguments="-B \""+Path.Combine(SeismicPath,"transient_analysis.py")+"\" --record \""+
                     catalog.records[recordIndex].id+"\" --intensity "+factors[factorIndex].ToString(CultureInfo.InvariantCulture)+
-                    " --direction "+directionNames[directionIndex],
+                    " --direction "+directionNames[directionIndex]+" --model \""+ModelPath+"\" --output \""+DesktopModelFile.ResultsDirectory(SeismicPath)+"\"",
                 WorkingDirectory=Path.GetFullPath(Path.Combine(SeismicPath,"..","..")),
                 UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true
             };

@@ -7,6 +7,14 @@ public sealed class VisualFrameFacade : MonoBehaviour
 {
     public readonly List<GameObject> Panels = new List<GameObject>();
     private Material material, frameMaterial, rearCladding;
+    private readonly Dictionary<GameObject,Rect> cafeDoorCuts=new Dictionary<GameObject,Rect>();
+    public int CafeDoorCount { get; private set; }
+    public int AccessDoorCount { get; private set; }
+    private static bool Between(FramePost a,FramePost b,string first,string second)
+        => (a.Tag==first && b.Tag==second) || (a.Tag==second && b.Tag==first);
+    private static bool CafeCantileverFrame(FramePost a,FramePost b)
+        => Between(a,b,"E1_241","E1_254") || Between(a,b,"E1_254","E1_255") || Between(a,b,"E1_241","E1_243") ||
+           Between(a,b,"E1_230","E1_243") || Between(a,b,"E1_255","E1_257");
     private sealed class FramePost
     {
         public Vector3 Point;
@@ -16,6 +24,7 @@ public sealed class VisualFrameFacade : MonoBehaviour
 
     public void Build(IEnumerable<ElementSelectable> members, StructureData data, System.Action<GameObject,string> register)
     {
+        VisualCafe.TryLayout(data,out var cafe);
         var columns = members.Where(m => m.data != null && m.data.type == "columna").ToList();
         var beams = members.Where(m => m.data != null && m.data.type == "viga").ToList();
         var nodes = data.nodes.ToDictionary(n => n.id, n => new Vector3(n.x,n.z,n.y));
@@ -24,7 +33,8 @@ public sealed class VisualFrameFacade : MonoBehaviour
         float minZ = basePoints.Min(p => p.z), maxZ = basePoints.Max(p => p.z);
         // Foundation perimeter defines the main facade, so columns standing on
         // projected balconies in Z do not close those cantilevers with walls.
-        columns = columns.Where(c => c.startPoint.z >= minZ - .01f && c.startPoint.z <= maxZ + .01f).ToList();
+        columns = columns.Where(c => (c.startPoint.z >= minZ - .01f && c.startPoint.z <= maxZ + .01f) ||
+            (VisualCafe.UseDesktopLayout && (c.data.elementTag=="E1_241" || c.data.elementTag=="E1_254"))).ToList();
         var posts = columns.Select(c => new FramePost {
             Point=c.startPoint, Bottom=Mathf.Min(c.startPoint.y,c.endPoint.y), Top=Mathf.Max(c.startPoint.y,c.endPoint.y),
             Inset=Mathf.Max(c.data.width_m,c.data.height_m)*.5f+.035f, Tag=c.data.elementTag, Floor=c.visualFloor
@@ -61,6 +71,7 @@ public sealed class VisualFrameFacade : MonoBehaviour
         for (int a = 0; a < posts.Count; a++) for (int b = a + 1; b < posts.Count; b++)
         {
             FramePost first = posts[a], second = posts[b];
+            if(VisualCafe.UseDesktopLayout && Between(first,second,"E1_243","E1_255")) continue;
             float bottom = first.Bottom, top = first.Top;
             if (Mathf.Abs(bottom-second.Bottom)>.01f || Mathf.Abs(top-second.Top)>.01f) continue;
             Vector3 p = first.Point, q = second.Point;
@@ -82,7 +93,7 @@ public sealed class VisualFrameFacade : MonoBehaviour
                 if (span < left-.01f || span > right+.01f) continue;
                 lowerSide |= cross < fixedAxis-.01f; upperSide |= cross > fixedAxis+.01f;
             }
-            if (lowerSide && upperSide) continue; // Interior frame.
+            if (lowerSide && upperSide && !(VisualCafe.UseDesktopLayout && CafeCantileverFrame(first,second))) continue;
             bool withinStructuralWall = members.Where(m => m.isWall).Any(w => {
                 Vector3 i=w.startPoint,j=w.endPoint;
                 float from=alongX?Mathf.Min(i.x,j.x):Mathf.Min(i.z,j.z);
@@ -137,6 +148,29 @@ public sealed class VisualFrameFacade : MonoBehaviour
                 panel.transform.SetParent(transform,false);
                 panel.transform.localPosition=alongX?new Vector3(center,(lower+upper)*.5f,fixedAxis):new Vector3(fixedAxis,(lower+upper)*.5f,center);
                 if(!alongX)panel.transform.localRotation=Quaternion.Euler(0,90,0);
+                if(VisualCafe.UseDesktopLayout && (Between(first,second,"E1_281","E1_293") || Between(first,second,"E1_297","E1_301")))
+                {
+                    float doorFloor=Mathf.Max(lower,bottom+bottomDepth+.14f);
+                    float doorAlong=alongX?center:left+leftInset+.08f+.65f;
+                    Vector3 doorBase=alongX?new Vector3(doorAlong,doorFloor,fixedAxis):new Vector3(fixedAxis,doorFloor,doorAlong);
+                    Vector3 local=panel.transform.InverseTransformPoint(doorBase);
+                    cafeDoorCuts[panel]=new Rect(local.x-.65f,local.y,1.3f,2.2f);
+                    var marker=new GameObject("Paso_puerta_acceso_"+(alongX?"E1_281_E1_293":"E1_297_Zpositivo"));
+                    marker.layer=2;marker.transform.SetParent(panel.transform,false);
+                    marker.transform.localPosition=local+Vector3.up*1.1f;
+                    AccessDoorCount++;
+                }
+                float doorX=cafe!=null?cafe.Left+5f:0f;
+                if(VisualCafe.UseDesktopLayout && cafe!=null && alongX &&
+                    (Mathf.Abs(fixedAxis-minZ)<.02f || Mathf.Abs(fixedAxis-maxZ)<.02f) &&
+                    lower<cafe.Floor+2.22f && upper>cafe.Floor &&
+                    doorX-.65f>left+leftInset+.08f && doorX+.65f<right-rightInset-.08f)
+                {
+                    cafeDoorCuts[panel]=new Rect(doorX-center-.65f,cafe.Floor+.02f-(lower+upper)*.5f,1.3f,2.2f);
+                    CafeDoorCount++;
+                    var marker=new GameObject("Paso_puerta_cafeteria");marker.layer=2;marker.transform.SetParent(panel.transform,false);
+                    marker.transform.localPosition=new Vector3(doorX-center,cafe.Floor+1.12f-(lower+upper)*.5f,0);
+                }
                 WindowPiece(panel,"Vidrio",Vector3.zero,new Vector3(width,upper-lower,.035f),material);
                 float h=upper-lower;
                 int panes=Mathf.CeilToInt(width/1.4f);
@@ -152,6 +186,28 @@ public sealed class VisualFrameFacade : MonoBehaviour
         }
     }
     private void WindowPiece(GameObject parent,string name,Vector3 position,Vector3 size,Material mat)
+    {
+        if(cafeDoorCuts.TryGetValue(parent,out var door))
+        {
+            float left=position.x-size.x/2,right=position.x+size.x/2,low=position.y-size.y/2,high=position.y+size.y/2;
+            if(left<door.xMax && right>door.xMin && low<door.yMax && high>door.yMin)
+            {
+                WindowFragment(parent,name,left,Mathf.Min(right,door.xMin),low,high,position.z,size.z,mat);
+                WindowFragment(parent,name,Mathf.Max(left,door.xMax),right,low,high,position.z,size.z,mat);
+                float a=Mathf.Max(left,door.xMin),b=Mathf.Min(right,door.xMax);
+                WindowFragment(parent,name,a,b,low,Mathf.Min(high,door.yMin),position.z,size.z,mat);
+                WindowFragment(parent,name,a,b,Mathf.Max(low,door.yMax),high,position.z,size.z,mat);
+                return;
+            }
+        }
+        CreateWindowPiece(parent,name,position,size,mat);
+    }
+    private void WindowFragment(GameObject parent,string name,float left,float right,float low,float high,float z,float depth,Material mat)
+    {
+        if(right-left>.001f && high-low>.001f)
+            CreateWindowPiece(parent,name,new Vector3((left+right)/2,(low+high)/2,z),new Vector3(right-left,high-low,depth),mat);
+    }
+    private void CreateWindowPiece(GameObject parent,string name,Vector3 position,Vector3 size,Material mat)
     {
         var piece=GameObject.CreatePrimitive(PrimitiveType.Cube);piece.name=name;piece.layer=2;
         piece.transform.SetParent(parent.transform,false);piece.transform.localPosition=position;piece.transform.localScale=size;

@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "central_column_segments": 15,
+  "slabs_updated": 68,
+  "elements_before": 813,
+  "elements_after": 803,
+  "superposition_max_error_kN_or_kNm": 6.5820700001495425e-09,
+  "equilibrium_max_error_kN": {
+    "G": 1.0906660463660955e-08,
+    "Q": 2.2228050511330366e-09,
+    "EX": 1.1130552479698963e-08,
+    "EY": 5.079527909401804e-10,
+    "C1": 8.658389560878277e-09,
+    "C2": 8.440110832452774e-09,
+    "C3": 1.5337718650698662e-08
+  },
+  "unchanged_protected_files": 211,
+  "phone_resources_and_ios_source": "unchanged"
+}

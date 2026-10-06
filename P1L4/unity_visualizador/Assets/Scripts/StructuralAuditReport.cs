@@ -221,8 +221,8 @@ public sealed class StructuralAuditReport
         if (!triedSlabCatalog)
         {
             triedSlabCatalog = true;
-            TextAsset asset = Resources.Load<TextAsset>("slab_load_surfaces");
-            if (asset != null) slabCatalog = JsonUtility.FromJson<SlabLoadCatalog>(asset.text);
+            string asset = DesktopModelFile.SlabCatalogJson;
+            if (asset != null) slabCatalog = JsonUtility.FromJson<SlabLoadCatalog>(asset);
         }
         return slabCatalog;
     }

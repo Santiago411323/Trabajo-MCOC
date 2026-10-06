@@ -235,7 +235,7 @@ public sealed partial class StructuralARController
     {
         PlacementRecord item = currentPlacement;
         if (item == null || diagramBaseline == null || diagramLine == null) return;
-        if (!item.Compare)
+        if (!item.Compare || MobileSeismicPlayback.IsActive)
         {
             foreach (LineRenderer line in item.Comparisons) if (line != null) line.enabled = false;
             return;

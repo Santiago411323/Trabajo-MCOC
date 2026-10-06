@@ -12,6 +12,7 @@ public sealed class VisualSiteTerrain : MonoBehaviour
     public GameObject BaseGround { get; private set; }
     public GameObject UpperTerrace { get; private set; }
     public float TerraceContactX { get; private set; }
+    public Bounds CantileverExtension { get; private set; }
     private Transform groupParent;
     private VisualCafe.Layout cafeLayout;
     private float cafeStairStartX;
@@ -43,6 +44,8 @@ public sealed class VisualSiteTerrain : MonoBehaviour
         {
             float left = level.Min(p => p.x) - (level == levels[0] ? 12f : 2f);
             float right = level.Max(p => p.x) + (level == levels[levels.Count - 1] ? 27f : 2f);
+            if(VisualCafe.UseDesktopLayout && cafeLayout!=null && Mathf.Abs(level.Key)<.01f)
+                left=Mathf.Min(left,Mathf.Min(cafeLayout.Left-.4f,cafeLayout.RearLeft-2f));
             float top = level.Key - Clearance;
             strips.Add(new Vector3(left, right, top));
             Surface("Pasto_nivel_" + level.Key, left, right, zMin, zMax, (x, z) => top, grass, 1, 1);
@@ -91,12 +94,12 @@ public sealed class VisualSiteTerrain : MonoBehaviour
             Edge("Talud_borde_posterior", new Vector3(start, a.z, zMax), new Vector3(end, b.z, zMax), bottom, rock);
             SlopeCount++;
         }
-        BuildUpperTerrace(nodes, bases, levels[levels.Count - 1].Key - Clearance, bottom, grass, rock, buildingRenderers);
+        BuildUpperTerrace(data, nodes, bases, levels[levels.Count - 1].Key - Clearance, bottom, grass, rock, buildingRenderers);
         var campus=new GameObject("Entorno_campus_referencia");campus.transform.SetParent(BaseGround.transform,false);
-        campus.AddComponent<VisualCampusSite>().Build(data,Clearance,UpperTerrace!=null?4f:levels[levels.Count-1].Key-Clearance);
+        campus.AddComponent<VisualCampusSite>().Build(data,Clearance,VisualCafe.UseDesktopLayout || UpperTerrace!=null?4f:levels[levels.Count-1].Key-Clearance);
     }
 
-    private void BuildUpperTerrace(Dictionary<int, Vector3> nodes, List<Vector3> bases,
+    private void BuildUpperTerrace(StructureData data, Dictionary<int, Vector3> nodes, List<Vector3> bases,
         float baseHeight, float bottom, Material grass, Material rock, IEnumerable<Renderer> renderers)
     {
         float elevation = 4f;
@@ -112,29 +115,49 @@ public sealed class VisualSiteTerrain : MonoBehaviour
         float end = bases.Where(p => Mathf.Abs(p.y) < .01f).Max(p => p.x) + 27f;
         float minZ = bases.Min(p => p.z) - 12f, maxZ = bases.Max(p => p.z) + 12f;
         TerraceContactX = contactX;
-        float rampStart = contactX - 9f;
+        float platformStart = VisualCafe.UseDesktopLayout || cafeLayout == null ? contactX : Mathf.Min(contactX, Mathf.Min(cafeLayout.Left - .4f, cafeLayout.RearLeft - 2f));
+        float rampStart = platformStart - 9f;
         UpperTerrace = new GameObject("Terraza_pasto_Y4_y_bajada_roca");
         UpperTerrace.transform.SetParent(transform, false); groupParent = UpperTerrace.transform;
-        // The requested full-width slope descends toward -X, including the building footprint.
-        Surface("Pasto_terraza_Y4", contactX, end, minZ, maxZ, (x,z) => elevation, grass, 1, 1);
-        Edge("Terraza_frente", new Vector3(end, elevation, minZ), new Vector3(contactX, elevation, minZ), baseHeight, rock);
-        Edge("Terraza_fondo", new Vector3(contactX, elevation, maxZ), new Vector3(end, elevation, maxZ), baseHeight, rock);
+        // Desktop keeps the original Y4 footprint; the phone layout retains its extended terrace.
+        Surface("Pasto_terraza_Y4", platformStart, end, minZ, maxZ, (x,z) => elevation, grass, 1, 1);
+        Edge("Terraza_frente", new Vector3(end, elevation, minZ), new Vector3(platformStart, elevation, minZ), baseHeight, rock);
+        Edge("Terraza_fondo", new Vector3(platformStart, elevation, maxZ), new Vector3(end, elevation, maxZ), baseHeight, rock);
         Edge("Terraza_borde_exterior", new Vector3(end, elevation, maxZ), new Vector3(end, elevation, minZ), baseHeight, rock);
-        System.Func<float,float,float> height = (x,z) => {
-            float t = Mathf.InverseLerp(rampStart, contactX, x);
-            return Mathf.Lerp(baseHeight, elevation, t) + (Mathf.PerlinNoise(x,z)-.5f)*.2f*Mathf.Sin(t*Mathf.PI);
-        };
-        Surface("Talud_Y4_hacia_menos_X", rampStart, contactX, minZ, maxZ, height, rock, 32, 48);
-        Edge("Bajada_frente", new Vector3(contactX,elevation,minZ), new Vector3(rampStart,baseHeight,minZ), baseHeight, rock);
-        Edge("Bajada_fondo", new Vector3(rampStart,baseHeight,maxZ), new Vector3(contactX,elevation,maxZ), baseHeight, rock);
-        var random = new System.Random(94);
-        for (int i = 0; i < 32; i++)
+        if(VisualCafe.UseDesktopLayout)
         {
-            float x = Mathf.Lerp(rampStart,contactX,.08f+(float)random.NextDouble()*.84f);
-            float z = Mathf.Lerp(minZ+.5f,maxZ-.5f,(float)random.NextDouble());
-            Stone(new Vector3(x,height(x,z),z),.2f+(float)random.NextDouble()*.3f,.15f+(float)random.NextDouble()*.25f,rock);
+            var column=data.elements.FirstOrDefault(e=>e.elementTag=="E1_280" && e.type=="columna");
+            if(column!=null)
+            {
+                Vector3 p=nodes[column.nodeJ];
+                float left=p.x, innerZ=p.z;
+                CantileverExtension=new Bounds(new Vector3((left+platformStart)/2,elevation,(minZ+innerZ)/2),
+                    new Vector3(platformStart-left,0,innerZ-minZ));
+                Surface("Pasto_ampliacion_Y4_E1_280",left,platformStart,minZ,innerZ,(x,z)=>elevation,grass,1,1);
+                Edge("Ampliacion_Y4_borde_voladizo",new Vector3(left,elevation,minZ),new Vector3(platformStart,elevation,minZ),baseHeight,rock);
+                Edge("Ampliacion_Y4_borde_edificio",new Vector3(platformStart,elevation,innerZ),new Vector3(left,elevation,innerZ),baseHeight,rock);
+                Edge("Ampliacion_Y4_frente_cafeteria",new Vector3(left,elevation,innerZ),new Vector3(left,elevation,minZ),baseHeight,rock);
+            }
         }
-        PlatformCount++; SlopeCount++;
+        if(!VisualCafe.UseDesktopLayout)
+        {
+            System.Func<float,float,float> height = (x,z) => {
+                float t = Mathf.InverseLerp(rampStart, platformStart, x);
+                return Mathf.Lerp(baseHeight, elevation, t) + (Mathf.PerlinNoise(x,z)-.5f)*.2f*Mathf.Sin(t*Mathf.PI);
+            };
+            Surface("Talud_Y4_hacia_menos_X", rampStart, platformStart, minZ, maxZ, height, rock, 32, 48);
+            Edge("Bajada_frente", new Vector3(platformStart,elevation,minZ), new Vector3(rampStart,baseHeight,minZ), baseHeight, rock);
+            Edge("Bajada_fondo", new Vector3(rampStart,baseHeight,maxZ), new Vector3(platformStart,elevation,maxZ), baseHeight, rock);
+            var random = new System.Random(94);
+            for (int i = 0; i < 32; i++)
+            {
+                float x = Mathf.Lerp(rampStart,platformStart,.08f+(float)random.NextDouble()*.84f);
+                float z = Mathf.Lerp(minZ+.5f,maxZ-.5f,(float)random.NextDouble());
+                Stone(new Vector3(x,height(x,z),z),.2f+(float)random.NextDouble()*.3f,.15f+(float)random.NextDouble()*.25f,rock);
+            }
+            SlopeCount++;
+        }
+        PlatformCount++;
         groupParent = BaseGround.transform;
     }
 

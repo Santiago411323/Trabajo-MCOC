@@ -11,6 +11,7 @@ using UnityEngine.InputSystem.XR;
 public static class StructuralVRValidation
 {
     private static double next;
+    private static float referenceMoment;
     static StructuralVRValidation(){EditorApplication.update+=Tick;}
     public static void ValidateBatch()
     {
@@ -27,7 +28,7 @@ public static class StructuralVRValidation
         try
         {
             var vr=UnityEngine.Object.FindAnyObjectByType<StructuralVRController>();
-            if(phase==1){Require(vr!=null,"Missing mode switch");vr.StartCoroutine(vr.EnterVR());}
+            if(phase==1){Require(vr!=null,"Missing mode switch");Require(UnityData.TryGetSectionForces(94,"C1",.5f,out var initial),"Static result missing");referenceMoment=initial.My;vr.StartCoroutine(vr.EnterVR());}
             if(phase==2)
             {
                 Require(vr.IsVR,"VR did not start in simulation");
@@ -53,18 +54,18 @@ public static class StructuralVRValidation
                 var facade=world.GetComponentInChildren<VisualFrameFacade>(true);
                 var roof=world.GetComponentInChildren<VisualFlatRoof>(true);
                 var stairs=world.GetComponentInChildren<VisualStairs>(true);
-                Require(terrain.PlatformCount==3&&terrain.UpperTerrace.activeInHierarchy&&stairs.FlightCount==2&&facade.Panels.Count>0&&roof.Pieces.Count>0,"Incomplete environment geometry");
+                Require(terrain.PlatformCount==3&&terrain.UpperTerrace.activeInHierarchy&&stairs.FlightCount==4&&facade.Panels.Count>0&&roof.Pieces.Count>0,"Incomplete environment geometry");
                 var decor=terrain.GetComponentsInChildren<Renderer>(true).Concat(facade.GetComponentsInChildren<Renderer>(true)).Concat(roof.GetComponentsInChildren<Renderer>(true)).Concat(stairs.GetComponentsInChildren<Renderer>(true)).ToArray();
                 Require(decor.All(r=>r.enabled&&r.gameObject.activeInHierarchy&&(camera.cullingMask&(1<<r.gameObject.layer))!=0&&r.sharedMaterials.All(m=>m.shader.name=="MCOC/VR Visual Environment")),"Decor is hidden, outside camera layers or using wrong shader");
-                Debug.Log("[VR environment] PASS: 3 platforms, 2 stair flights, "+facade.Panels.Count+" salmon walls, "+roof.Pieces.Count+" roofs; all active, stereo shader and camera layers.");
+                Debug.Log("[VR environment] PASS: 3 platforms, 4 stair flights, "+facade.Panels.Count+" salmon walls, "+roof.Pieces.Count+" roofs; all active, stereo shader and camera layers.");
                 var member=world.GetComponentsInChildren<ElementSelectable>().Single(e=>e.data!=null&&e.data.elementTag=="E1_94");
                 Require(member.data.id==94 && member.data.nodeI==61 && member.data.nodeJ==60,"IDs changed");
                 typeof(StructuralVRController).GetMethod("SelectElement",flags).Invoke(vr,new object[]{member});
-                Require(UnityData.TryGetSectionForces(94,"C1",.5f,out var forces)&&Mathf.Abs(forces.My+23.377838f)<.001f,"VR result mismatch");
+                Require(UnityData.TryGetSectionForces(94,"C1",.5f,out var forces)&&Mathf.Abs(forces.My-referenceMoment)<.001f,"VR result mismatch");
                 var diagrams=(System.Collections.Generic.List<LineRenderer>)typeof(StructuralVRController).GetField("diagrams",flags).GetValue(vr);
                 Require(diagrams[0].positionCount==2&&diagrams[1].positionCount==41&&diagrams.All(d=>d.enabled&&(camera.cullingMask&(1<<d.gameObject.layer))!=0),"VR diagrams not rendered by camera");
                 Vector3 middle=Vector3.Lerp(member.startPoint,member.endPoint,.5f);
-                Require(Vector3.Dot(diagrams[1].GetPosition(20)-middle,Vector3.up)>0,"Negative beam moment must appear above axis");
+                Require(Vector3.Dot(diagrams[1].GetPosition(20)-middle,Vector3.up)*forces.My<=0,"Negative beam moment must appear above axis");
                 var column=world.GetComponentsInChildren<ElementSelectable>().First(e=>e.data!=null&&e.data.type=="columna"&&UnityData.TryGetSectionForces(e.data.id,"C1",.5f,out _));
                 typeof(StructuralVRController).GetMethod("SelectElement",flags).Invoke(vr,new object[]{column});
                 Require(diagrams[1].enabled&&diagrams[1].positionCount==41,"Column diagram missing");

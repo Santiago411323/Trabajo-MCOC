@@ -46,3 +46,16 @@ P1L4/seismic/results/
 P1L4/seismic/validation/
 P1L4/seismic/cache/
 P1L4/seismic/runtime.local.json
+**/Assets/Resources/MobileSeismic/
+**/Assets/Resources/MobileSeismic.meta
+
+# Desktop-only regenerated transient responses
+P1L4/seismic/desktop_results/
+
+# Recovery checkpoint and temporary alignment calculation outputs.
+revisiones/punto_inicio_alineacion_e2_20261006/
+revisiones/alineacion_e2_trabajo/
+revisiones/punto_inicio_recorte_muro_20261006/
+revisiones/recorte_muro_trabajo/
+revisiones/punto_inicio_ventanas_20261006/
+revisiones/punto_inicio_actualizacion_movil_20261006/

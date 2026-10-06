@@ -225,9 +225,9 @@ public class MobileLoadController : MonoBehaviour
         slabMetadata=selectable.metadata;
         if(slabMetadata==null)
         {
-            var metadata=Resources.Load<TextAsset>("slab_load_surfaces");
+            var metadata=DesktopModelFile.SlabCatalogJson;
             if(metadata!=null)
-                foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
+                foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata).slabs)
                     if(row.id==found.id) {slabMetadata=row;break;}
         }
         Vector2 p=new Vector2(point.x,point.z);
@@ -319,9 +319,9 @@ public class MobileLoadController : MonoBehaviour
 
     private void LoadSlabMetadata()
     {
-        var metadata=Resources.Load<TextAsset>("slab_load_surfaces");slabMetadata=null;
+        var metadata=DesktopModelFile.SlabCatalogJson;slabMetadata=null;
         if(metadata==null)return;
-        foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata.text).slabs)
+        foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(metadata).slabs)
             if(row.id==slab.id) {slabMetadata=row;break;}
     }
     private void SyncCoordinates()
@@ -510,7 +510,7 @@ public class MobileLoadController : MonoBehaviour
         }
         if(!File.Exists(script)||!File.Exists(pythonExecutable)) throw new IOException("Configure Python y mobile_slab_worker.py (requiere OpenSeesPy).");
         worker=new System.Diagnostics.Process(); worker.StartInfo=new System.Diagnostics.ProcessStartInfo {
-            FileName=pythonExecutable, Arguments="-u \""+script+"\" \""+Path.Combine(Application.dataPath,"Resources/estructura_p1l4_unity.json")+"\"",
+            FileName=pythonExecutable, Arguments="-u \""+script+"\" \""+DesktopModelFile.ActivePath+"\"",
             UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true };
         worker.ErrorDataReceived+=(s,e)=> { if(e.Data!=null) workerError=e.Data; };
         worker.Start(); worker.BeginErrorReadLine();

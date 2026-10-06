@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "zip": "C:\\Users\\chuntley\\Desktop\\Proyecto MCOC\\P1L4\\unity_visualizador_ios\\Entregables\\MCOC_iOS_Xcode_20261006_063239_329_0458f7.zip",
+  "build": "14",
+  "size_mib": 594.3,
+  "sha256": "9889b69e924d3786aef7fbae43028abbb787f6a8bb1a6260ddf11657b2535325",
+  "checks": [
+    "CRC completo",
+    "proyecto Xcode",
+    "permiso de camara",
+    "permisos ejecutables",
+    "modelo exacto",
+    "ocho metadatos y ocho binarios exactos",
+    "textura de laptops incluida"
+  ],
+  "resources": {
+    "el_centro_1940_ns_X_i025_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i050_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i100_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i150_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i025_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i050_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i100_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i150_payload.bytes": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i025.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i050.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i100.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_X_i150.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i025.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i050.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i100.json": "xc/Data/resources.assets",
+    "el_centro_1940_ns_Y_i150.json": "xc/Data/resources.assets",
+    "estructura_p1l4_unity.json": "xc/Data/sharedassets0.assets"
+  }
+}

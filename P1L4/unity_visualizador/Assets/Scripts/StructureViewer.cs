@@ -84,6 +84,29 @@ public class StructureViewer : MonoBehaviour
     private Vector2 leftScroll;
     private bool showTopBar = true;
     private bool showLeftPanel = true;
+    private bool[] walkSavedVisibility;
+    private int walkSavedFloor;
+
+    public void SetWalkthroughView(bool active)
+    {
+        if(active)
+        {
+            walkSavedFloor=floorIndex;
+            walkSavedVisibility=new[]{showColumns,showBeams,showWalls,showSupports,showDiaphragms,
+                showVisualTerrain,showUpperTerrace,showVisualFacades,showVisualRoof,showVisualStairs,showVisualCafe};
+            floorIndex=0;
+            showColumns=showBeams=showWalls=showSupports=showDiaphragms=true;
+            showVisualTerrain=showUpperTerrace=showVisualFacades=showVisualRoof=showVisualStairs=showVisualCafe=true;
+        }
+        else if(walkSavedVisibility!=null)
+        {
+            floorIndex=walkSavedFloor;var s=walkSavedVisibility;
+            showColumns=s[0];showBeams=s[1];showWalls=s[2];showSupports=s[3];showDiaphragms=s[4];
+            showVisualTerrain=s[5];showUpperTerrace=s[6];showVisualFacades=s[7];showVisualRoof=s[8];showVisualStairs=s[9];showVisualCafe=s[10];
+            walkSavedVisibility=null;
+        }
+        RefreshVisibility();
+    }
 
     public bool IsTopBarVisible()
     {
@@ -112,6 +135,14 @@ public class StructureViewer : MonoBehaviour
     {
         // CreateStructure is called from OnEnable. Calling it again here
         // duplicates controllers and their OnGUI/Update event handling.
+        EnsureDesktopWalkthrough();
+    }
+
+    private void EnsureDesktopWalkthrough()
+    {
+        if(!Application.isPlaying || Application.isMobilePlatform || !VisualCafe.UseDesktopLayout || loadedData==null)return;
+        var walk=GetComponent<DesktopWalkthrough>() ?? gameObject.AddComponent<DesktopWalkthrough>();
+        walk.Configure(this,loadedData);
     }
 
     private void OnEnable()
@@ -121,6 +152,7 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateStructure()
     {
+        GetComponent<DesktopWalkthrough>()?.Exit();
         CreateDefaultMaterials();
 
         if (structureJson == null)
@@ -137,7 +169,7 @@ public class StructureViewer : MonoBehaviour
             }
         }
 
-        string json = !string.IsNullOrEmpty(RuntimeJsonOverride) ? RuntimeJsonOverride : structureJson.text;
+        string json = !string.IsNullOrEmpty(RuntimeJsonOverride) ? RuntimeJsonOverride : (DesktopModelFile.Available ? System.IO.File.ReadAllText(DesktopModelFile.ModelPath) : structureJson.text);
         loadedData = JsonUtility.FromJson<StructureData>(json);
         UnityData.LoadData(loadedData);
 
@@ -179,11 +211,17 @@ public class StructureViewer : MonoBehaviour
         CreateVisualRoof();
         CreateVisualStairs();
         CreateVisualCafe();
+        if(VisualCafe.UseDesktopLayout)
+        {
+            var room=new GameObject("Sala_visual_mesas_laptops");room.transform.SetParent(transform,false);
+            room.AddComponent<VisualStudyRoom>().Build(loadedData);
+            visualFacadeObjects.Add(room);RegisterFloor(room,"CIELO_2");
+        }
         CreateGlobalAxes();
         CreateDiagramController();
         CreatePMPanel();
         CreateMobileLoadController();
-        if (Application.isPlaying && GetComponent<SeismicPlaybackController>() == null)
+        if (Application.isPlaying && !Application.isMobilePlatform && GetComponent<SeismicPlaybackController>() == null)
             gameObject.AddComponent<SeismicPlaybackController>();
 
         BuildComboOptions();
@@ -196,6 +234,8 @@ public class StructureViewer : MonoBehaviour
 
         MarkGeneratedDontSave();
         RefreshVisibility();
+
+        EnsureDesktopWalkthrough();
 
         Debug.Log($"[StructureViewer] Estructura lista: {selectables.Count} elementos interactivos, {comboOptions.Length} combinaciones.");
     }
@@ -773,9 +813,9 @@ public class StructureViewer : MonoBehaviour
     {
         float thickness = 0.15f;
         var slabLoads=new Dictionary<string,SlabLoadMetadata>();
-        var catalog=Resources.Load<TextAsset>("slab_load_surfaces");
+        var catalog=DesktopModelFile.SlabCatalogJson;
         if(catalog!=null)
-            foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(catalog.text).slabs) slabLoads[row.id]=row;
+            foreach(var row in JsonUtility.FromJson<SlabLoadCatalog>(catalog).slabs) slabLoads[row.id]=row;
         foreach (SlabData slab in data.slabs)
         {
             float cx = (slab.x0 + slab.x1) * 0.5f;
@@ -1031,15 +1071,21 @@ public class StructureViewer : MonoBehaviour
         VisualStairs stairs = root.AddComponent<VisualStairs>();
         float terraceX = visualTerrain.GetComponent<VisualSiteTerrain>().TerraceContactX;
         stairs.Build(loadedData,terraceX,(piece,floor)=>RegisterFloor(piece,floor));
+        if(VisualCafe.UseDesktopLayout)
+        {
+            stairs.BuildTerraceAccess(visualTerrain.GetComponent<VisualSiteTerrain>(),(piece,floor)=>RegisterFloor(piece,floor));
+            root.AddComponent<VisualSalmonRailings>().Build(loadedData,stairs,(piece,floor)=>
+            {stairs.Pieces.Add(piece);RegisterFloor(piece,floor);});
+        }
         visualStairObjects.AddRange(stairs.Pieces);
     }
 
     private void CreateVisualCafe()
     {
         var terrain=visualTerrain.GetComponent<VisualSiteTerrain>();
-        visualCafe=new GameObject("Cafeteria_terraza_nivel_menos4");
+        visualCafe=new GameObject(VisualCafe.UseDesktopLayout ? "Cafeteria_terraza_Y0" : "Cafeteria_terraza_piso1_Y4");
         visualCafe.transform.SetParent(terrain.BaseGround.transform,false);
-        RegisterFloor(visualCafe,"FOUNDATION");
+        RegisterFloor(visualCafe,VisualCafe.FloorFilter);
         visualCafe.AddComponent<VisualCafe>().Build(loadedData,terrain.TerraceContactX,(piece,floor)=>
         {visualStairObjects.Add(piece);RegisterFloor(piece,floor);});
     }
@@ -1243,6 +1289,7 @@ public class StructureViewer : MonoBehaviour
 
     private void OnGUI()
     {
+        if(DesktopWalkthrough.IsActive)return;
         bool previousGuiEnabled = GUI.enabled;
         if (showTopBar)
         {
@@ -1417,7 +1464,7 @@ public class StructureViewer : MonoBehaviour
         showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Ventanas");
         innerY += 24f;
         showVisualRoof = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showVisualRoof, "Techo gris");
-        showVisualStairs = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualStairs, "Escaleras");
+        showVisualStairs = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualStairs, VisualCafe.UseDesktopLayout ? "Escaleras / barandas" : "Escaleras");
         innerY += 24f;
         showVisualCafe = GUI.Toggle(new Rect(innerX,innerY,160f,22f),showVisualCafe,"Cafetería / terraza");
         innerY += 32f;

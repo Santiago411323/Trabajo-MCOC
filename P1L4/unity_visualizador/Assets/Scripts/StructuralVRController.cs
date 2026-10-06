@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 
 // A separate visual world consumes the same JSON. It never adds analytical loads or members.
-public sealed class StructuralVRController : MonoBehaviour
+public sealed partial class StructuralVRController : MonoBehaviour
 {
     public bool IsVR { get; private set; }
     public bool IsChanging { get; private set; }
@@ -121,14 +121,14 @@ public sealed class StructuralVRController : MonoBehaviour
 
     private void RestoreAR()
     {
-        walking=false;movementDirection=Vector3.zero;IsVR=false;selected=null;gazeTarget=activatedTarget=null;
+        ResetMobileWorld();walking=false;movementDirection=Vector3.zero;IsVR=false;selected=null;gazeTarget=activatedTarget=null;
         if(cardboard!=null){cardboard.Stop();cardboard.Deinitialize();Destroy(cardboard);cardboard=null;}
         if(world!=null)
         {
             // Primitive meshes are Unity assets; only release materials created for this world.
             string[] ownedByDecor={"Pasto_visual","Roca_visual","Salmon_fachada_visual","Cubierta_plana_gris","Escaleras_grises_visuales"};
             foreach(Material material in world.GetComponentsInChildren<Renderer>(true)
-                .Where(r=>r.GetComponent<TextMesh>()==null).SelectMany(r=>r.sharedMaterials).Distinct())
+                .Where(r=>r.GetComponent<TextMesh>()==null&&!OwnedByDecoration(r)).SelectMany(r=>r.sharedMaterials).Distinct())
                 if(material!=null&&!materials.Contains(material)&&!ownedByDecor.Contains(material.name))Destroy(material);
             world.SetActive(false);Destroy(world);
         }
@@ -153,7 +153,7 @@ public sealed class StructuralVRController : MonoBehaviour
         if(Floors.Length==0)throw new InvalidOperationException("El modelo no contiene pisos.");
         rig=new GameObject("Recorrido VR visual");
         GameObject head=new GameObject("Camara VR");head.transform.SetParent(rig.transform,false);
-        vrCamera=head.AddComponent<Camera>();head.tag="MainCamera";vrCamera.nearClipPlane=.05f;vrCamera.farClipPlane=250;
+        vrCamera=head.AddComponent<Camera>();head.tag="MainCamera";vrCamera.nearClipPlane=.05f;vrCamera.farClipPlane=1000;
         vrCamera.cullingMask=(1<<30)|(1<<31);
         // Cardboard exposes CenterEyeRotation. Track only orientation: floor/walking own position.
         var pose=head.AddComponent<TrackedPoseDriver>();
@@ -196,6 +196,7 @@ public sealed class StructuralVRController : MonoBehaviour
         }
         nodeILabel=Text("Nodo I seleccionado",world.transform,Vector3.zero,.020f,"");
         nodeJLabel=Text("Nodo J seleccionado",world.transform,Vector3.zero,.020f,"");
+        InitializeMobileWorld();
     }
 
     private Material MaterialFor(Color color,bool overlay=false)
@@ -220,8 +221,8 @@ public sealed class StructuralVRController : MonoBehaviour
         title=Text("Piso actual",menu,new Vector3(0,.43f,0),.021f,"");
         info=Text("Resultado seleccionado",menu,new Vector3(0,-1.12f,0),.015f,"Mira una viga o columna\nManten la mira 1,2 s o pulsa el visor");
         info.anchor=TextAnchor.UpperCenter;
-        string[] labels={"Piso -","Piso +","Detener","C1/C2/C3","N/V/M","Ambiente","Centrar","Salir AR","Diagrama"};
-        Action[] callbacks={()=>ChangeFloor(-1),()=>ChangeFloor(1),()=>StopMovement(),()=>CycleCombo(),()=>CycleResult(),()=>ToggleEnvironment(),()=>Recenter(),()=>ExitVR(),()=>{showDiagram=!showDiagram;RefreshResult();}};
+        string[] labels={"Piso -","Piso +","Detener","C1/C2/C3","N/V/M","Ambiente","Centrar","Salir AR","Diagrama","Sismo","Acero"};
+        Action[] callbacks={()=>ChangeFloor(-1),()=>ChangeFloor(1),()=>StopMovement(),()=>CycleCombo(),()=>CycleResult(),()=>ToggleEnvironment(),()=>Recenter(),()=>ExitVR(),()=>{showDiagram=!showDiagram;RefreshResult();},()=>ToggleMobileSeismic(),()=>{showSteel=!showSteel;RefreshResult();}};
         for(int i=0;i<labels.Length;i++)
         {
             GameObject button=GameObject.CreatePrimitive(PrimitiveType.Cube);button.name=labels[i];button.layer=31;button.transform.SetParent(menu,false);
@@ -315,13 +316,16 @@ public sealed class StructuralVRController : MonoBehaviour
         roots.AddRange(world.GetComponentsInChildren<VisualFrameFacade>(true).Select(c=>c.transform));
         roots.AddRange(world.GetComponentsInChildren<VisualFlatRoof>(true).Select(c=>c.transform));
         roots.AddRange(world.GetComponentsInChildren<VisualStairs>(true).Select(c=>c.transform));
+        roots.AddRange(world.GetComponentsInChildren<VisualCafe>(true).Select(c=>c.transform));
+        roots.AddRange(world.GetComponentsInChildren<VisualCampusSite>(true).Select(c=>c.transform));
+        roots.AddRange(world.GetComponentsInChildren<VisualStudyRoom>(true).Select(c=>c.transform));
         foreach(var root in roots)
         {
             root.gameObject.SetActive(true);
             foreach(var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 renderer.gameObject.layer=30;renderer.enabled=true;
-                foreach(var material in renderer.sharedMaterials)if(material!=null)material.shader=shader;
+                foreach(var material in renderer.sharedMaterials)if(material!=null){material.shader=shader;material.enableInstancing=true;}
             }
         }
         ApplyEnvironmentVisibility();
@@ -330,6 +334,9 @@ public sealed class StructuralVRController : MonoBehaviour
     private void ApplyEnvironmentVisibility()
     {
         var terrain=world.GetComponentInChildren<VisualSiteTerrain>(true);terrain.SetVisibility(environment,environment);
+        foreach(var cafe in world.GetComponentsInChildren<VisualCafe>(true))cafe.gameObject.SetActive(environment);
+        foreach(var room in world.GetComponentsInChildren<VisualStudyRoom>(true))room.gameObject.SetActive(environment);
+        foreach(var campus in world.GetComponentsInChildren<VisualCampusSite>(true))campus.gameObject.SetActive(environment);
         foreach(var facade in world.GetComponentsInChildren<VisualFrameFacade>(true))foreach(var p in facade.Panels)p.SetActive(environment);
         foreach(var roof in world.GetComponentsInChildren<VisualFlatRoof>(true))foreach(var p in roof.Pieces)p.SetActive(environment);
         foreach(var stairs in world.GetComponentsInChildren<VisualStairs>(true))foreach(var p in stairs.Pieces)p.SetActive(environment);
@@ -362,11 +369,12 @@ public sealed class StructuralVRController : MonoBehaviour
             if(chosen.HasValue)break;
             if(hit.collider.GetComponent<StructuralVRButton>()!=null){chosen=hit;break;}
             var element=hit.collider.GetComponent<ElementSelectable>();
-            if(element!=null && element.transform.IsChildOf(world.transform) && element.data!=null && (element.data.type=="viga"||element.data.type=="columna")){chosen=hit;break;}
+            if(element!=null && element.transform.IsChildOf(world.transform) && element.data!=null && (element.data.type=="viga"||element.data.type=="columna"||element.data.type=="muro_eq")){chosen=hit;break;}
         }
         Collider target=chosen.HasValue?chosen.Value.collider:null;
         HandleGaze(target,trigger,Time.unscaledTime);
         if(!IsVR)return;
+        UpdateMobileWorld();
         if(walking&&!TryMove(Time.deltaTime))StopMovement();
         FollowMenu();
         if(selected!=null)
@@ -410,6 +418,7 @@ public sealed class StructuralVRController : MonoBehaviour
 
     private bool TryMove(float deltaTime)
     {
+        if(MobileSeismicPlayback.IsActive)return false;
         float distance=Mathf.Clamp(deltaTime,0,.05f)*1.8f;
         if(movementDirection.sqrMagnitude<.01f)return false;
         Vector3 candidate=rig.transform.position+movementDirection.normalized*distance;
@@ -434,7 +443,7 @@ public sealed class StructuralVRController : MonoBehaviour
         Vector3 a=selected.startPoint,b=selected.endPoint;
         Vector3 axis=(b-a).normalized,down=Vector3.ProjectOnPlane(Vector3.down,axis).normalized;if(down.sqrMagnitude<.01f)down=Vector3.forward;
         float[] values=new float[41];float maximum=0;
-        for(int i=0;i<41;i++){if(!UnityData.TryGetSectionForces(selected.data.id,combo,i/40f,out var section))return;values[i]=section.Component(result);maximum=Mathf.Max(maximum,Mathf.Abs(values[i]));}
+        for(int i=0;i<41;i++){if(!TryVRSection(i/40f,out var section))return;values[i]=section.Component(result);maximum=Mathf.Max(maximum,Mathf.Abs(values[i]));}
         diagrams[0].positionCount=2;diagrams[0].SetPositions(new[]{a,b});diagrams[1].positionCount=41;
         for(int i=0;i<41;i++)diagrams[1].SetPosition(i,Vector3.Lerp(a,b,i/40f)+down*(maximum>.00001f?values[i]/maximum*.75f:0));
         foreach(var diagram in diagrams)diagram.enabled=showDiagram;
@@ -442,7 +451,9 @@ public sealed class StructuralVRController : MonoBehaviour
         nodeILabel.transform.position=a+Vector3.up*.22f;nodeJLabel.transform.position=b+Vector3.up*.22f;
         nodeILabel.gameObject.SetActive(showDiagram);nodeJLabel.gameObject.SetActive(showDiagram);
         string component=result==0?"N":result==1?"Vy":result==2?"Vz":result==4?"My":"Mz";
-        info.text=selected.data.elementTag+" · ID "+selected.data.id+" · "+combo+"\nI: N"+selected.data.nodeI+" → J: N"+selected.data.nodeJ+"\n"+component+" I / centro / J\n"+values[0].ToString("0.00")+" / "+values[20].ToString("0.00")+" / "+values[40].ToString("0.00")+" "+(result>=4?"kN·m":"kN")+"\nDiagrama normalizado · "+(showDiagram?"visible":"oculto");
+        info.text=selected.data.elementTag+" · ID "+selected.data.id+" · "+(MobileSeismicPlayback.IsActive?MobileSeismicPlayback.Instance.Summary:combo)+"\nI: N"+selected.data.nodeI+" → J: N"+selected.data.nodeJ+"\n"+component+" I / centro / J\n"+values[0].ToString("0.00")+" / "+values[20].ToString("0.00")+" / "+values[40].ToString("0.00")+" "+(result>=4?"kN·m":"kN")+"\nDiagrama normalizado · "+(showDiagram?"visible":"oculto");
+        if(showSteel)info.text+="\n"+MobileSeismicPlayback.Reinforcement(selected.data);
+        if(MobileSeismicPlayback.IsActive)info.text+="\n"+CapacitySummary();
     }
 
     private void OnDestroy(){if(IsVR)RestoreAR();}

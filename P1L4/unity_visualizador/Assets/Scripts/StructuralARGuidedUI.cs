@@ -92,6 +92,7 @@ public sealed partial class StructuralARController
                 if (GUILayout.Button("Volver a ajustar cara")) calibrationStage = CalibrationStage.ChooseFace;
                 break;
             case CalibrationStage.Locked:
+                if (MobileSeismicPlayback.IsActive) { DrawMobileSeismicResult(); break; }
                 DrawCombinationButtons();
                 if (menuExpanded)
                 {

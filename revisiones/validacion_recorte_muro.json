@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "walls_trimmed": [
+    41,
+    42,
+    43,
+    44,
+    45
+  ],
+  "column_face_unity_z": -0.35,
+  "length_before_m": 4.445,
+  "length_after_m": 3.695,
+  "other_walls_columns_beams_slabs": "unchanged"
+}

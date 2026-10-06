@@ -879,7 +879,7 @@ public sealed partial class StructuralARController : MonoBehaviour
         for (int index = 0; index < count; index++)
         {
             float t = index / (float)(count - 1);
-            if (!UnityData.TryGetSectionForces(selectedElement.id, activeCombo, t, out FrameSectionForces section))
+            if (!TryDisplayedSection(t, out FrameSectionForces section))
             {
                 valid = false;
                 break;
