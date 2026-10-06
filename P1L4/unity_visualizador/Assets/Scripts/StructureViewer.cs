@@ -230,6 +230,9 @@ public class StructureViewer : MonoBehaviour
             var room=new GameObject("Sala_visual_mesas_laptops");room.transform.SetParent(transform,false);
             room.AddComponent<VisualStudyRoom>().Build(loadedData);
             visualFacadeObjects.Add(room);RegisterFloor(room,"CIELO_2");
+            var interiors=new GameObject("Muros_interiores_ambiente_Y4");interiors.transform.SetParent(transform,false);
+            interiors.AddComponent<VisualInteriorPartitions>().Build(loadedData,room.transform);
+            visualFacadeObjects.Add(interiors);RegisterFloor(interiors,"CIELO_2");
         }
         CreateGlobalAxes();
         CreateDiagramController();
@@ -1121,6 +1124,7 @@ public class StructureViewer : MonoBehaviour
         if(VisualCafe.UseDesktopLayout)
         {
             stairs.BuildTerraceAccess(visualTerrain.GetComponent<VisualSiteTerrain>(),(piece,floor)=>RegisterFloor(piece,floor));
+            stairs.BuildRearAccess(loadedData,visualTerrain.GetComponent<VisualSiteTerrain>(),(piece,floor)=>RegisterFloor(piece,floor));
             root.AddComponent<VisualSalmonRailings>().Build(loadedData,stairs,(piece,floor)=>
             {stairs.Pieces.Add(piece);RegisterFloor(piece,floor);});
         }
@@ -1523,7 +1527,7 @@ public class StructureViewer : MonoBehaviour
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Entorno visual");
         innerY += 22f;
         showUpperTerrace = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showUpperTerrace, "Terraza Y=4");
-        showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Ventanas");
+        showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Ventanas / muros");
         innerY += 24f;
         showVisualRoof = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showVisualRoof, "Techo gris");
         showVisualStairs = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualStairs, VisualCafe.UseDesktopLayout ? "Escaleras / barandas" : "Escaleras");

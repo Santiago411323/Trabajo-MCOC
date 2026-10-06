@@ -142,7 +142,7 @@ public sealed partial class StructuralVRController : MonoBehaviour
         if(arLoader!=null)arLoader.Start();
         if(arCamera!=null)arCamera.gameObject.SetActive(true);
         if(session!=null)session.enabled=true;
-        if(ar!=null){ar.enabled=true;ar.ResumeAfterVR();}
+        if(ar!=null){ar.RestoreEngineeringCases();ar.enabled=true;ar.ResumeAfterVR();}
         if(!string.IsNullOrEmpty(savedCombo))UnityData.ActiveCombo=savedCombo;
     }
 
@@ -197,6 +197,7 @@ public sealed partial class StructuralVRController : MonoBehaviour
         nodeILabel=Text("Nodo I seleccionado",world.transform,Vector3.zero,.020f,"");
         nodeJLabel=Text("Nodo J seleccionado",world.transform,Vector3.zero,.020f,"");
         InitializeMobileWorld();
+        InitializeEngineeringVR();
     }
 
     private Material MaterialFor(Color color,bool overlay=false)
@@ -319,6 +320,7 @@ public sealed partial class StructuralVRController : MonoBehaviour
         roots.AddRange(world.GetComponentsInChildren<VisualCafe>(true).Select(c=>c.transform));
         roots.AddRange(world.GetComponentsInChildren<VisualCampusSite>(true).Select(c=>c.transform));
         roots.AddRange(world.GetComponentsInChildren<VisualStudyRoom>(true).Select(c=>c.transform));
+        roots.AddRange(world.GetComponentsInChildren<VisualInteriorPartitions>(true).Select(c=>c.transform));
         foreach(var root in roots)
         {
             root.gameObject.SetActive(true);
@@ -336,6 +338,7 @@ public sealed partial class StructuralVRController : MonoBehaviour
         var terrain=world.GetComponentInChildren<VisualSiteTerrain>(true);terrain.SetVisibility(environment,environment);
         foreach(var cafe in world.GetComponentsInChildren<VisualCafe>(true))cafe.gameObject.SetActive(environment);
         foreach(var room in world.GetComponentsInChildren<VisualStudyRoom>(true))room.gameObject.SetActive(environment);
+        foreach(var partitions in world.GetComponentsInChildren<VisualInteriorPartitions>(true))partitions.gameObject.SetActive(environment);
         foreach(var campus in world.GetComponentsInChildren<VisualCampusSite>(true))campus.gameObject.SetActive(environment);
         foreach(var facade in world.GetComponentsInChildren<VisualFrameFacade>(true))foreach(var p in facade.Panels)p.SetActive(environment);
         foreach(var roof in world.GetComponentsInChildren<VisualFlatRoof>(true))foreach(var p in roof.Pieces)p.SetActive(environment);
@@ -375,6 +378,7 @@ public sealed partial class StructuralVRController : MonoBehaviour
         HandleGaze(target,trigger,Time.unscaledTime);
         if(!IsVR)return;
         UpdateMobileWorld();
+        UpdateEngineeringVR();
         if(walking&&!TryMove(Time.deltaTime))StopMovement();
         FollowMenu();
         if(selected!=null)

@@ -60,7 +60,7 @@ public class StructuralModelEditor : MonoBehaviour
 
     private string ConfigPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "model_edits.json"));
     private string ResultsPath => DesktopModelFile.ActivePath;
-    private string ExporterPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", DesktopModelFile.Available ? "actualizar_hueco_muros_desktop.py" : "exportar_resultados_unity.py"));
+    private string ExporterPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", DesktopModelFile.Available ? "mover_muros_positivos_desktop.py" : "exportar_resultados_unity.py"));
     private string RootPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", ".."));
 
     private void OnEnable()

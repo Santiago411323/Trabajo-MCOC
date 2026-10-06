@@ -58,6 +58,12 @@ public sealed class VisualStudyRoom : MonoBehaviour
         Piece("Muro_visual_E1_8_izquierda",new Vector3((left+doorX-.65f)/2,(low+high)/2,b.z),new Vector3(doorX-.65f-left,high-low,.12f),cement);
         Piece("Muro_visual_E1_8_derecha_hasta_E1_38",new Vector3((doorX+.65f+right)/2,(low+high)/2,b.z),new Vector3(right-doorX-.65f,high-low,.12f),cement);
         Piece("Dintel_puerta_sala_E1_8",new Vector3(doorX,(floor+2.2f+high)/2,b.z),new Vector3(1.3f,high-floor-2.2f,.12f),cement);
+        foreach(float side in new[]{-1f,1f})
+            Piece("Marco_puerta_sala_computadores",DoorCenter+Vector3.right*side*.69f,new Vector3(.08f,2.2f,.16f),wood);
+        Piece("Marco_superior_puerta_sala_computadores",DoorCenter+Vector3.up*1.14f,new Vector3(1.46f,.08f,.16f),wood);
+        // Open toward the corridor so the leaf does not collide with the existing tables/chairs.
+        Piece("Puerta_sala_computadores_abierta",DoorCenter+new Vector3(-.69f,0,.66f),new Vector3(.055f,2.12f,1.24f),wood);
+        Piece("Manilla_puerta_sala_computadores",DoorCenter+new Vector3(-.63f,-.05f,1.12f),new Vector3(.12f,.04f,.08f),metal);
         for(int row=0;row<2;row++)for(int col=0;col<2;col++)
         {
             Vector3 p=new Vector3(Mathf.Lerp(a.x,c.x,.25f+.5f*col),floor,Mathf.Lerp(a.z,b.z,.25f+.5f*row));

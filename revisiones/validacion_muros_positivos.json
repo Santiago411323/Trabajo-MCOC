@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "translated_wall_ids": [
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+  ],
+  "wall31_to35_unity_z": 6.99,
+  "wall36_to40_unity_z": [
+    4.045,
+    6.99
+  ],
+  "opening_faces_corridor": true,
+  "common_corners_connected": true,
+  "frames_and_slabs_unchanged": true,
+  "solver_and_phone_resources_unchanged": true,
+  "superposition_max_error": 1.2409827832016163e-08,
+  "equilibrium": {
+    "G": 1.8058926798403263e-08,
+    "Q": 3.4924596548080444e-09,
+    "EX": 1.5445039025507867e-08,
+    "EY": 2.661425135830342e-09,
+    "C1": 1.493026502430439e-08,
+    "C2": 1.5686964616179466e-08,
+    "C3": 2.4199835024774075e-08
+  },
+  "model_sha256": "73889f1c38277c9f7943e11323ffecc0885aa1e20ede737886e602e4a66f60f8"
+}

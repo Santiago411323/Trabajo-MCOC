@@ -4,6 +4,7 @@ public sealed partial class StructuralARController
 {
     private void DrawGuidedInterface()
     {
+        if(lockedTab!="Ingeniería" || calibrationStage!=CalibrationStage.Locked || !menuExpanded)engineering.Preview?.Hide();
         uiScale = Mathf.Max(1f, Mathf.Min(Screen.width, Screen.height) / 390f);
         Matrix4x4 previousMatrix = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f));
@@ -97,11 +98,12 @@ public sealed partial class StructuralARController
                 if (menuExpanded)
                 {
                     GUILayout.BeginHorizontal();
-                    foreach (string tab in new[] { "Resultados", "Ajuste", "Sector" })
+                    foreach (string tab in new[] { "Resultados", "Ajuste", "Sector", "Ingeniería" })
                         if (GUILayout.Button(tab, GUILayout.Height(32f))) { lockedTab = tab; panelScroll = Vector2.zero; }
                     GUILayout.EndHorizontal();
                     if (lockedTab == "Ajuste") DrawFineControls();
                     else if (lockedTab == "Sector") DrawSector();
+                    else if(lockedTab=="Ingeniería") DrawEngineering();
                     else DrawComparisonResults();
                 }
                 break;

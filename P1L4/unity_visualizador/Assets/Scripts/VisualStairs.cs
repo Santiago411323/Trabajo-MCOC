@@ -91,9 +91,22 @@ public sealed class VisualStairs : MonoBehaviour
             new Vector3(b.min.x+.2f-run,.03f,wideZ),wideWidth,8,-terrain.Clearance-.05f,register);
     }
 
-    private void SolidFlight(string name,Vector3 start,Vector3 end,float width,int steps,float bottom,System.Action<GameObject,string> register)
+    public void BuildRearAccess(StructureData data,VisualSiteTerrain terrain,System.Action<GameObject,string> register)
     {
-        const string floor="CIELO_1S";
+        if(!VisualCafe.UseDesktopLayout)return;
+        var column=data.elements.FirstOrDefault(e=>e.elementTag=="E1_288" && e.type=="columna");
+        if(column==null)return;
+        var node=data.nodes.Single(n=>n.id==column.nodeJ);
+        // Outside the rear facade, descend along -X to the lower platform at E1_288.
+        float z=node.y+3.5f;
+        Vector3 top=new Vector3(terrain.TerraceContactX+.4f,4.03f,z);
+        Vector3 bottom=new Vector3(node.x,-terrain.Clearance+.03f,z);
+        SolidFlight("Escalera_lateral_E1_288_Y4",top,bottom,3f,Mathf.CeilToInt((top.y-bottom.y)/.18f),
+            -terrain.Clearance-.05f,register,"CIELO_2");
+    }
+
+    private void SolidFlight(string name,Vector3 start,Vector3 end,float width,int steps,float bottom,System.Action<GameObject,string> register,string floor="CIELO_1S")
+    {
         float tread=(start.x-end.x)/steps;
         for(int i=0;i<steps;i++)
         {
@@ -101,8 +114,16 @@ public sealed class VisualStairs : MonoBehaviour
             Box(name+"_peldaño_"+(i+1),new Vector3(start.x-(i+.5f)*tread,(top+bottom)/2,start.z),
                 new Vector3(tread+.005f,top-bottom,width),Quaternion.identity,floor,register);
         }
-        Box(name+"_descanso_superior",start+new Vector3(.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
-        Box(name+"_descanso_inferior",end+new Vector3(-.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
+        if(floor=="CIELO_2")
+        {
+            Box(name+"_descanso_superior",new Vector3(start.x+.3f,(start.y+bottom)/2,start.z),new Vector3(.6f,start.y-bottom,width),Quaternion.identity,floor,register);
+            Box(name+"_descanso_inferior",new Vector3(end.x-.3f,(end.y+bottom)/2,end.z),new Vector3(.6f,end.y-bottom,width),Quaternion.identity,floor,register);
+        }
+        else
+        {
+            Box(name+"_descanso_superior",start+new Vector3(.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
+            Box(name+"_descanso_inferior",end+new Vector3(-.3f,-.09f,0),new Vector3(.6f,.18f,width),Quaternion.identity,floor,register);
+        }
         Paths.Add(new FlightPath{Name=name,Floor=floor,Start=start,End=end,Width=width});
         FlightCount++;
     }

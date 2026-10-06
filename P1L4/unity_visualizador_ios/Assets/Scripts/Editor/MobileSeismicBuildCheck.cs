@@ -17,6 +17,7 @@ public sealed class MobileSeismicBuildCheck : IPreprocessBuildWithReport
     }
     public static void Validate()
     {
+        var lrfd=new MobileLrfd();if(!lrfd.Load())throw new BuildFailedException(lrfd.Status);
         string root=Path.Combine(Application.dataPath,"Resources");
         string modelHash=SeismicResponseData.Hash(File.ReadAllBytes(Path.Combine(root,"estructura_p1l4_unity.json")));
         foreach(string direction in new[]{"X","Y"})foreach(int intensity in new[]{25,50,100,150})

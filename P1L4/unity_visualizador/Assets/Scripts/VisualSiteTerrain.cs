@@ -35,7 +35,7 @@ public sealed class VisualSiteTerrain : MonoBehaviour
             if (e.type == "viga" && nodes.ContainsKey(e.nodeI) && nodes.ContainsKey(e.nodeJ) &&
                 levels.Any(g => Mathf.Abs(nodes[e.nodeI].y - g.Key) < .01f && Mathf.Abs(nodes[e.nodeJ].y - g.Key) < .01f))
                 Clearance = Mathf.Max(Clearance, e.height_m * .5f + .1f);
-        Material grass = SurfaceMaterial(true);
+        Material grass = VisualCafe.UseDesktopLayout ? CementMaterial() : SurfaceMaterial(true);
         Material rock = SurfaceMaterial(false);
         float zMin = bases.Min(p => p.z) - 12f, zMax = bases.Max(p => p.z) + 12f;
         float bottom = levels[0].Key - Clearance - .4f;
@@ -126,6 +126,17 @@ public sealed class VisualSiteTerrain : MonoBehaviour
         Edge("Terraza_borde_exterior", new Vector3(end, elevation, maxZ), new Vector3(end, elevation, minZ), baseHeight, rock);
         if(VisualCafe.UseDesktopLayout)
         {
+            // Close the exposed rear face beneath Y4, behind the exterior stair.
+            float rearFacade=data.elements.Where(e=>e.type=="columna" && (e.elementTag ?? "").StartsWith("E1_"))
+                .SelectMany(e=>new[]{nodes[e.nodeI].z,nodes[e.nodeJ].z}).Max();
+            var stoneClosure=new GameObject("Muro_piedra_vertical_detras_escalera");stoneClosure.layer=2;
+            stoneClosure.transform.SetParent(groupParent,false);var terraceParent=groupParent;groupParent=stoneClosure.transform;
+            // The solid stair body fills the notch; a full-height face across it would block ascent.
+            float stairNear=rearFacade+2f,stairFar=rearFacade+5f;
+            Edge("Piedra_junto_fachada",new Vector3(platformStart,elevation,rearFacade),new Vector3(platformStart,elevation,stairNear),baseHeight,rock);
+            Edge("Piedra_bajo_entrada_escalera",new Vector3(platformStart,3.3f,stairNear),new Vector3(platformStart,3.3f,stairFar),baseHeight,rock);
+            Edge("Piedra_cierre_exterior",new Vector3(platformStart,elevation,stairFar),new Vector3(platformStart,elevation,maxZ),baseHeight,rock);
+            groupParent=terraceParent;
             var column=data.elements.FirstOrDefault(e=>e.elementTag=="E1_280" && e.type=="columna");
             if(column!=null)
             {
@@ -188,6 +199,22 @@ public sealed class VisualSiteTerrain : MonoBehaviour
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", .04f);
         resources.Add(texture); resources.Add(material);
         return material;
+    }
+
+    private Material CementMaterial()
+    {
+        var material=new Material(Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit"))
+            {name="Cemento_plataformas_visuales",color=Color.white};
+        var texture=new Texture2D(128,128,TextureFormat.RGB24,true){name="Textura_cemento_plataformas",wrapMode=TextureWrapMode.Repeat};
+        var pixels=new Color[128*128];
+        for(int y=0;y<128;y++)for(int x=0;x<128;x++)
+        {
+            float noise=Mathf.PerlinNoise(x*.45f+8,y*.45f+12);
+            float tone=.57f+noise*.10f;pixels[y*128+x]=new Color(tone,tone,tone*.98f);
+        }
+        texture.SetPixels(pixels);texture.Apply(true,true);material.mainTexture=texture;
+        if(material.HasProperty("_Glossiness"))material.SetFloat("_Glossiness",.08f);
+        resources.Add(material);resources.Add(texture);return material;
     }
 
     private void Surface(string name, float minX, float maxX, float minZ, float maxZ,

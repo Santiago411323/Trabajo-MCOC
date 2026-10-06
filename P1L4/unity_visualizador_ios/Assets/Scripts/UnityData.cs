@@ -122,6 +122,7 @@ public static class UnityData
 
     public static Vector3 GetNodeDisplacement(string combo, int nodeId)
     {
+        if(combo!=null && combo.StartsWith("LRFD_"))return GetBaseNodeDisplacement(combo,nodeId);
         return GetBaseNodeDisplacement(combo,nodeId) +
             (MobileDisplacements.TryGetValue(nodeId,out var increment) ? increment : Vector3.zero);
     }
@@ -161,6 +162,7 @@ public static class UnityData
     {
         float[] source=GetBaseElementForces(combo,elementId);
         if(source==null) return null;
+        if(combo!=null && combo.StartsWith("LRFD_"))return source;
         float[] extra=MobileForces.TryGetValue(elementId,out var increment) ? increment : null;
         if(extra==null) return source;
         float[] total=(float[])source.Clone();
@@ -368,6 +370,29 @@ public static class UnityData
     {
         if (string.IsNullOrEmpty(sectionId) || materialLookup == null) return null;
         return materialLookup.TryGetValue(sectionId, out var mat) ? mat : null;
+    }
+
+    public static void RegisterLrfdCase(LrfdVariant variant)
+    {
+        if(variant==null || variant.name==null || !variant.name.StartsWith("LRFD_") || variant.forces==null || variant.displacements==null)
+            throw new System.ArgumentException("Contrato LRFD inválido.");
+        var byId=new Dictionary<int,float[]>();var records=new List<ElementForceRecord>();
+        foreach(var row in variant.forces)
+        {
+            if(!frames.ContainsKey(row.id))continue;
+            if(!FrameForces.IsValid(row.f))throw new System.ArgumentException("Fuerzas LRFD no finitas.");
+            byId[row.id]=(float[])row.f.Clone();records.Add(new ElementForceRecord{combo=variant.name,id=row.id,f=(float[])row.f.Clone()});
+        }
+        if(byId.Count==0)throw new System.ArgumentException("El caso no coincide con los elementos del modelo.");
+        var nodes=new List<DisplacementRecord>();
+        foreach(var row in variant.displacements)
+        {
+            if(float.IsNaN(row.ux) || float.IsInfinity(row.ux) || float.IsNaN(row.uy) || float.IsInfinity(row.uy) || float.IsNaN(row.uz) || float.IsInfinity(row.uz))
+                throw new System.ArgumentException("Desplazamientos LRFD inválidos.");
+            row.combo=variant.name;nodes.Add(row);
+        }
+        localForces[variant.name]=byId;ElementForcesByCombo[variant.name]=records;DisplacementsByCombo[variant.name]=nodes;
+        comboLookup[variant.name]=new ComboInfo{name=variant.name,label=variant.label+" · escenario LRFD de referencia"};
     }
 
     public static void UpsertMaterial(SectionMaterialData material)

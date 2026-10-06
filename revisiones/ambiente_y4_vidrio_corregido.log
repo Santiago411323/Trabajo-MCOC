@@ -1,0 +1,470 @@
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 22720)
+VBCSCompiler prewarm took 9.42 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.6/respin/6000.6.0f1-fa21a270ab12' branch; Version is '6000.6.0f1 (f7f8ed4d1e24) revision 16251117'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley" at "2026-10-06T20:04:52.1724603Z"
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'es' Physical Memory: 24260 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-06T20:04:52Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 6784, path: "C:/Program Files/Unity Hub/UnityLicensingClient_V1/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              0be94da956094ef294a545c06908f1b8
+  Correlation Id:          4ba745babcaf1c4054dba56c93494cac
+  External correlation Id: 261547457408460889
+  Machine Id:              RVWmRlYDKragNEt0oPrKajgv5w0=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-chuntley" (connect: 0.00s, validation: 0.00s, handshake: 0.06s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley-notifications" at "2026-10-06T20:04:52.2357359Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 4674248689123-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.07s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe
+-batchmode
+-projectPath
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+-executeMethod
+DesktopFacadeRevisionValidation.ValidateBatch
+-logFile
+C:/Users/chuntley/Desktop/Proyecto MCOC/revisiones/ambiente_y4_vidrio_corregido.log
+Successfully changed project path to: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=1"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [22212]  Target information:
+
+Player connection [22212]  * "[IP] 192.168.1.17 [Port] 55504 [Flags] 2 [Guid] 2849150852 [EditorId] 2849150852 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-CDJE44U) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [22212] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [22212] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-2408" after 0.3 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Initialising UDS system complete:
+  - System type: Client
+  - Resource namespace: 926b2610ed02254863998b18cfa180f7
+  - Shared memory size: 1073741824
+  - Command buffer id: 1052576
+  - Command buffer size: 8192
+  - Hashmap size: 4194304
+  - Service connected: false
+Launching Unity Data Store - C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore.exe 
+Unity Data Store artifact dir = Library/DataStore, working dir = C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Unity Data Store running and initialised
+Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.1]
+    Renderer:        Intel(R) Iris(R) Xe Graphics (ID=0xa7a1)
+    Vendor:          Intel
+    VRAM:            12130 MB
+    App VRAM Budget: 11362 MB
+    Driver:          32.0.101.7088
+    Unified Memory Architecture
+    Cache Coherent UMA
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56408
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+[Licensing::Client] Successfully resolved entitlement details
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Registered in 0.006765 seconds.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  0.878 seconds
+Domain Reload Profiling: 1469ms
+	BeginReloadAssembly (134ms)
+		CreateAndSetChildDomain (4ms)
+	RebuildCommonClasses (5ms)
+	RebuildNativeTypeToScriptingClass (17ms)
+	initialDomainReloadingComplete (79ms)
+	LoadAllAssembliesAndSetupDomain (354ms)
+		LoadAssemblies (126ms)
+		TypeCache.Refresh (241ms)
+			TypeCache.ScanAssembly (225ms)
+		AnalyzeDomain (1ms)
+	FinalizeReload (880ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (16ms)
+			BeforeProcessingInitializeOnLoad (119ms)
+			ProcessInitializeOnLoadAttributes (162ms)
+			ProcessInitializeOnLoadMethodAttributes (317ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 29 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.xr.arcore@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arcore@48fb51f3ca76)
+    com.unity.xr.arfoundation@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a)
+    com.unity.xr.management@4.5.3 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.management@574ebfb1e976)
+    com.unity.inputsystem@1.20.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.inputsystem@7a4e1a2a8194)
+    com.unity.xr.legacyinputhelpers@3.0.1 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.legacyinputhelpers@3f62d634f63b)
+    com.unity.xr.core-utils@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.core-utils@a8b900321199)
+  Built-in packages:
+    com.unity.modules.animation@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.director@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.physics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.ui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.modules.xr@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.ugui@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.ugui@23caec89ae27)
+    com.unity.mathematics@1.4.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.mathematics@8306a64d0cd6)
+    com.unity.editorcoroutines@6.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.editorcoroutines@8cd72baa102a)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.physicscore2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physicscore2d)
+  Git packages:
+    com.google.xr.cardboard@https://github.com/googlevr/cardboard-xr-plugin.git#36ac9815b8f191fe11e149b7f323368fa86655a6 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1)
+[Subsystems] Looking for new subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] Novel subsystem found at Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  displays in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'meshings' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Package Manager] Done registering packages in 0.02 seconds
+Starting: C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 0s279ms
+[456/568    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra build success (0.23 seconds), 1 items updated, 568 evaluated
+AssetDatabase: script compilation time: 0.843432s
+Begin MonoManager ReloadAssembly
+Refreshing native plugins compatible for Editor in 2.96 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  0.806 seconds
+Domain Reload Profiling: 1587ms
+	BeginReloadAssembly (426ms)
+		DisableScriptedObjects (52ms)
+		CreateAndSetChildDomain (159ms)
+	RebuildCommonClasses (12ms)
+	RebuildNativeTypeToScriptingClass (16ms)
+	initialDomainReloadingComplete (71ms)
+	LoadAllAssembliesAndSetupDomain (255ms)
+		LoadAssemblies (143ms)
+		TypeCache.Refresh (48ms)
+			TypeCache.ScanAssembly (34ms)
+		AnalyzeDomain (26ms)
+			BuildScriptInfoCaches (20ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (808ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (9ms)
+			BeforeProcessingInitializeOnLoad (154ms)
+			ProcessInitializeOnLoadAttributes (184ms)
+			ProcessInitializeOnLoadMethodAttributes (56ms)
+			AfterProcessingInitializeOnLoad (22ms)
+		AwakeInstancesAfterBackupRestoration (55ms)
+Starting new worker id: 0 with log in C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Logs/AssetImportWorkerHW0.log
+
+Asset Pipeline Refresh (id=c74da9a505cb3be49a5ee387bd4b0d60): Total: 2.951 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1129 ms
+		Asset DB Callback time: managed=32 ms, native=22 ms
+		Scripting: domain reloads=1, domain reload time=870 ms, compile time=847 ms, other=49 ms
+		Project Asset Count: scripts=510, non-scripts=418
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 25.883ms
+	ApplyChangesToAssetFolders: 0.993ms
+	Scan: 65.628ms
+	Collect global state as custom dependencies: 10.288ms
+	CategorizeScriptCompilationAssets: 6.069ms
+	ProcessAssetsWithTransientArtifactChanges: 26.479ms
+	CategorizeAssets: 15.597ms
+	CompileScripts: 847.024ms
+	ImportOutOfDateAssets: 834.804ms (816.527ms without children)
+		UnloadImportedAssets: 0.211ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.256ms
+		ImportSchedulerStart: 17.784ms
+	PostProcessAllAssets: 32.925ms
+		MonoPostProcessAllAssets: 32.822ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 10.581ms
+			SyncVS.PostprocessSyncProject 3.424ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.538ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 1.289ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 0.491ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.464ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.430ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.356ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.288ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.153ms
+	UnloadStreamsBegin: 2.137ms
+	GenerateScriptTypeHashes: 3.226ms
+	GenerateScriptTypeSerializationHashes: 6.062ms
+	Untracked: 1030.352ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+Scanning for USB devices : 5.049ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+[MODES] Loading mode Default (0) for mode-current-id-unity_visualizador
+Curl error 6: Could not resolve host: config.uca.cloud.unity3d.com
+Unloading 11 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 1793 unused Assets / (2.7 MB). Loaded Objects now: 2546.
+Memory consumption went from 259.2 MB to 256.5 MB.
+Total: 10.255100 ms (FindLiveObjects: 0.349700 ms CreateObjectMapping: 0.128100 ms MarkObjects: 7.732600 ms  DeleteObjects: 1.804700 ms)
+
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:890)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:238)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:14)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:257)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:14)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 257)
+
+[Facade revision] PASS: old window removed; three cantilever windows match facade style; cafe roof matches L95; two unobstructed Y4 access doors and original cafe doors preserved; game collision openings clear.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:53)
+
+(Filename: Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs Line: 53)
+
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:890)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:238)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:14)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:257)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:14)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 257)
+
+[Cafe tables] PASS: 29 tables preserved; chairs separated; corridor towards cafe doors kept clear.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:59)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/Editor/DesktopCafeValidation.cs Line: 59)
+
+[Cafe service] PASS: closed wall between E1_256/E1_264; equipment/sign moved; old opening cleared; two unobstructed visual doorways near tables; structural columns preserved.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:82)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/Editor/DesktopCafeValidation.cs Line: 82)
+
+[Wall opening] PASS: five stories including basement terminate at column face Z=-0.35; clear opening 2.45 m, outer endpoints preserved, base supports and E1_233 preserved.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:95)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/Editor/DesktopCafeValidation.cs Line: 95)
+
+[Terrace stairs and rails] PASS: four beam rails; existing stair rails connected; Y4 extension to E1_280 only on cantilever side; adjacent normal stairs and straight seating descend to Y0; visual pieces only.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:117)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/Editor/DesktopCafeValidation.cs Line: 117)
+
+[Desktop cafe] PASS: Y0 cafe and ceiling; full Y0 ground coverage; Y4 grass restored; promenade behind trees rises Y0 to Y4; trees follow ramp; hills preserved clear of campus; paths connect to parking.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopCafeValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopCafeValidation.cs:118)
+DesktopFacadeRevisionValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopFacadeRevisionValidation.cs:55)
+
+(Filename: Assets/Scripts/Editor/DesktopCafeValidation.cs Line: 118)
+
+MonoPathRemapper: Attempts to remap: 4781; Successful remaps: 0
+Worker ready: AssetImportWorkerHW0 0
+Serialized file version minimum: 23, current 23
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-chuntley-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-chuntley channel disconnected successfully.
+Lingering sessions upon destruction of worker manager
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+Shut down UDS service system complete
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1791317103908,"processId":2408,"allocatedMemory":11708704,"memoryLabels":[{"Default":221866},{"Permanent":15516},{"NewDelete":71167},{"Thread":4205560},{"Manager":32453},{"VertexData":8},{"Geometry":816},{"Texture":24},{"Shader":840084},{"Material":24},{"GfxDevice":58848},{"Animation":952},{"Audio":1272},{"FreeType":8},{"FontEngine":736},{"Physics":1970},{"Physics2D":16},{"Serialization":16704},{"Input":42840},{"JobScheduler":256},{"TextLib":280},{"Mono":48},{"ScriptingNativeRuntime":1225616},{"BaseObject":49232},{"Resource":1208},{"Renderer":2376},{"Transform":4685},{"File":4416},{"WebCam":616},{"Culling":32},{"Terrain":11442},{"Wind":24},{"STL":40},{"String":323580},{"StaticString":3808},{"Utility":2674262},{"Curl":2498},{"PoolAlloc":2168},{"AI":80},{"TypeTree":8869},{"ScriptManager":12640},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7816},{"Director":8296},{"CloudService":7728},{"WebRequest":552},{"VR":49938},{"SceneManager":608},{"Video":64},{"LazyScriptCache":32},{"Camera":729},{"Secure":2377},{"SerializationCache":9256},{"APIUpdating":10320},{"Subsystems":48},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":768},{"Hierarchy":1188},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":128},{"EditorUtility":102953},{"VersionControl":8},{"Undo":931},{"AssetDatabase":1237331},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40441},{"Upm":1912},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":266},{"ProfilerEditor":9746},{"CoreBusinessMetrics":3606},{"Windowing":456},{"Licensing":12760},{"AssetReference":32},{"IPCStream":32}]}
+~StackAllocator(ALLOC_TEMP_MAIN) m_LastAlloc not NULL. Did you forget to call FreeAllStackAllocations()? To get more information, run app with -diag-temp-memory-leak-validation cmd line argument

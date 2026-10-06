@@ -96,9 +96,9 @@ public static class DesktopCafeValidation
             Require(VisualCafe.FloorFilter=="CIELO_1S","Wrong cafe floor filter");
             var stairs=model.GetComponentInChildren<VisualStairs>();
             var rails=model.GetComponentInChildren<VisualSalmonRailings>();
-            Require(stairs.FlightCount==4,"Expected two existing flights and two terrace access strips");
+            Require(stairs.FlightCount==5,"Expected existing stairs plus rear E1_288 access");
             Require(rails!=null && rails.BeamTags.OrderBy(t=>t).SequenceEqual(new[]{"E1_206","E1_208","E1_221.1","E1_221.2"}),"Missing beam rails");
-            Require(rails.Routes.Count==11 && rails.GetComponentsInChildren<MeshFilter>().Any(m=>m.name.Contains("panel_cerrado")),"Expected solid rails with only outer stair sides and no middle divider");
+            Require(rails.Routes.Count==13 && rails.GetComponentsInChildren<MeshFilter>().Any(m=>m.name.Contains("panel_cerrado")),"Expected original solid rails plus both rear stair sides");
             var extension=terrain.CantileverExtension;
             Require(Mathf.Abs(extension.min.x-30f)<.001f && Mathf.Abs(extension.max.z+7.25f)<.001f,"Terrace extension must end at E1_280 on cantilever side only");
             var normal=stairs.Paths.Single(p=>p.Name=="Escalera_Y4_cafeteria_normal");

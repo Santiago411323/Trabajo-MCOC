@@ -1,0 +1,644 @@
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 9444)
+VBCSCompiler prewarm took 9.22 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.6/respin/6000.6.0f1-fa21a270ab12' branch; Version is '6000.6.0f1 (f7f8ed4d1e24) revision 16251117'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley" at "2026-10-06T19:07:51.8134696Z"
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'es' Physical Memory: 24260 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-06T19:07:51Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 6784, path: "C:/Program Files/Unity Hub/UnityLicensingClient_V1/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              46d356af959b42a68553b549c1caf926
+  Correlation Id:          4ba745babcaf1c4054dba56c93494cac
+  External correlation Id: 8287185817366613083
+  Machine Id:              RVWmRlYDKragNEt0oPrKajgv5w0=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-chuntley" (connect: 0.00s, validation: 0.00s, handshake: 0.06s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley-notifications" at "2026-10-06T19:07:51.8736912Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 4674248689123-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.07s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe
+-batchmode
+-projectPath
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+-executeMethod
+DesktopWalkthroughPlayValidation.ValidateBatch
+-logFile
+C:/Users/chuntley/Desktop/Proyecto MCOC/revisiones/skate_pc_play.log
+Successfully changed project path to: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=1"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [7072]  Target information:
+
+Player connection [7072]  * "[IP] 192.168.1.17 [Port] 55504 [Flags] 2 [Guid] 973244520 [EditorId] 973244520 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-CDJE44U) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [7072] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [7072] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-22188" after 0.3 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Initialising UDS system complete:
+  - System type: Client
+  - Resource namespace: 926b2610ed02254863998b18cfa180f7
+  - Shared memory size: 1073741824
+  - Command buffer id: 1052576
+  - Command buffer size: 8192
+  - Hashmap size: 4194304
+  - Service connected: false
+Launching Unity Data Store - C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore.exe 
+Unity Data Store artifact dir = Library/DataStore, working dir = C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Unity Data Store running and initialised
+Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.1]
+    Renderer:        Intel(R) Iris(R) Xe Graphics (ID=0xa7a1)
+    Vendor:          Intel
+    VRAM:            12130 MB
+    App VRAM Budget: 11362 MB
+    Driver:          32.0.101.7088
+    Unified Memory Architecture
+    Cache Coherent UMA
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56188
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+[Licensing::Client] Successfully resolved entitlement details
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Registered in 0.005497 seconds.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  0.902 seconds
+Domain Reload Profiling: 1512ms
+	BeginReloadAssembly (159ms)
+		CreateAndSetChildDomain (17ms)
+	RebuildCommonClasses (5ms)
+	RebuildNativeTypeToScriptingClass (16ms)
+	initialDomainReloadingComplete (89ms)
+	LoadAllAssembliesAndSetupDomain (341ms)
+		LoadAssemblies (138ms)
+		TypeCache.Refresh (232ms)
+			TypeCache.ScanAssembly (218ms)
+		AnalyzeDomain (1ms)
+	FinalizeReload (903ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (13ms)
+			BeforeProcessingInitializeOnLoad (144ms)
+			ProcessInitializeOnLoadAttributes (166ms)
+			ProcessInitializeOnLoadMethodAttributes (311ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 29 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.xr.arcore@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arcore@48fb51f3ca76)
+    com.unity.xr.arfoundation@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a)
+    com.unity.xr.management@4.5.3 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.management@574ebfb1e976)
+    com.unity.inputsystem@1.20.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.inputsystem@7a4e1a2a8194)
+    com.unity.xr.legacyinputhelpers@3.0.1 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.legacyinputhelpers@3f62d634f63b)
+    com.unity.xr.core-utils@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.core-utils@a8b900321199)
+  Built-in packages:
+    com.unity.modules.animation@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.director@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.physics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.ui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.modules.xr@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.ugui@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.ugui@23caec89ae27)
+    com.unity.mathematics@1.4.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.mathematics@8306a64d0cd6)
+    com.unity.editorcoroutines@6.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.editorcoroutines@8cd72baa102a)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.physicscore2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physicscore2d)
+  Git packages:
+    com.google.xr.cardboard@https://github.com/googlevr/cardboard-xr-plugin.git#36ac9815b8f191fe11e149b7f323368fa86655a6 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1)
+[Subsystems] Looking for new subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] Novel subsystem found at Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  displays in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'meshings' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Package Manager] Done registering packages in 0.02 seconds
+[ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 1s738ms
+[455/568    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[564/568    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+Assets\Scripts\Editor\DesktopWalkthroughPlayValidation.cs(29,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\Editor\MCOCSetup.cs(104,13): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+[565/568    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 147 defines and 334 references
+
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+1 processor(s) skipped this assembly
+[566/568    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[567/568    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+*** Tundra build success (1.70 seconds), 5 items updated, 568 evaluated
+Assets\Scripts\Editor\DesktopWalkthroughPlayValidation.cs(29,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\Editor\MCOCSetup.cs(104,13): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Total cache size 69200540
+Total cache size after purge 69200540, took 00:00:00.1799816
+AssetDatabase: script compilation time: 3.151353s
+Begin MonoManager ReloadAssembly
+Refreshing native plugins compatible for Editor in 4.49 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  0.674 seconds
+Domain Reload Profiling: 1248ms
+	BeginReloadAssembly (272ms)
+		DisableScriptedObjects (36ms)
+		CreateAndSetChildDomain (63ms)
+	RebuildCommonClasses (10ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (60ms)
+	LoadAllAssembliesAndSetupDomain (216ms)
+		LoadAssemblies (122ms)
+		TypeCache.Refresh (39ms)
+			TypeCache.ScanAssembly (31ms)
+		AnalyzeDomain (19ms)
+			BuildScriptInfoCaches (16ms)
+	FinalizeReload (676ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (8ms)
+			BeforeProcessingInitializeOnLoad (119ms)
+			ProcessInitializeOnLoadAttributes (160ms)
+			ProcessInitializeOnLoadMethodAttributes (71ms)
+			AfterProcessingInitializeOnLoad (25ms)
+		AwakeInstancesAfterBackupRestoration (56ms)
+Starting new worker id: 0 with log in C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Logs/AssetImportWorkerHW0.log
+Refreshing native plugins compatible for Editor in 4.77 ms, found 1 plugins.
+
+Asset Pipeline Refresh (id=afedec7e31b4ea84c81428922de88136): Total: 4.983 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=985 ms
+		Asset DB Callback time: managed=149 ms, native=34 ms
+		Scripting: domain reloads=1, domain reload time=620 ms, compile time=3155 ms, other=37 ms
+		Project Asset Count: scripts=510, non-scripts=418
+		Asset File Changes: new=0, changed=1, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 22.200ms
+	ApplyChangesToAssetFolders: 0.548ms
+	Scan: 60.603ms
+	Collect global state as custom dependencies: 9.373ms
+	OnSourceAssetsModified: 0.781ms
+	CategorizeScriptCompilationAssets: 5.758ms
+	ProcessAssetsWithTransientArtifactChanges: 36.205ms
+	CategorizeAssets: 15.271ms
+	CompileScripts: 3154.514ms
+	ImportOutOfDateAssets: 705.007ms (686.475ms without children)
+		UnloadImportedAssets: 0.137ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.187ms
+		ImportSchedulerStart: 18.187ms
+	PostProcessAllAssets: 154.346ms
+		VCAutoAddAssetPostprocess 3.050ms
+		XRBuildSystem.XRAssetImported 1.244ms
+		PostProcessCallbackCreateDeferredMaterials 0.059ms
+		MonoPostProcessAllAssets: 148.920ms
+			AssetPostprocessor.OnPostprocessAllAssets 59.603ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 17.403ms
+			AssetCallbacks.OnPostprocessAllAssets 12.228ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 10.541ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 7.043ms
+			AssetChangedListener.OnPostprocessAllAssets 3.803ms
+			SyncVS.PostprocessSyncProject 2.999ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 2.765ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 2.241ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.507ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 1.023ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 0.782ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.765ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 0.749ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 0.590ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 0.563ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 0.521ms
+			EnvironmentAssetPostprocessor.OnPostprocessAllAssets 0.460ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.338ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.318ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.306ms
+			AssetEvents.OnPostprocessAllAssets 0.294ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.260ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.256ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.178ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.143ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.136ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.121ms
+	PostAssetChangesProfiler: 9.762ms
+	UnloadStreamsBegin: 1.680ms
+	GenerateScriptTypeHashes: 3.966ms
+	GenerateScriptTypeSerializationHashes: 7.849ms
+	Untracked: 761.829ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+Scanning for USB devices : 4.077ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-unity_visualizador
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+Curl error 6: Could not resolve host: config.uca.cloud.unity3d.com
+Unloading 11 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 1791 unused Assets / (2.5 MB). Loaded Objects now: 2544.
+Memory consumption went from 258.0 MB to 255.5 MB.
+Total: 8.257500 ms (FindLiveObjects: 0.450200 ms CreateObjectMapping: 0.114900 ms MarkObjects: 6.545300 ms  DeleteObjects: 0.954400 ms)
+
+Opening scene 'Assets/Scenes/StructureViewerScene.unity'
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:887)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:235)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEditor.SceneManagement.EditorSceneManager:OpenScene (string,UnityEditor.SceneManagement.OpenSceneMode)
+DesktopWalkthroughPlayValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopWalkthroughPlayValidation.cs:13)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:254)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEditor.SceneManagement.EditorSceneManager:OpenScene (string,UnityEditor.SceneManagement.OpenSceneMode)
+DesktopWalkthroughPlayValidation:ValidateBatch () (at Assets/Scripts/Editor/DesktopWalkthroughPlayValidation.cs:13)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 254)
+
+Loaded scene 'Assets/Scenes/StructureViewerScene.unity'
+	Deserialize:            16.656 ms
+	Integration:            640.012 ms
+	Integration of assets:  0.022 ms
+	Thread Wait Time:       2.150 ms
+	Total Operation Time:   658.841 ms
+Unloading 2 unused Assets / (4.8 KB). Loaded Objects now: 21218.
+Memory consumption went from 293.8 MB to 293.8 MB.
+Total: 7.550300 ms (FindLiveObjects: 1.311500 ms CreateObjectMapping: 0.173000 ms MarkObjects: 5.687900 ms  DeleteObjects: 0.046400 ms)
+
+[Project] Loading completed in 9.527 seconds
+	Project init time: 				8.384 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.273 seconds
+		Asset Database init time: 		1.016 seconds
+		Global illumination init time: 	0.002 seconds
+		Assemblies load time: 			1.566 seconds
+		Unity extensions init time: 	0.009 seconds
+		Asset Database refresh time: 	4.983 seconds
+	Scene opening time: 			0.860 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1791313681324,"processId":22188,"projectLoad":9.527088399999998,"projectInit":8.3841059,"templateInit":0.0,"packageManagerInit":0.2734421,"assetDatabaseInit":1.0164286,"globalIlluminationInit":0.0022477,"assembliesLoad":1.5656247,"unityExtensionsInit":0.009238,"assetDatabaseRefresh":4.9828424,"sceneOpening":0.8603601}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1791313681324,"processId":22188,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Windows"}
+Reloading assemblies for play mode.
+Reloading assemblies after forced synchronous recompile.
+Begin MonoManager ReloadAssembly
+Refreshing native plugins compatible for Editor in 2.02 ms, found 1 plugins.
+Worker ready: AssetImportWorkerHW0 0
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:887)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:235)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:254)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 254)
+
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  2.291 seconds
+Domain Reload Profiling: 3116ms
+	BeginReloadAssembly (580ms)
+		DisableScriptedObjects (36ms)
+		CreateAndSetChildDomain (59ms)
+	RebuildCommonClasses (10ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (52ms)
+	LoadAllAssembliesAndSetupDomain (167ms)
+		LoadAssemblies (131ms)
+		TypeCache.Refresh (5ms)
+		AnalyzeDomain (6ms)
+			ResolveRequiredComponents (3ms)
+	FinalizeReload (2292ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (14ms)
+			BeforeProcessingInitializeOnLoad (112ms)
+			ProcessInitializeOnLoadAttributes (107ms)
+			ProcessInitializeOnLoadMethodAttributes (42ms)
+			AfterProcessingInitializeOnLoad (9ms)
+		AwakeInstancesAfterBackupRestoration (445ms)
+Refreshing native plugins compatible for Editor in 2.16 ms, found 1 plugins.
+
+Asset Pipeline Refresh (id=06eac664b0d7b824da44c141553b55a2): Total: 3.416 seconds - Initiated by StopAssetImportingV2(ForceSynchronousImport | ForceDomainReload)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=2397 ms
+		Asset DB Callback time: managed=81 ms, native=60 ms
+		Scripting: domain reloads=1, domain reload time=873 ms, compile time=3 ms, other=0 ms
+		Project Asset Count: scripts=510, non-scripts=418
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 3.096ms
+	ApplyChangesToAssetFolders: 0.164ms
+	Collect global state as custom dependencies: 1.782ms
+	ProcessAssetsWithTransientArtifactChanges: 39.715ms
+	CategorizeAssets: 6.611ms
+	CompileScripts: 2.505ms
+	ImportOutOfDateAssets: 2297.525ms (2296.819ms without children)
+		CollectScriptTypesHashes: 0.208ms
+		ReloadNativeAssets: 0.129ms
+		UnloadImportedAssets: 0.177ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.132ms
+		ImportSchedulerStart: 0.259ms
+	PostProcessAllAssets: 136.057ms
+		PostProcessCallbackCreateDeferredMaterials 3.432ms
+		ShaderAssetModifiedCallback 1.463ms
+		RaytracingShaderImportPostprocess 1.142ms
+		ComputeShaderImportPostprocess 1.096ms
+		SpeedTreeImporter.PostprocessAllAssets 0.936ms
+		XRBuildSystem.XRAssetImported 0.703ms
+		LocalizationDatabase.AssetDatabasePostprocessCallback 0.524ms
+		BlockShaderImporter.PostprocessAllAssets 0.495ms
+		AssemblyValidation.PostprocessAllAssets 0.481ms
+		MonoPostProcessAllAssets: 80.252ms
+			AssetPostprocessor.OnPostprocessAllAssets 20.822ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 8.551ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 5.739ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 5.696ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 5.651ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 5.439ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 4.716ms
+			AssetCallbacks.OnPostprocessAllAssets 4.401ms
+			AssetChangedListener.OnPostprocessAllAssets 3.614ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 1.438ms
+			SyncVS.PostprocessSyncProject 1.391ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.365ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 0.470ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.318ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.310ms
+			AssetEvents.OnPostprocessAllAssets 0.287ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.250ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 0.245ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 0.243ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 0.234ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.213ms
+			EnvironmentAssetPostprocessor.OnPostprocessAllAssets 0.181ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.167ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.144ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.113ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.102ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.082ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.063ms
+	PostAssetChangesProfiler: 5.049ms
+	GatherAllCurrentPrimaryImportResultRevisions: 0.065ms
+	UnloadStreamsBegin: 0.092ms
+	GenerateScriptTypeHashes: 1.903ms
+	GenerateScriptTypeSerializationHashes: 3.536ms
+	Untracked: 897.767ms
+
+[Subsystems] Loading plugin XRSimulationSubsystem for subsystem XRSimulation-Input...
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Input
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Input
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Meshing
+[Subsystems] Loading plugin XRSimulationSubsystem for subsystem XRSimulation-Meshing...
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:887)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:235)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:254)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 254)
+
+Loaded scene 'Temp/__Backupscenes/0.backup'
+	Deserialize:            1.009 ms
+	Integration:            308.953 ms
+	Integration of assets:  0.003 ms
+	Thread Wait Time:       0.139 ms
+	Total Operation Time:   310.104 ms
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+Created GICache directory at C:/Users/chuntley/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.041s, timestamps: [13.390 - 13.431]
+[Licensing::Client] Successfully resolved entitlement details
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+[PC Play Mode] PASS: scene initializes game mode; walking; skate mounts/accelerates; third-person camera; pause; brake; dismount restores first person; restores orbit camera on exit.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DesktopWalkthroughPlayValidation:Check () (at Assets/Scripts/Editor/DesktopWalkthroughPlayValidation.cs:49)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Scripts/Editor/DesktopWalkthroughPlayValidation.cs Line: 49)
+
+Unloading 6 Unused Serialized files (Serialized files now loaded: 0)
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:887)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:235)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:254)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 254)
+
+Loaded scene 'Temp/__Backupscenes/0.backup'
+	Deserialize:            0.739 ms
+	Integration:            255.919 ms
+	Integration of assets:  0.001 ms
+	Thread Wait Time:       0.113 ms
+	Total Operation Time:   256.772 ms
+Unloading 1340 unused Assets / (486.2 KB). Loaded Objects now: 21390.
+Memory consumption went from 344.1 MB to 343.6 MB.
+Total: 9.606600 ms (FindLiveObjects: 1.169600 ms CreateObjectMapping: 0.195500 ms MarkObjects: 7.317700 ms  DeleteObjects: 0.303500 ms)
+
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+MonoPathRemapper: Attempts to remap: 11609; Successful remaps: 5546
+Serialized file version minimum: 23, current 23
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-chuntley-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-chuntley channel disconnected successfully.
+Lingering sessions upon destruction of worker manager
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+Shut down UDS service system complete
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1791313692715,"processId":22188,"allocatedMemory":12122986,"memoryLabels":[{"Default":172893},{"Permanent":15516},{"NewDelete":71777},{"Thread":4205560},{"Manager":32677},{"VertexData":8},{"Geometry":816},{"Texture":24},{"Shader":840084},{"Material":24},{"GfxDevice":58008},{"Animation":952},{"Audio":32},{"FreeType":8},{"FontEngine":736},{"Physics":1970},{"Physics2D":16},{"Serialization":17568},{"Input":42840},{"JobScheduler":256},{"TextLib":280},{"Mono":48},{"ScriptingNativeRuntime":1384480},{"BaseObject":49232},{"Resource":1208},{"Renderer":2376},{"Transform":4685},{"File":7397},{"WebCam":616},{"Culling":32},{"Terrain":11442},{"Wind":24},{"STL":40},{"String":473858},{"StaticString":3808},{"Utility":2674262},{"Curl":4116},{"PoolAlloc":2168},{"AI":80},{"TypeTree":19397},{"ScriptManager":18960},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7816},{"Director":8296},{"CloudService":9312},{"WebRequest":552},{"VR":50546},{"SceneManager":608},{"Video":208},{"LazyScriptCache":32},{"Camera":729},{"Secure":2377},{"SerializationCache":9256},{"APIUpdating":10320},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":768},{"Hierarchy":1188},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":128},{"EditorUtility":234249},{"VersionControl":8},{"Undo":931},{"AssetDatabase":1237331},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40465},{"Upm":1912},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":266},{"ProfilerEditor":9746},{"CoreBusinessMetrics":3606},{"Windowing":456},{"Licensing":12760},{"AssetReference":32},{"IPCStream":32}]}

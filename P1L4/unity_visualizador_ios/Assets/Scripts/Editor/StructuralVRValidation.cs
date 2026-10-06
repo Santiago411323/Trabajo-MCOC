@@ -54,7 +54,7 @@ public static class StructuralVRValidation
                 var facade=world.GetComponentInChildren<VisualFrameFacade>(true);
                 var roof=world.GetComponentInChildren<VisualFlatRoof>(true);
                 var stairs=world.GetComponentInChildren<VisualStairs>(true);
-                Require(terrain.PlatformCount==3&&terrain.UpperTerrace.activeInHierarchy&&stairs.FlightCount==4&&facade.Panels.Count>0&&roof.Pieces.Count>0,"Incomplete environment geometry");
+                Require(terrain.PlatformCount==3&&terrain.UpperTerrace.activeInHierarchy&&stairs.FlightCount==5&&facade.Panels.Count>0&&roof.Pieces.Count>0,"Incomplete environment geometry");
                 var decor=terrain.GetComponentsInChildren<Renderer>(true).Concat(facade.GetComponentsInChildren<Renderer>(true)).Concat(roof.GetComponentsInChildren<Renderer>(true)).Concat(stairs.GetComponentsInChildren<Renderer>(true)).ToArray();
                 Require(decor.All(r=>r.enabled&&r.gameObject.activeInHierarchy&&(camera.cullingMask&(1<<r.gameObject.layer))!=0&&r.sharedMaterials.All(m=>m.shader.name=="MCOC/VR Visual Environment")),"Decor is hidden, outside camera layers or using wrong shader");
                 Debug.Log("[VR environment] PASS: 3 platforms, 4 stair flights, "+facade.Panels.Count+" salmon walls, "+roof.Pieces.Count+" roofs; all active, stereo shader and camera layers.");

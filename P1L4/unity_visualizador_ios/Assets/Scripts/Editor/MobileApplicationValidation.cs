@@ -37,6 +37,9 @@ public static class MobileApplicationValidation
                 Require(p!=null&&vr!=null,"Missing mobile controllers");
                 Require(UnityData.TryGetSectionForces(94,"C1",.5f,out var initialForce),"Initial static result missing");
                 referenceMoment=initialForce.My;
+                MobileEngineeringValidation.ValidateData();
+                var arTools=(MobileStructuralTools)typeof(StructuralARController).GetField("engineering",Flags).GetValue(UnityEngine.Object.FindAnyObjectByType<StructuralARController>());
+                arTools.Lrfd.Input.d=.5f;Require(arTools.Lrfd.Evaluate(),arTools.Lrfd.Status);
                 foreach(string direction in new[]{"X","Y"})
                 {
                     if(p.Direction!=direction)p.CycleDirection();
@@ -69,6 +72,7 @@ public static class MobileApplicationValidation
                 var cafe=world.GetComponentInChildren<VisualCafe>();
                 var room=world.GetComponentInChildren<VisualStudyRoom>();
                 Require(room!=null && room.Tables.Count==4,"Updated study room missing in VR");
+                MobileEnvironmentRevisionValidation.Validate(world);
                 var laptopImages=room.GetComponentsInChildren<Renderer>().Where(r=>r.name=="Imagen_laptop").ToArray();
                 Require(laptopImages.Length==4 && laptopImages.All(r=>r.gameObject.layer==30 && r.sharedMaterial.shader.name=="MCOC/VR Visual Environment" && r.sharedMaterial.mainTexture!=null),"Laptop texture missing in stereo VR");
                 var nodeMap=UnityData.Structure.nodes.ToDictionary(n=>n.id);
@@ -88,6 +92,7 @@ public static class MobileApplicationValidation
                 Debug.Log("[Cafe layout] PASS: floor Y4, raised ceiling, terrace covers cafe, slope begins outside cafe towards -X.");
                 }
                 var member=world.GetComponentsInChildren<ElementSelectable>().Single(e=>e.data!=null&&e.data.id==94);
+                MobileEngineeringValidation.ValidateVR(vr,member);
                 Call(vr,"SelectElement",member);
                 Vector3 original=member.startPoint;
                 Require(p.LoadCurrent(),p.Status);p.Seek(3);Call(vr,"UpdateMobileWorld");
@@ -105,9 +110,13 @@ public static class MobileApplicationValidation
                 Require(UnityData.TryGetSectionForces(94,"C1",.5f,out var staticForce)&&Mathf.Abs(staticForce.My-referenceMoment)<.001f,"Static result not restored");
                 Call(vr,"ToggleEnvironment");Require(!world.GetComponentInChildren<VisualCafe>(true).gameObject.activeInHierarchy,"Cafe toggle failed");
                 Require(!room.gameObject.activeInHierarchy,"Study room environment toggle failed");
+                Require(!world.GetComponentInChildren<VisualInteriorPartitions>(true).gameObject.activeInHierarchy,"Partitions environment toggle failed");
                 Call(vr,"ToggleEnvironment");Require(world.GetComponentInChildren<VisualCafe>().gameObject.activeInHierarchy,"Cafe restore failed");
+                Require(world.GetComponentInChildren<VisualInteriorPartitions>().gameObject.activeInHierarchy,"Partitions restore failed");
                 vr.ExitVR();Require(!vr.IsVR&&!MobileSeismicPlayback.IsActive,"AR/static restore failed");
                 Require(UnityEngine.Object.FindAnyObjectByType<StructuralARController>().enabled,"AR controller disabled after exit");
+                var restored=UnityData.GetElementForces("LRFD_MOBILE_0",94);var gravity=UnityData.GetElementForcesForCase("G",94);
+                Require(restored!=null&&gravity!=null&&restored.Where((f,i)=>Mathf.Abs(f-.7f*gravity[i])>.003f).Count()==0,"AR LRFD scenario not restored after VR");
                 Debug.Log("[Mobile application] PASS: new campus/cafe/windows; VR playback/deformation/selection/forces/capacity/cracks; static and AR restore. Native phone tracking requires device.");
                 SessionState.SetInt("MCOCMobileValidation",0);EditorApplication.Exit(0);return;
             }

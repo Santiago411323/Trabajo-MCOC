@@ -1,0 +1,1824 @@
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 22864)
+VBCSCompiler prewarm took 15.64 ms
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.6/respin/6000.6.0f1-fa21a270ab12' branch; Version is '6000.6.0f1 (f7f8ed4d1e24) revision 16251117'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley" at "2026-10-06T18:27:05.5485982Z"
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'es' Physical Memory: 24260 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-06T18:27:05Z
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 20896, path: "C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              7f533c846cf741cbbb4d457637a7d4ec
+  Correlation Id:          d790f0dae83c1ba6f2a66a0ab31e33e3
+  External correlation Id: 2326321786786923925
+  Machine Id:              RVWmRlYDKragNEt0oPrKajgv5w0=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-chuntley" (connect: 0.00s, validation: 0.00s, handshake: 0.06s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-chuntley-notifications" at "2026-10-06T18:27:05.6151599Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 4674248689123-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.01
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.10s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe
+-batchmode
+-projectPath
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+-executeMethod
+MobileApplicationValidation.ValidateBatch
+-logFile
+C:/Users/chuntley/Desktop/Proyecto MCOC/revisiones/lrfd_movil_android_unity.log
+Successfully changed project path to: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=1"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [21972]  Target information:
+
+Player connection [21972]  * "[IP] 192.168.1.17 [Port] 55505 [Flags] 2 [Guid] 3286277591 [EditorId] 3286277591 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-CDJE44U) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [21972] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [21972] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-17224" after 0.3 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Initialising UDS system complete:
+  - System type: Client
+  - Resource namespace: 926b2610ed02254863998b18cfa180f7
+  - Shared memory size: 1073741824
+  - Command buffer id: 1052576
+  - Command buffer size: 8192
+  - Hashmap size: 4194304
+  - Service connected: false
+Launching Unity Data Store - C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Tools/Unity.DataStore.exe 
+Unity Data Store artifact dir = Library/DataStore, working dir = C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Unity Data Store running and initialised
+Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.1]
+    Renderer:        Intel(R) Iris(R) Xe Graphics (ID=0xa7a1)
+    Vendor:          Intel
+    VRAM:            12130 MB
+    App VRAM Budget: 11362 MB
+    Driver:          32.0.101.7088
+    Unified Memory Architecture
+    Cache Coherent UMA
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56224
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+[Licensing::Client] Successfully resolved entitlement details
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Registered in 0.014249 seconds.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  1.057 seconds
+Domain Reload Profiling: 2113ms
+	BeginReloadAssembly (297ms)
+		CreateAndSetChildDomain (7ms)
+	RebuildCommonClasses (10ms)
+	RebuildNativeTypeToScriptingClass (33ms)
+	initialDomainReloadingComplete (177ms)
+	LoadAllAssembliesAndSetupDomain (536ms)
+		LoadAssemblies (283ms)
+		TypeCache.Refresh (387ms)
+			TypeCache.ScanAssembly (368ms)
+		AnalyzeDomain (1ms)
+	FinalizeReload (1059ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (17ms)
+			BeforeProcessingInitializeOnLoad (176ms)
+			ProcessInitializeOnLoadAttributes (179ms)
+			ProcessInitializeOnLoadMethodAttributes (362ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 29 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.xr.arcore@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arcore@48fb51f3ca76)
+    com.unity.xr.arfoundation@6.6.2 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a)
+    com.unity.xr.management@4.5.3 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.management@574ebfb1e976)
+    com.unity.inputsystem@1.20.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.inputsystem@7a4e1a2a8194)
+    com.unity.xr.legacyinputhelpers@3.0.1 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.legacyinputhelpers@3f62d634f63b)
+    com.unity.xr.core-utils@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.core-utils@a8b900321199)
+  Built-in packages:
+    com.unity.modules.animation@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.director@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.physics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.ui@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.modules.xr@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.ugui@2.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.ugui@23caec89ae27)
+    com.unity.mathematics@1.4.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.mathematics@8306a64d0cd6)
+    com.unity.editorcoroutines@6.6.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.editorcoroutines@8cd72baa102a)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.physicscore2d@1.0.0 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.modules.physicscore2d)
+  Git packages:
+    com.google.xr.cardboard@https://github.com/googlevr/cardboard-xr-plugin.git#36ac9815b8f191fe11e149b7f323368fa86655a6 (location: C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1)
+[Subsystems] Looking for new subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] Novel subsystem found at Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.6.0f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Assets
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.unity.xr.arfoundation@d57b0b4d336a
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  displays in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'meshings' descriptors matched in Library/PackageCache/com.unity.xr.arfoundation@d57b0b4d336a/Runtime/UnitySubsystemsManifest.json
+[Subsystems] Discovering subsystems at path C:\Users\chuntley\Desktop\Proyecto MCOC\P1L4\unity_visualizador\Library\PackageCache\com.google.xr.cardboard@36ac9815b8f1
+[Subsystems] No descriptors matched for  examples in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in Library/PackageCache/com.google.xr.cardboard@36ac9815b8f1/Runtime/UnitySubsystemsManifest.json.
+[Package Manager] Done registering packages in 0.03 seconds
+[ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 3s160ms
+[454/568    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[560/568    1s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll (+2 others)
+Assets\Scripts\ElementPicker.cs(106,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(125,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(150,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(170,49): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\ElementPicker.cs(213,49): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(219,26): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(229,43): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(235,27): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(244,47): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementPicker.cs(270,26): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\LrfdWeatherEnvironment.cs(25,62): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+
+Assets\Scripts\LrfdWeatherEnvironment.cs(25,30): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+
+Assets\Scripts\ElementPicker.cs(295,23): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadLivePanel.cs(94,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\LrfdEvaluation.cs(143,20): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Scripts\PMPanel.cs(43,23): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\MobileLoadController.cs(395,33): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\OrbitCamera.cs(136,42): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(393,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(402,9): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(455,47): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\PMPanel.cs(194,43): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(550,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(551,47): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(599,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(686,53): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(691,13): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementResultsPanel.cs(96,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\SelectedBeamDiagramPanel.cs(39,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\SelectedBeamDiagramPanel.cs(66,68): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\ElementResultsPanel.cs(145,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(742,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\StructuralDemandRadar.cs(43,55): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Scripts\StructuralDemandRadar.cs(44,87): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Scripts\MobileLoadController.cs(609,32): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+
+Assets\Scripts\StructuralDemandRadar.cs(149,32): warning CS0618: 'Object.FindFirstObjectByType<T>(FindObjectsInactive)' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+
+Assets\Scripts\ElementResultsPanel.cs(311,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\MobileLoadResultsDashboard.cs(855,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+
+Assets\Scripts\DiagramController.cs(1355,50): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+[562/568    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 147 defines and 334 references
+
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+1 processor(s) skipped this assembly
+[563/568    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll, with 149 defines and 304 references
+
+processors: zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+1 processor(s) skipped this assembly
+[565/568    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[567/568    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+*** Tundra build success (3.11 seconds), 6 items updated, 568 evaluated
+Assets\Scripts\ElementPicker.cs(106,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(125,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(150,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(170,49): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\ElementPicker.cs(213,49): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(219,26): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(229,43): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(235,27): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(244,47): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementPicker.cs(270,26): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\LrfdWeatherEnvironment.cs(25,62): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'
+Assets\Scripts\LrfdWeatherEnvironment.cs(25,30): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'
+Assets\Scripts\ElementPicker.cs(295,23): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadLivePanel.cs(94,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\LrfdEvaluation.cs(143,20): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Scripts\PMPanel.cs(43,23): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\MobileLoadController.cs(395,33): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\OrbitCamera.cs(136,42): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(393,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(402,9): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(455,47): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\PMPanel.cs(194,43): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(550,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(551,47): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(599,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(686,53): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(691,13): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementResultsPanel.cs(96,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\SelectedBeamDiagramPanel.cs(39,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\SelectedBeamDiagramPanel.cs(66,68): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\ElementResultsPanel.cs(145,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(742,38): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\StructuralDemandRadar.cs(43,55): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Scripts\StructuralDemandRadar.cs(44,87): warning CS0618: 'Object.FindFirstObjectByType<T>()' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Scripts\MobileLoadController.cs(609,32): warning CS0618: 'Object.FindObjectsOfType<T>()' is obsolete: 'Object.FindObjectsOfType has been deprecated. Use Object.FindObjectsByType instead which lets you decide whether you need the results sorted or not.  FindObjectsOfType sorts the results by InstanceID but if you do not need this using FindObjectSortMode.None is considerably faster.'
+Assets\Scripts\StructuralDemandRadar.cs(149,32): warning CS0618: 'Object.FindFirstObjectByType<T>(FindObjectsInactive)' is obsolete: 'FindFirstObjectByType has been deprecated because it relies on instance ID ordering. Use FindAnyObjectByType instead, which does not depend on ordering.'
+Assets\Scripts\ElementResultsPanel.cs(311,22): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\MobileLoadResultsDashboard.cs(855,30): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Assets\Scripts\DiagramController.cs(1355,50): warning CS0618: 'Object.FindObjectOfType<T>()' is obsolete: 'Object.FindObjectOfType has been deprecated. Use Object.FindAnyObjectByType instead.'
+Total cache size 69200540
+Total cache size after purge 69200540, took 00:00:00.2254621
+AssetDatabase: script compilation time: 4.400838s
+Begin MonoManager ReloadAssembly
+Refreshing native plugins compatible for Editor in 3.34 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  0.826 seconds
+Domain Reload Profiling: 1655ms
+	BeginReloadAssembly (369ms)
+		DisableScriptedObjects (76ms)
+		CreateAndSetChildDomain (71ms)
+	RebuildCommonClasses (16ms)
+	RebuildNativeTypeToScriptingClass (27ms)
+	initialDomainReloadingComplete (78ms)
+	LoadAllAssembliesAndSetupDomain (336ms)
+		LoadAssemblies (157ms)
+		TypeCache.Refresh (64ms)
+			TypeCache.ScanAssembly (50ms)
+		AnalyzeDomain (37ms)
+			BuildScriptInfoCaches (31ms)
+			ResolveRequiredComponents (3ms)
+	FinalizeReload (829ms)
+		SetupLoadedEditorAssemblies (0ms)
+			LogAssemblyErrors (3ms)
+			InitializePlatformSupportModulesInManaged (10ms)
+			BeforeProcessingInitializeOnLoad (165ms)
+			ProcessInitializeOnLoadAttributes (227ms)
+			ProcessInitializeOnLoadMethodAttributes (68ms)
+			AfterProcessingInitializeOnLoad (23ms)
+		AwakeInstancesAfterBackupRestoration (52ms)
+Starting new worker id: 0 with log in C:/Users/chuntley/Desktop/Proyecto MCOC/P1L4/unity_visualizador/Logs/AssetImportWorkerHW0.log
+Refreshing native plugins compatible for Editor in 3.87 ms, found 1 plugins.
+
+Asset Pipeline Refresh (id=3720f8998524e5b4abf5b0d880552192): Total: 6.773 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1184 ms
+		Asset DB Callback time: managed=188 ms, native=47 ms
+		Scripting: domain reloads=1, domain reload time=880 ms, compile time=4408 ms, other=64 ms
+		Project Asset Count: scripts=510, non-scripts=418
+		Asset File Changes: new=0, changed=2, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 36.937ms
+	ApplyChangesToAssetFolders: 0.738ms
+	Scan: 98.662ms
+	Collect global state as custom dependencies: 9.151ms
+	OnSourceAssetsModified: 0.664ms
+	CategorizeScriptCompilationAssets: 5.797ms
+	ProcessAssetsWithTransientArtifactChanges: 41.341ms
+	CategorizeAssets: 19.070ms
+	CompileScripts: 4407.640ms
+	ImportOutOfDateAssets: 857.856ms (838.065ms without children)
+		UnloadImportedAssets: 0.174ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.239ms
+		ImportSchedulerStart: 19.357ms
+	PostProcessAllAssets: 191.972ms
+		VCAutoAddAssetPostprocess 1.881ms
+		XRBuildSystem.XRAssetImported 1.503ms
+		PostProcessCallbackCreateDeferredMaterials 0.076ms
+		MonoPostProcessAllAssets: 187.651ms
+			AssetPostprocessor.OnPostprocessAllAssets 95.451ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 15.557ms
+			AssetCallbacks.OnPostprocessAllAssets 14.015ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 13.132ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 9.597ms
+			AssetChangedListener.OnPostprocessAllAssets 3.956ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 3.641ms
+			SyncVS.PostprocessSyncProject 2.420ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 1.458ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.456ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 1.291ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 1.271ms
+			EnvironmentAssetPostprocessor.OnPostprocessAllAssets 0.709ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 0.651ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.557ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 0.527ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.507ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 0.481ms
+			AssetEvents.OnPostprocessAllAssets 0.451ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 0.384ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.368ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.334ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.313ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.290ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.243ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.235ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.212ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.140ms
+	PostAssetChangesProfiler: 10.105ms
+	UnloadStreamsBegin: 2.262ms
+	GenerateScriptTypeHashes: 4.505ms
+	GenerateScriptTypeSerializationHashes: 8.281ms
+	Untracked: 1049.635ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+Scanning for USB devices : 5.694ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-unity_visualizador
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+Curl error 6: Could not resolve host: config.uca.cloud.unity3d.com
+Unloading 11 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 1789 unused Assets / (2.5 MB). Loaded Objects now: 2542.
+Memory consumption went from 257.2 MB to 254.7 MB.
+Total: 9.148600 ms (FindLiveObjects: 0.397800 ms CreateObjectMapping: 0.094500 ms MarkObjects: 6.639600 ms  DeleteObjects: 1.782700 ms)
+
+Asset Pipeline Refresh (id=d9a5735ba4604ea41987873f89258c77): Total: 0.055 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=2fbba68a79155be40a084d3db75a7710): Total: 0.024 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Importing 'GUID: 00000000000000004000000000000000 - Path: ProjectSettings/ProjectSettings.asset' with importer (LibraryAssetImporter)
+Imported 'GUID: 00000000000000004000000000000000' -> (Import Result ID: 'a16b0a72a1fd478c9bd68a4e883f0d88') in 0.017 seconds [static dependencies only]. Details - ImportResultOutputID=054c890a8f4b6dddbea933bc5e4b7df4 DependenciesID=ca8cd0464facdb1cbf0be57b7c7cf348 StaticDependenciesID=3bec662e1a47ad11a09e959826dbca5e 
+Importing 'GUID: 0000000000000000b000000000000000 - Path: ProjectSettings/EditorBuildSettings.asset' with importer (LibraryAssetImporter)
+Imported 'GUID: 0000000000000000b000000000000000' -> (Import Result ID: 'f5f1af8fdaaca583f6e63ac5e39c24b7') in 0.002 seconds [static dependencies only]. Details - ImportResultOutputID=0a89a5c5f492143e0fa186859e17ba6f DependenciesID=4ff141b05b1dde605f26477ebd43ead0 StaticDependenciesID=32338a4edd77778e4ba07867674bb109 
+Importing 'GUID: cebe8ba780cb7644ea6b74312d4e801c - Path: Assets/XR/Settings/XRGeneralSettingsPerBuildTarget.asset' with importer (NativeFormatImporter)
+Imported 'GUID: cebe8ba780cb7644ea6b74312d4e801c' -> (Import Result ID: '3b0d757ef281dd1c6d6fd8f05c850f2d') in 0.003 seconds [static dependencies only]. Details - ImportResultOutputID=c5a76bfe265a17414b3e575c7d7e541c DependenciesID=e1aadb93fc2c1be6d4b4d0ca5f9f451e StaticDependenciesID=a99d19eb69ea4081016743615c007e43 
+Refreshing native plugins compatible for Editor in 6.19 ms, found 1 plugins.
+Asset Pipeline Refresh (id=c2412569be393944caa8ee4b6bfc9ece): Total: 0.062 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[MCOC Android] ARCore primero; Cardboard VR; ARM64/IL2CPP/OpenGLES3/Activity configurados.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+AndroidVRBuild:ConfigureAndroid () (at Assets/Scripts/Editor/AndroidVRBuild.cs:48)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:21)
+
+(Filename: Assets/Scripts/Editor/AndroidVRBuild.cs Line: 48)
+
+Opening scene 'Assets/Scenes/StructuralARScene.unity additively'
+Loaded scene 'Assets/Scenes/StructuralARScene.unity'
+	Deserialize:            29.814 ms
+	Integration:            2.127 ms
+	Integration of assets:  0.027 ms
+	Thread Wait Time:       0.019 ms
+	Total Operation Time:   31.987 ms
+[StructuralARValidation][PASS] I + J USER POINTS -> FACE -> AR ANCHOR -> E1_72 / E1_229 -> DIAGRAMS -> OPENSEES C1/C2/C3
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARValidation:ValidateOrThrow () (at Assets/Scripts/Editor/StructuralARValidation.cs:113)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/Editor/StructuralARValidation.cs Line: 113)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:54)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_229: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:93)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Seleccionado #1 E1_72.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:SelectPlacement (StructuralARController/PlacementRecord) (at Assets/Scripts/StructuralARPlacements.cs:110)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:95)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Ajuste visual de #1. Los resultados OpenSees se conservan.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:FineMove (UnityEngine.Vector3) (at Assets/Scripts/StructuralARPlacements.cs:184)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:99)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Ajuste visual de #1. Los resultados OpenSees se conservan.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:FineMove (UnityEngine.Vector3) (at Assets/Scripts/StructuralARPlacements.cs:184)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:103)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Ajuste visual de #1. Los resultados OpenSees se conservan.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:FineMove (UnityEngine.Vector3) (at Assets/Scripts/StructuralARPlacements.cs:184)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:106)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Seleccionado #2 E1_229.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:SelectPlacement (StructuralARController/PlacementRecord) (at Assets/Scripts/StructuralARPlacements.cs:110)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:116)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Elige el elemento que vas a agregar al sector.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:StartNewElement () (at Assets/Scripts/StructuralARPlacements.cs:124)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:118)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Seleccionado #2 E1_229.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:SelectPlacement (StructuralARController/PlacementRecord) (at Assets/Scripts/StructuralARPlacements.cs:110)
+StructuralARController:CancelGuidedPlacement () (at Assets/Scripts/StructuralARPlacements.cs:145)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:118)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Seleccionado #1 E1_72.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:SelectPlacement (StructuralARController/PlacementRecord) (at Assets/Scripts/StructuralARPlacements.cs:110)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:120)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Seleccionado #2 E1_229.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:SelectPlacement (StructuralARController/PlacementRecord) (at Assets/Scripts/StructuralARPlacements.cs:110)
+StructuralARController:RemoveSelectedPlacement () (at Assets/Scripts/StructuralARPlacements.cs:204)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:120)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_72: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C1 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C2 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[StructuralAR] Caso activo C3 para E1_94: datos OpenSees disponibles
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetCombination (string) (at Assets/Scripts/StructuralARController.cs:838)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+StructuralARSectorValidation:Call (object,string,object[]) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:15)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:153)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 838)
+
+[Moment AR Validation] PASS: E1_72/E1_94 My/Mz positivos abajo, negativos arriba; C1/C2/C3 individual y superpuesto; independiente de camara/cara; valores intactos.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARSectorValidation:ValidateMomentOrientation (StructuralARController,StructureData) (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:191)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:122)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/Editor/StructuralARSectorValidation.cs Line: 191)
+
+[Sector AR Validation] PASS: dos elementos independientes, I/J y ajuste fino, IDs/casos conservados, comparacion con escala comun y extremos reales, cancelar/quitar sin borrar sector.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARSectorValidation:Validate () (at Assets/Scripts/Editor/StructuralARSectorValidation.cs:123)
+MobileApplicationValidation:ValidateBatch () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:22)
+
+(Filename: Assets/Scripts/Editor/StructuralARSectorValidation.cs Line: 123)
+
+Opening scene 'Assets/Scenes/StructuralARScene.unity'
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
+Loaded scene 'Assets/Scenes/StructuralARScene.unity'
+	Deserialize:            1.337 ms
+	Integration:            8.837 ms
+	Integration of assets:  0.001 ms
+	Thread Wait Time:       0.060 ms
+	Total Operation Time:   10.234 ms
+Unloading 23 unused Assets / (11.3 KB). Loaded Objects now: 2567.
+Memory consumption went from 256.4 MB to 256.4 MB.
+Total: 7.827500 ms (FindLiveObjects: 0.336400 ms CreateObjectMapping: 0.046800 ms MarkObjects: 7.129300 ms  DeleteObjects: 0.074100 ms)
+
+<RI> Initializing input.
+Using Windows.Gaming.Input
+<RI> Input initialized.
+[Project] Loading completed in 11.805 seconds
+	Project init time: 				10.443 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.325 seconds
+		Asset Database init time: 		0.347 seconds
+		Global illumination init time: 	0.004 seconds
+		Assemblies load time: 			2.224 seconds
+		Unity extensions init time: 	0.013 seconds
+		Asset Database refresh time: 	6.773 seconds
+	Scene opening time: 			1.088 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1791311237291,"processId":17224,"projectLoad":11.804989500000001,"projectInit":10.4431459,"templateInit":0.0,"packageManagerInit":0.3249211,"assetDatabaseInit":0.3468715,"globalIlluminationInit":0.0042891,"assembliesLoad":2.223668,"unityExtensionsInit":0.0126675,"assetDatabaseRefresh":6.773032,"sceneOpening":1.0876952}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1791311237291,"processId":17224,"editorVersion":"6000.6.0f1 (f7f8ed4d1e24)","branch":"6000.6/respin/6000.6.0f1-fa21a270ab12","buildType":"Release","platform":"Windows"}
+Reloading assemblies for play mode.
+Reloading assemblies after forced synchronous recompile.
+Begin MonoManager ReloadAssembly
+Worker ready: AssetImportWorkerHW0 0
+Refreshing native plugins compatible for Editor in 2.77 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+Scripting: successfully reloaded assembly
+- Finished resetting the current domain, in  1.171 seconds
+Domain Reload Profiling: 1789ms
+	BeginReloadAssembly (318ms)
+		DisableScriptedObjects (65ms)
+		CreateAndSetChildDomain (77ms)
+	RebuildCommonClasses (11ms)
+	RebuildNativeTypeToScriptingClass (16ms)
+	initialDomainReloadingComplete (53ms)
+	LoadAllAssembliesAndSetupDomain (219ms)
+		LoadAssemblies (144ms)
+		TypeCache.Refresh (5ms)
+		AnalyzeDomain (5ms)
+			ResolveRequiredComponents (3ms)
+	FinalizeReload (1172ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (10ms)
+			BeforeProcessingInitializeOnLoad (148ms)
+			ProcessInitializeOnLoadAttributes (294ms)
+			ProcessInitializeOnLoadMethodAttributes (56ms)
+			AfterProcessingInitializeOnLoad (18ms)
+		AwakeInstancesAfterBackupRestoration (291ms)
+Refreshing native plugins compatible for Editor in 2.57 ms, found 1 plugins.
+
+Asset Pipeline Refresh (id=d846bd41835626a408de3c7bd44dd9f8): Total: 2.130 seconds - Initiated by StopAssetImportingV2(ForceSynchronousImport | ForceDomainReload)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1286 ms
+		Asset DB Callback time: managed=89 ms, native=88 ms
+		Scripting: domain reloads=1, domain reload time=662 ms, compile time=3 ms, other=0 ms
+		Project Asset Count: scripts=510, non-scripts=418
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 2.159ms
+	ApplyChangesToAssetFolders: 0.134ms
+	Collect global state as custom dependencies: 1.779ms
+	ProcessAssetsWithTransientArtifactChanges: 49.682ms
+	CategorizeAssets: 8.284ms
+	CompileScripts: 3.027ms
+	ImportOutOfDateAssets: 1180.443ms (1178.238ms without children)
+		CollectScriptTypesHashes: 0.151ms
+		ReloadNativeAssets: 0.143ms
+		UnloadImportedAssets: 1.562ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.168ms
+		ImportSchedulerStart: 0.321ms
+	PostProcessAllAssets: 172.375ms
+		PostProcessCallbackCreateDeferredMaterials 4.307ms
+		RaytracingShaderImportPostprocess 2.987ms
+		ShaderAssetModifiedCallback 2.072ms
+		ComputeShaderImportPostprocess 1.737ms
+		XRBuildSystem.XRAssetImported 1.714ms
+		SpeedTreeImporter.PostprocessAllAssets 1.350ms
+		LocalizationDatabase.AssetDatabasePostprocessCallback 0.977ms
+		AssemblyValidation.PostprocessAllAssets 0.608ms
+		BlockShaderImporter.PostprocessAllAssets 0.584ms
+		MonoPostProcessAllAssets: 88.314ms
+			AssetPostprocessor.OnPostprocessAllAssets 25.223ms
+			BuilderAssetPostprocessor.OnPostprocessAllAssets 9.289ms
+			InputActionJsonNameModifierAssetProcessor.OnPostprocessAllAssets 7.210ms
+			InputActionAssetPostprocessor.OnPostprocessAllAssets 6.764ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 5.909ms
+			AssetCallbacks.OnPostprocessAllAssets 5.198ms
+			TextAssetPostProcessor.OnPostprocessAllAssets 4.358ms
+			AssetChangedListener.OnPostprocessAllAssets 4.317ms
+			SyncVS.PostprocessSyncProject 2.131ms
+			RetainedModeAssetPostprocessor.OnPostprocessAllAssets 1.921ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.740ms
+			ArtifactBrowserPostProcessor.OnPostprocessAllAssets 0.689ms
+			ProjectSettingsPostprocessor.OnPostprocessAllAssets 0.631ms
+			TMPro_TexturePostProcessor.OnPostprocessAllAssets 0.341ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 0.302ms
+			AudioMixerPostprocessor.OnPostprocessAllAssets 0.274ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.267ms
+			StyleCatalogPostProcessor.OnPostprocessAllAssets 0.242ms
+			ThemePostprocessor.OnPostprocessAllAssets 0.239ms
+			EnvironmentAssetPostprocessor.OnPostprocessAllAssets 0.209ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.207ms
+			AssetEvents.OnPostprocessAllAssets 0.198ms
+			SpeedTreePostProcessor.OnPostprocessAllAssets 0.196ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.149ms
+			ConfigAssetsTracker.OnPostprocessAllAssets 0.143ms
+			ScenarioDriftAssetsTracker.OnPostprocessAllAssets 0.107ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.100ms
+			AudioContainerPostProcessor.OnPostprocessAllAssets 0.082ms
+	PostAssetChangesProfiler: 4.843ms
+	GatherAllCurrentPrimaryImportResultRevisions: 0.074ms
+	UnloadStreamsBegin: 1.337ms
+	GenerateScriptTypeHashes: 2.243ms
+	GenerateScriptTypeSerializationHashes: 4.114ms
+	Untracked: 689.347ms
+
+[Subsystems] Loading plugin XRSimulationSubsystem for subsystem XRSimulation-Input...
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Input
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Input
+[Subsystems] XR Simulation Plug-in successfully registered Provider for XRSimulation-Meshing
+[Subsystems] Loading plugin XRSimulationSubsystem for subsystem XRSimulation-Meshing...
+No Camera Floor Offset GameObject specified for XR Origin, using attached GameObject.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object,UnityEngine.Object)
+UnityEngine.Debug:LogWarning (object,UnityEngine.Object)
+Unity.XR.CoreUtils.XROrigin:Awake () (at ./Library/PackageCache/com.unity.xr.core-utils@a8b900321199/Runtime/XROrigin.cs:527)
+
+(Filename: ./Library/PackageCache/com.unity.xr.core-utils@a8b900321199/Runtime/XROrigin.cs Line: 527)
+
+[StructuralAR] Elige un ID y apunta al nodo I para comenzar.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructuralARController:SetStatus (string) (at Assets/Scripts/StructuralARController.cs:882)
+StructuralARController:Awake () (at Assets/Scripts/StructuralARController.cs:115)
+
+(Filename: Assets/Scripts/StructuralARController.cs Line: 882)
+
+Loaded scene 'Temp/__Backupscenes/0.backup'
+	Deserialize:            2.449 ms
+	Integration:            281.420 ms
+	Integration of assets:  0.005 ms
+	Thread Wait Time:       0.016 ms
+	Total Operation Time:   283.889 ms
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+[Mobile engineering] PASS: all 22 variants agree with OpenSees, member forces, nodes, rotations, reinforcement, radar, capacities and invalidation.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+MobileEngineeringValidation:ValidateData () (at Assets/Scripts/Editor/MobileEngineeringValidation.cs:36)
+MobileApplicationValidation:Tick () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:40)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Scripts/Editor/MobileEngineeringValidation.cs Line: 36)
+
+[Mobile application] PASS: eight complete X/Y cases; hashes, IDs, nodes, forces; scale-independent values.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+MobileApplicationValidation:Tick () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:60)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Scripts/Editor/MobileApplicationValidation.cs Line: 60)
+
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[DiagramController] listo con 563 elementos con datos (todos los edificios)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+DiagramController:Initialize (System.Collections.Generic.List`1<ElementSelectable>) (at Assets/Scripts/DiagramController.cs:89)
+StructureViewer:CreateDiagramController () (at Assets/Scripts/StructureViewer.cs:887)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:235)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+StructuralVRController:BuildWorld () (at Assets/Scripts/StructuralVRController.cs:171)
+StructuralVRController/<EnterVR>d__54:MoveNext () (at Assets/Scripts/StructuralVRController.cs:107)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+(Filename: Assets/Scripts/DiagramController.cs Line: 89)
+
+[StructureViewer] Estructura lista: 638 elementos interactivos, 3 combinaciones.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+StructureViewer:CreateStructure () (at Assets/Scripts/StructureViewer.cs:254)
+StructureViewer:OnEnable () (at Assets/Scripts/StructureViewer.cs:164)
+UnityEngine.GameObject:Internal_AddComponentWithType (System.Type)
+UnityEngine.GameObject:AddComponent (System.Type)
+UnityEngine.GameObject:AddComponent<StructureViewer> ()
+StructuralVRController:BuildWorld () (at Assets/Scripts/StructuralVRController.cs:171)
+StructuralVRController/<EnterVR>d__54:MoveNext () (at Assets/Scripts/StructuralVRController.cs:107)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+(Filename: Assets/Scripts/StructureViewer.cs Line: 254)
+
+Created GICache directory at C:/Users/chuntley/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.036s, timestamps: [15.823 - 15.859]
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+[Licensing::Client] Successfully resolved entitlement details
+[Mobile engineering] PASS: gaze controls, 3D render texture, curves, radar selection/map, LRFD diagrams, visuals, invalidation and restored movement menu.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+MobileEngineeringValidation:ValidateVR (StructuralVRController,ElementSelectable) (at Assets/Scripts/Editor/MobileEngineeringValidation.cs:64)
+MobileApplicationValidation:Tick () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:94)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Scripts/Editor/MobileEngineeringValidation.cs Line: 64)
+
+[Mobile application] PASS: new campus/cafe/windows; VR playback/deformation/selection/forces/capacity/cracks; static and AR restore. Native phone tracking requires device.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+MobileApplicationValidation:Tick () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:117)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Scripts/Editor/MobileApplicationValidation.cs Line: 117)
+
+MonoPathRemapper: Attempts to remap: 11593; Successful remaps: 5548
+Serialized file version minimum: 23, current 23
+Some objects were not cleaned up when closing the scene. (Did you spawn new GameObjects from OnDestroy?)
+The following scene GameObjects were found:
+SimulationCamera
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+MobileApplicationValidation:Tick () (at Assets/Scripts/Editor/MobileApplicationValidation.cs:118)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+[Assets/Scripts/Editor/MobileApplicationValidation.cs line 118]
+
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+[Licensing::IpcConnector] LicenseClient-chuntley-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-chuntley channel disconnected successfully.
+Lingering sessions upon destruction of worker manager
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+Shut down UDS service system complete
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+Leak Detected : Persistent allocates 2 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1791311272043,"processId":17224,"allocatedMemory":12375241,"memoryLabels":[{"Default":200370},{"Permanent":15516},{"NewDelete":69095},{"Thread":4205560},{"Manager":32677},{"VertexData":8},{"Geometry":816},{"Texture":24},{"Shader":840084},{"Material":24},{"GfxDevice":59880},{"Animation":952},{"FreeType":8},{"FontEngine":736},{"Physics":1970},{"Physics2D":16},{"Serialization":33952},{"Input":45280},{"JobScheduler":256},{"TextLib":7414},{"Mono":48},{"ScriptingNativeRuntime":1384480},{"BaseObject":49520},{"Resource":1208},{"Renderer":2376},{"Transform":4685},{"File":7397},{"WebCam":616},{"Culling":32},{"Terrain":11442},{"Wind":24},{"STL":40},{"String":660561},{"StaticString":3808},{"Utility":2674262},{"Curl":2498},{"PoolAlloc":2168},{"AI":80},{"TypeTree":19397},{"ScriptManager":18960},{"CodeReload":448},{"RuntimeInitializeOnLoadManager":64},{"Sprites":102},{"SpriteAtlas":120},{"GI":7816},{"Director":8296},{"CloudService":9744},{"WebRequest":552},{"VR":50546},{"SceneManager":608},{"Video":208},{"LazyScriptCache":32},{"NativeArray":1604},{"Camera":729},{"Secure":2377},{"SerializationCache":9256},{"APIUpdating":10320},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":768},{"Hierarchy":1188},{"UIElements":40},{"CoreStats":14456},{"Identifiers":7152},{"Gui":189},{"EditorUtility":246617},{"VersionControl":8},{"Undo":931},{"AssetDatabase":1237411},{"AssetImporter":40},{"EditorGi":328},{"UnityConnect":40465},{"Upm":1912},{"UpmDiagnostics":8},{"AssetCompliance":96},{"DrivenProperties":72},{"LocalIPC":266},{"ProfilerEditor":9746},{"CoreBusinessMetrics":3606},{"Windowing":456},{"Licensing":12760},{"AssetReference":32},{"IPCStream":32}]}

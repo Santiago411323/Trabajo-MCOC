@@ -14,6 +14,8 @@ public sealed class VisualCampusSite : MonoBehaviour
     private float parkingLift;
     private FuncGround campusGround;
     private Vector4 hillKeepout;
+    private readonly List<Bounds> platformGrades=new List<Bounds>();
+    private readonly List<Vector2> frontGradeProfile=new List<Vector2>();
     private Material sand,concrete,asphalt,white,grass,bark,leaves,glass;
     private Material Mat(string name,Color color)
     {
@@ -36,6 +38,28 @@ public sealed class VisualCampusSite : MonoBehaviour
         var levels=supports.GroupBy(p=>Mathf.Round(p.y*100)/100).Select(g=>new Vector2(g.Average(p=>p.x),g.Key-clearance)).OrderBy(p=>p.x).ToArray();
         gradeLevels=levels;frontZ=zmin;
         parkingLift=upperTerraceElevation-levels[levels.Length-1].y;
+        // Match the lawn perimeter before blending back to the original campus grade.
+        // Parking, pavement, trees and cars all use Grade, so they follow the same slope.
+        platformGrades.Clear();
+        var supportLevels=supports.GroupBy(p=>Mathf.Round(p.y*100)/100).OrderBy(g=>g.Key).ToArray();
+        for(int i=0;i<supportLevels.Length;i++)
+        {
+            var level=supportLevels[i];
+            float left=level.Min(p=>p.x)-(i==0?12:2),right=level.Max(p=>p.x)+(i==supportLevels.Length-1?27:2);
+            if(VisualCafe.TryLayout(data,out var layout) && Mathf.Abs(level.Key)<.01f)
+                left=Mathf.Min(left,Mathf.Min(layout.Left-.4f,layout.RearLeft-2f));
+            AddPlatformGrade(left,right,zmin-12,zmax+12,level.Key-clearance);
+        }
+        var terraceNodes=nodes.Values.Where(p=>Mathf.Abs(p.y-4)<.01f).ToArray();
+        if(terraceNodes.Length>0)
+        {
+            float contact=terraceNodes.Max(p=>p.x)+.345f;
+            AddPlatformGrade(contact,xmax+27,zmin-12,zmax+12,upperTerraceElevation);
+            var extension=data.elements.FirstOrDefault(e=>e.elementTag=="E1_280" && e.type=="columna");
+            if(extension!=null)
+            {var p=nodes[extension.nodeJ];AddPlatformGrade(p.x,contact,zmin-12,p.z,upperTerraceElevation);}
+        }
+        BuildFrontGradeProfile();
         sand=Mat("Explanada_arena",new Color(.60f,.52f,.37f));concrete=Mat("Senderos_hormigon",new Color(.68f,.67f,.61f));
         asphalt=Mat("Calzada",new Color(.23f,.25f,.25f));white=Mat("Demarcacion",new Color(.88f,.87f,.78f));
         grass=Mat("Cancha_pasto",new Color(.23f,.39f,.17f));bark=Mat("Troncos",new Color(.28f,.23f,.16f));
@@ -54,7 +78,12 @@ public sealed class VisualCampusSite : MonoBehaviour
         System.Func<float,float,float> landscape=(x,z)=>
         {
             float h=Grade(x,z);
-            if(x>=xmin-2 && x<=xmax+2 && z>=zmin-12 && z<=zmax+12)h=ground;
+            if(x>=xmin-2 && x<=xmax+2 && z>=zmin-12 && z<=zmax+12)
+            {
+                float boundaryDistance=Mathf.Min(x-(xmin-2),xmax+2-x,z-(zmin-12),zmax+12-z);
+                float blendInside=VisualCafe.UseDesktopLayout?Mathf.SmoothStep(0,1,Mathf.Clamp01((boundaryDistance-3.5f)/6f)):1;
+                h=Mathf.Lerp(h,ground,blendInside);
+            }
             h=VisualCafe.CutHeight(cafe,x,z,h,xmax+2);
             // Level playing surface, blended back into the common hillside without a wall.
             float edge=Mathf.Max(Mathf.Abs(x-fieldX)-(PitchWidth/2+5),Mathf.Abs(z-fieldZ)-(PitchLength/2+5));
@@ -72,6 +101,11 @@ public sealed class VisualCampusSite : MonoBehaviour
                     h=Mathf.Min(h,3.94f);
                 if(x>=xmax-1f && x<=xmax+5f && z<zmin-12f && z>=zmin-16f)
                     h=Mathf.Min(h,Mathf.Lerp(4f,Grade(x,z),Mathf.InverseLerp(zmin-12f,zmin-14.8f,z))-.04f);
+                // The coarse background mesh must stay below the finer parking
+                // and sidewalk meshes; otherwise it pokes through their ramps.
+                float exteriorDistance=Mathf.Max(xmin-24-x,0,x-(xmax+24),zmin-69-z,0,z-(zmin-12));
+                if(exteriorDistance<4)
+                    h=Mathf.Min(h,Grade(x,z)-1.5f*(1-Mathf.SmoothStep(0,1,exteriorDistance/4)));
             }
             return h;
         };
@@ -82,8 +116,9 @@ public sealed class VisualCampusSite : MonoBehaviour
         {
             float left=k==0?xmin-24:(levels[k-1].x+levels[k].x)*.5f;
             float right=k==levels.Length-1?xmax+24:(levels[k].x+levels[k+1].x)*.5f;
-            Surface("Estacionamiento_en_pendiente",left,right,zmin-65,zmin-15,(x,z)=>Grade(x,z)+.025f,sand,1.5f);
-            Surface("Vereda_en_pendiente",left,right,zmin-16.3f,zmin-13.3f,(x,z)=>Grade(x,z)+.06f,concrete,1.5f);
+            Surface("Estacionamiento_en_pendiente",left,right,zmin-65,zmin-15,(x,z)=>Grade(x,z)+.025f,sand,VisualCafe.UseDesktopLayout?.5f:1.5f);
+            if(!VisualCafe.UseDesktopLayout)
+                Surface("Vereda_en_pendiente",left,right,zmin-16.3f,zmin-13.3f,(x,z)=>Grade(x,z)+.06f,concrete,1.5f);
             Surface("Calle_en_pendiente",left,right,zmin-69,zmin-61,(x,z)=>Grade(x,z)+.04f,asphalt,1.5f);
             for(float x=left+2;x<right-2;x+=6)OnGrade("Eje_calzada",x,zmin-65,.065f,new Vector3(3,.025f,.12f),white);
             for(int row=0;row<3;row++)for(float x=left+4;x<right-3;x+=5.6f)
@@ -98,6 +133,9 @@ public sealed class VisualCampusSite : MonoBehaviour
             }
             for(float x=left+3;x<right-3;x+=9)Tree(new Vector3(x,Grade(x,zmin-14),zmin-14),3.3f+Mathf.Repeat(x,1.4f));
         }
+        if(VisualCafe.UseDesktopLayout)
+            Surface("Vereda_en_pendiente",xmin-24,xmax+24,zmin-16.3f,zmin-12f,
+                (x,z)=>Grade(x,z)+.04f,concrete,.5f);
         // Sports ground to the side, set on its adjacent terrace, away from the FE footprint.
         Piece("Base_cancha",new Vector3(fieldX,(fieldY+ground)/2,fieldZ),new Vector3(PitchWidth+10,fieldY-ground,PitchLength+10),sand);
         Piece("Cancha_105x68",new Vector3(fieldX,fieldY+.025f,fieldZ),new Vector3(PitchWidth,.06f,PitchLength),grass);
@@ -191,7 +229,51 @@ public sealed class VisualCampusSite : MonoBehaviour
     {
         var low=gradeLevels[0];var high=gradeLevels[gradeLevels.Length-1];
         float slope=gradeLevels.Length>1 && Mathf.Abs(high.x-low.x)>.01f ? (high.y-low.y)/(high.x-low.x) : .035f;
-        return high.y+parkingLift+slope*(x-high.x)-.018f*(z-(frontZ-15));
+        float original=high.y+parkingLift+slope*(x-high.x)-.018f*(z-(frontZ-15));
+        if(!VisualCafe.UseDesktopLayout || platformGrades.Count==0)return original;
+        // Rear sports ground and its tree promenade retain their dedicated grading.
+        // Smooth the exterior approach along the front and both lateral lawn edges.
+        float rear=platformGrades[0].max.z;
+        if(z>rear)return original;
+        float distance=float.PositiveInfinity,target=original;
+        foreach(var platform in platformGrades)
+        {
+            float dx=Mathf.Max(platform.min.x-x,0,x-platform.max.x);
+            float dz=Mathf.Max(platform.min.z-z,0,z-platform.max.z);
+            float d=Mathf.Sqrt(dx*dx+dz*dz);
+            if(d<distance-.001f || Mathf.Abs(d-distance)<.001f && platform.center.y>target)
+            {distance=d;target=platform.center.y;}
+        }
+        if(z<platformGrades.Min(p=>p.min.z) && frontGradeProfile.Count>0)
+        {
+            // Smooth the exposed top profile, excluding lower surfaces hidden
+            // by an overlapping terrace. All parking strips use this same grade.
+            float spread=.15f+(platformGrades.Min(p=>p.min.z)-z)*2.5f;
+            target=frontGradeProfile[0].y;
+            for(int i=1;i<frontGradeProfile.Count;i++)
+            {
+                float t=Mathf.InverseLerp(frontGradeProfile[i].x-spread,frontGradeProfile[i].x+spread,x);
+                target+=(frontGradeProfile[i].y-frontGradeProfile[i-1].y)*Mathf.SmoothStep(0,1,t);
+            }
+        }
+        float blend=1-Mathf.SmoothStep(0,1,Mathf.Clamp01(distance/30f));
+        return Mathf.Lerp(original,target-.025f,blend);
+    }
+    private void AddPlatformGrade(float left,float right,float front,float rear,float height)
+    {platformGrades.Add(new Bounds(new Vector3((left+right)/2,height,(front+rear)/2),new Vector3(right-left,0,rear-front)));}
+    private void BuildFrontGradeProfile()
+    {
+        frontGradeProfile.Clear();if(platformGrades.Count==0)return;
+        float z=platformGrades.Min(p=>p.min.z)+.001f;
+        var bounds=platformGrades.SelectMany(p=>new[]{p.min.x,p.max.x}).Distinct().OrderBy(x=>x).ToArray();
+        for(int i=0;i+1<bounds.Length;i++)
+        {
+            float x=(bounds[i]+bounds[i+1])/2;
+            var heights=platformGrades.Where(p=>x>=p.min.x && x<=p.max.x && z>=p.min.z && z<=p.max.z).Select(p=>p.center.y).ToArray();
+            if(heights.Length==0)continue;float height=heights.Max();
+            if(frontGradeProfile.Count==0 || Mathf.Abs(frontGradeProfile.Last().y-height)>.001f)
+                frontGradeProfile.Add(new Vector2(bounds[i],height));
+        }
     }
     private void OnGrade(string name,float x,float z,float offset,Vector3 size,Material mat)
     {

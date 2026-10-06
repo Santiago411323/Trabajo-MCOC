@@ -27,7 +27,7 @@ public static class DesktopFacadeRevisionValidation
                 Mathf.Abs(roof.min.z-slab.y0)<.001f && Mathf.Abs(roof.max.z-slab.y1)<.001f,"Roof extends beyond real cantilever footprint");
             Require(cafe.transform.Find("Cielo_cafeteria").GetComponent<Renderer>().bounds.min.z>=slab.y1-.001f,"Inside roof still overhangs outside the building");
             var doors=facade.GetComponentsInChildren<Transform>().Where(t=>t.name.StartsWith("Paso_puerta_acceso_")).ToArray();
-            Require(doors.Length==2 && facade.AccessDoorCount==2 && facade.CafeDoorCount==2,"Access doors or cafe doors missing");
+            Require(doors.Length==2 && facade.AccessDoorCount==2 && facade.CafeDoorCount==2,"Original access doors or cafe doors missing");
             foreach(var door in doors)
             {
                 Require(door.position.y>5.5f && door.position.y<5.8f,"Door must belong to Y4 story");

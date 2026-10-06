@@ -4,6 +4,7 @@ public sealed partial class StructuralARController
 {
     private void DrawGuidedInterface()
     {
+        if(lockedTab!="Ingeniería" || calibrationStage!=CalibrationStage.Locked || !menuExpanded)engineering.Preview?.Hide();
         uiScale = Mathf.Max(1f, Mathf.Min(Screen.width, Screen.height) / 390f);
         Matrix4x4 previousMatrix = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f));
@@ -35,16 +36,6 @@ public sealed partial class StructuralARController
             menuExpanded = !menuExpanded;
         GUILayout.EndHorizontal();
         panelScroll = GUILayout.BeginScrollView(panelScroll, false, true);
-        GUILayout.Label(cameraStatus, WrapStyle());
-        if (cameraDenied && GUILayout.Button("Abrir Ajustes: permitir camara", GUILayout.Height(32f)))
-        {
-#if UNITY_IOS && !UNITY_EDITOR
-            Application.OpenURL("app-settings:");
-#endif
-        }
-        else if (!cameraReady && !cameraStarting && !cameraRestricted && GUILayout.Button(
-            IOSCameraPermission.Current == IOSCameraPermission.State.NotDetermined ? "Solicitar permiso de camara" : "Reintentar camara", GUILayout.Height(30f)))
-            StartCoroutine(StartCamera());
         bool enabled = GUI.enabled;
         GUI.enabled = enabled && !placementInProgress;
         DrawCurrentStep();
@@ -107,11 +98,12 @@ public sealed partial class StructuralARController
                 if (menuExpanded)
                 {
                     GUILayout.BeginHorizontal();
-                    foreach (string tab in new[] { "Resultados", "Ajuste", "Sector" })
+                    foreach (string tab in new[] { "Resultados", "Ajuste", "Sector", "Ingeniería" })
                         if (GUILayout.Button(tab, GUILayout.Height(32f))) { lockedTab = tab; panelScroll = Vector2.zero; }
                     GUILayout.EndHorizontal();
                     if (lockedTab == "Ajuste") DrawFineControls();
                     else if (lockedTab == "Sector") DrawSector();
+                    else if(lockedTab=="Ingeniería") DrawEngineering();
                     else DrawComparisonResults();
                 }
                 break;
@@ -147,7 +139,7 @@ public sealed partial class StructuralARController
     private bool CameraAction(string title)
     {
         bool enabled = GUI.enabled;
-        GUI.enabled = enabled && cameraReady;
+        GUI.enabled = enabled;
         bool clicked = GUILayout.Button(title, GUILayout.Height(34f));
         GUI.enabled = enabled;
         return clicked;
@@ -271,7 +263,7 @@ public sealed partial class StructuralARController
         if (GUILayout.Button("Cara +5°", GUILayout.Height(32f))) FineRotate(5f, true);
         GUILayout.EndHorizontal();
         GUI.enabled = enabled;
-        if (!EditablePlacement) GUILayout.Label("Para ajustar, recupera imagen y seguimiento del anchor.", WrapStyle());
+        if (!EditablePlacement) GUILayout.Label("Para ajustar, recupera el seguimiento del anchor.", WrapStyle());
         GUILayout.Label("Se conserva el anchor y el ID. Los nodos del modelo OpenSees no se modifican.", WrapStyle());
     }
 

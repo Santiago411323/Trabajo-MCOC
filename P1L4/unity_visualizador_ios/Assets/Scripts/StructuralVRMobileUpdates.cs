@@ -121,9 +121,10 @@ public sealed partial class StructuralVRController
     }
     private static bool OwnedByDecoration(Renderer r) => r.GetComponentInParent<VisualSiteTerrain>()!=null ||
         r.GetComponentInParent<VisualFrameFacade>()!=null || r.GetComponentInParent<VisualFlatRoof>()!=null ||
-        r.GetComponentInParent<VisualStairs>()!=null || r.GetComponentInParent<VisualCafe>()!=null || r.GetComponentInParent<VisualCampusSite>()!=null || r.GetComponentInParent<VisualStudyRoom>()!=null;
+        r.GetComponentInParent<VisualStairs>()!=null || r.GetComponentInParent<VisualCafe>()!=null || r.GetComponentInParent<VisualCampusSite>()!=null || r.GetComponentInParent<VisualStudyRoom>()!=null || r.GetComponentInParent<VisualInteriorPartitions>()!=null;
     private void ResetMobileWorld()
     {
+        DisposeEngineeringVR();
         MobileSeismicPlayback.Instance?.Close();mobileCracks.Clear();mobileHistory=null;historyResponse=null;
         originalMembers.Clear();historyId=-1;seismicWasActive=false;seismicControls=null;
     }

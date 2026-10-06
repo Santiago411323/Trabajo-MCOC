@@ -183,6 +183,10 @@ public class StructureViewer : MonoBehaviour
         {
             var room=new GameObject("Sala_visual_mesas_laptops");room.transform.SetParent(transform,false);
             room.AddComponent<VisualStudyRoom>().Build(loadedData);
+            var partitions=new GameObject("Muros_interiores_ambiente_Y4");
+            partitions.transform.SetParent(transform,false);
+            partitions.AddComponent<VisualInteriorPartitions>().Build(loadedData,room.transform);
+            visualFacadeObjects.Add(partitions);RegisterFloor(partitions,"CIELO_2");
             visualFacadeObjects.Add(room);RegisterFloor(room,"CIELO_2");
         }
         CreateGlobalAxes();
@@ -1040,6 +1044,7 @@ public class StructureViewer : MonoBehaviour
         if(VisualCafe.UseDesktopLayout)
         {
             stairs.BuildTerraceAccess(visualTerrain.GetComponent<VisualSiteTerrain>(),(piece,floor)=>RegisterFloor(piece,floor));
+            stairs.BuildRearAccess(loadedData,visualTerrain.GetComponent<VisualSiteTerrain>(),(piece,floor)=>RegisterFloor(piece,floor));
             root.AddComponent<VisualSalmonRailings>().Build(loadedData,stairs,(piece,floor)=>
             {stairs.Pieces.Add(piece);RegisterFloor(piece,floor);});
         }

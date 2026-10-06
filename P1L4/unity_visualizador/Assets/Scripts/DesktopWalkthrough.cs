@@ -13,6 +13,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
     public CharacterController Body {get;private set;}
     public GameObject CollisionWorld {get;private set;}
     public bool Paused {get;private set;}
+    public DesktopSkateController Skate {get;private set;}
     private StructureViewer viewer;
     private StructureData data;
     private Camera cameraView;
@@ -66,6 +67,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         cameraView.nearClipPlane=.05f;cameraView.fieldOfView=70;
         Active=IsActive=true;yaw=90;pitch=0;Paused=false;player.transform.rotation=Quaternion.Euler(0,yaw,0);
         startPoint=FindExteriorSpawn();Teleport(startPoint);SetPaused(false);
+        Skate=player.AddComponent<DesktopSkateController>();Skate.Configure(Body,cameraView,gravity);
     }
 
     private void BuildCollisionWorld()
@@ -82,7 +84,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
             bool structural=source.GetComponent<ElementSelectable>()!=null;
             bool slab=source.GetComponent<SlabSelectable>()!=null;
             bool decoration=source.GetComponentInParent<VisualSiteTerrain>()!=null || source.GetComponentInParent<VisualStairs>()!=null ||
-                source.GetComponentInParent<VisualFlatRoof>()!=null || source.GetComponentInParent<VisualFrameFacade>()!=null || source.GetComponentInParent<VisualStudyRoom>()!=null;
+                source.GetComponentInParent<VisualFlatRoof>()!=null || source.GetComponentInParent<VisualFrameFacade>()!=null || source.GetComponentInParent<VisualStudyRoom>()!=null || source.GetComponentInParent<VisualInteriorPartitions>()!=null;
             if(!structural && !slab && !decoration)continue;
             // Leaves, lines, spectators, signs and decorative tiny details are not obstacles.
             string n=source.name;
@@ -169,13 +171,16 @@ public sealed class DesktopWalkthrough : MonoBehaviour
     public void Teleport(Vector3 feet)
     {
         if(Body==null)return;
-        Body.enabled=false;player.transform.position=feet;Body.enabled=true;verticalSpeed=0;Physics.SyncTransforms();
+        Body.enabled=false;player.transform.position=feet;Body.enabled=true;verticalSpeed=0;
+        if(Skate!=null)Skate.ResetMotion();Physics.SyncTransforms();
     }
 
     // Same physics path is used by keyboard movement and runtime verification.
     public void Step(Vector2 movement,bool jump,bool sprint,float dt)
     {
         if(!Active || Paused || Body==null)return;
+        if(Skate!=null && Skate.Mounted)
+        {Skate.Step(movement,jump,dt);if(player.transform.position.y<-45)Teleport(startPoint);return;}
         dt=Mathf.Min(dt,.05f);
         if(Body.isGrounded && verticalSpeed<0)verticalSpeed=-2;
         if(jump && Body.isGrounded)verticalSpeed=Mathf.Sqrt(jumpHeight*-2*gravity);
@@ -195,21 +200,46 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         bool toggle=k.fKey.wasPressedThisFrame,escape=k.escapeKey.wasPressedThisFrame;
         Vector2 move=new Vector2((k.dKey.isPressed?1:0)-(k.aKey.isPressed?1:0),(k.wKey.isPressed?1:0)-(k.sKey.isPressed?1:0));
         bool jump=k.spaceKey.wasPressedThisFrame,sprint=k.leftShiftKey.isPressed || k.rightShiftKey.isPressed,reset=k.rKey.wasPressedThisFrame;
+        bool skateToggle=k.eKey.wasPressedThisFrame;
+        bool kickflip=k.qKey.wasPressedThisFrame,shoveIt=k.tKey.wasPressedThisFrame;
         Vector2 look=mouse!=null?mouse.delta.ReadValue()*.12f:Vector2.zero;
 #else
         bool toggle=Input.GetKeyDown(KeyCode.F),escape=Input.GetKeyDown(KeyCode.Escape);
         Vector2 move=new Vector2((Input.GetKey(KeyCode.D)?1:0)-(Input.GetKey(KeyCode.A)?1:0),(Input.GetKey(KeyCode.W)?1:0)-(Input.GetKey(KeyCode.S)?1:0));
         bool jump=Input.GetKeyDown(KeyCode.Space),sprint=Input.GetKey(KeyCode.LeftShift),reset=Input.GetKeyDown(KeyCode.R);
+        bool skateToggle=Input.GetKeyDown(KeyCode.E);
+        bool kickflip=Input.GetKeyDown(KeyCode.Q),shoveIt=Input.GetKeyDown(KeyCode.T);
         Vector2 look=new Vector2(Input.GetAxis("Mouse X"),Input.GetAxis("Mouse Y"))*2;
 #endif
         if(toggle && (Active || GUIUtility.keyboardControl==0)){if(Active)Exit();else Enter();return;}
         if(!Active)return;
         if(escape)SetPaused(!Paused);
         if(Paused)return;
+        if(skateToggle)ToggleSkate();
+        if(Skate!=null && Skate.Mounted)
+        {
+            if(reset)Teleport(startPoint);
+            if(kickflip)Skate.RequestTrick(DesktopSkateController.Trick.Kickflip);
+            else if(shoveIt)Skate.RequestTrick(DesktopSkateController.Trick.ShoveIt);
+            Step(move,jump,sprint,Time.deltaTime);Skate.UpdateCamera(look,Time.deltaTime);return;
+        }
         yaw+=look.x;pitch=Mathf.Clamp(pitch-look.y,-85,85);
         player.transform.rotation=Quaternion.Euler(0,yaw,0);cameraView.transform.localRotation=Quaternion.Euler(pitch,0,0);
         if(reset)Teleport(startPoint);
         Step(move,jump,sprint,Time.deltaTime);
+    }
+
+    public bool ToggleSkate()
+    {
+        if(!Active || Skate==null || (!Skate.Mounted && verticalSpeed>0))return false;
+        if(!Skate.Toggle())return false;
+        verticalSpeed=0;
+        if(!Skate.Mounted)
+        {
+            yaw=player.transform.eulerAngles.y;pitch=0;
+            cameraView.transform.localPosition=Vector3.up*1.62f;cameraView.transform.localRotation=Quaternion.identity;
+        }
+        return true;
     }
 
     public void SetPaused(bool value)
@@ -226,22 +256,28 @@ public sealed class DesktopWalkthrough : MonoBehaviour
             if(GUI.Button(new Rect(Screen.width-215,Screen.height-45,200,30),"Modo juego · primera persona (F)"))Enter();
             GUI.enabled=true;return;
         }
-        GUI.Box(new Rect(12,12,Mathf.Min(670,Screen.width-24),48),"WASD mover · Ratón mirar · Espacio saltar · Shift correr\nEsc menú / cursor · R volver al inicio · F salir");
+        bool skating=Skate!=null && Skate.Mounted;
+        string controls=skating?"SKATE · W impulsar · S frenar · A/D girar · Espacio ollie · Q kickflip · T shove-it · E bajarse":"WASD mover · Ratón mirar · Espacio saltar · Shift correr · E subir al skate";
+        string state=skating?" · "+(Skate.Speed*3.6f).ToString("F0")+" km/h · "+Skate.Status:"";
+        GUI.Box(new Rect(12,12,Mathf.Min(850,Screen.width-24),58),controls+"\n"+(skating?"Ratón cámara · ":"")+"Esc menú / cursor · R volver al inicio · F salir"+state);
         if(!Paused)return;
         float x=(Screen.width-340)/2f,y=90;
-        GUI.Box(new Rect(x,y,340,210+FloorHeights.Length*30),"Recorrido en primera persona");
+        GUI.Box(new Rect(x,y,340,250+FloorHeights.Length*30),"Modo juego · caminar / skate");
         if(GUI.Button(new Rect(x+20,y+35,300,30),"Continuar"))SetPaused(false);
         if(GUI.Button(new Rect(x+20,y+70,300,30),"Volver al inicio")){Teleport(startPoint);SetPaused(false);}
+        if(GUI.Button(new Rect(x+20,y+105,300,30),skating?"Bajarse del skate (E)":"Subir al skate (E)"))
+            if(ToggleSkate())SetPaused(false);
         int i=0;foreach(float height in FloorHeights)
-            if(GUI.Button(new Rect(x+20,y+110+i++*30,300,26),"Ir al piso "+Mathf.RoundToInt(height/4)+" (Y="+height+")"))
+            if(GUI.Button(new Rect(x+20,y+145+i++*30,300,26),"Ir al piso "+Mathf.RoundToInt(height/4)+" (Y="+height+")"))
                 if(GoToFloor(height))SetPaused(false);
-        if(GUI.Button(new Rect(x+20,y+125+i*30,300,30),"Volver al visualizador"))Exit();
+        if(GUI.Button(new Rect(x+20,y+160+i*30,300,30),"Volver al visualizador"))Exit();
     }
 
     public void Exit()
     {
         if(!Active)return;
         Active=IsActive=false;
+        if(Skate!=null){Skate.Dispose();Skate=null;}
         if(cameraView!=null)
         {
             cameraView.transform.SetParent(savedParent,true);cameraView.transform.SetPositionAndRotation(savedPosition,savedRotation);

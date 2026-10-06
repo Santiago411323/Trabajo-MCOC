@@ -50,6 +50,15 @@ public sealed class VisualSalmonRailings : MonoBehaviour
             Route("Baranda_gradas_borde_exterior",wide.Start-Vector3.forward*wide.Width/2,
                 wide.End-Vector3.forward*wide.Width/2,wide.Floor,8);
         }
+        var rear=stairs.Paths.FirstOrDefault(p=>p.Name=="Escalera_lateral_E1_288_Y4");
+        if(rear!=null)
+        {
+            var direction=rear.End-rear.Start;direction.y=0;
+            var side=Vector3.Cross(Vector3.up,direction.normalized)*rear.Width/2;
+            Route("Baranda_E1_288_izquierda",rear.Start-side,rear.End-side,rear.Floor);
+            Route("Baranda_E1_288_derecha",rear.Start+side,rear.End+side,rear.Floor);
+        }
+
     }
 
     private void Landing(string tag,Vector3 landing,Dictionary<int,Vector3> nodes,StructureData data,float width,string floor)

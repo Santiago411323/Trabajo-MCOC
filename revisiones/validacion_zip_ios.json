@@ -1,17 +1,17 @@
 {
   "status": "PASS",
-  "zip": "C:\\Users\\chuntley\\Desktop\\Proyecto MCOC\\P1L4\\unity_visualizador_ios\\Entregables\\MCOC_iOS_Xcode_20261006_063239_329_0458f7.zip",
-  "build": "14",
-  "size_mib": 594.3,
-  "sha256": "9889b69e924d3786aef7fbae43028abbb787f6a8bb1a6260ddf11657b2535325",
+  "zip": "C:\\Users\\chuntley\\Desktop\\Proyecto MCOC\\P1L4\\unity_visualizador_ios\\Entregables\\MCOC_iOS_Xcode_20261006_210635_093_78fb4a.zip",
+  "build": "16",
+  "size_mib": 597.8,
+  "sha256": "b5c19988f7f2c7d7a79d04a7f39f87b4e48e13fd513b13bc4a4e5857997d4917",
   "checks": [
     "CRC completo",
     "proyecto Xcode",
     "permiso de camara",
     "permisos ejecutables",
     "modelo exacto",
-    "ocho metadatos y ocho binarios exactos",
-    "textura de laptops incluida"
+    "nueve unidades LRFD exactas",
+    "ocho metadatos y ocho binarios exactos"
   ],
   "resources": {
     "el_centro_1940_ns_X_i025_payload.bytes": "xc/Data/resources.assets",
@@ -30,6 +30,7 @@
     "el_centro_1940_ns_Y_i050.json": "xc/Data/resources.assets",
     "el_centro_1940_ns_Y_i100.json": "xc/Data/resources.assets",
     "el_centro_1940_ns_Y_i150.json": "xc/Data/resources.assets",
+    "MobileLrfdUnits.json": "xc/Data/resources.assets",
     "estructura_p1l4_unity.json": "xc/Data/sharedassets0.assets"
   }
 }
