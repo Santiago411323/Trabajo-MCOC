@@ -24,6 +24,7 @@ public partial class ElementResultsPanel : MonoBehaviour
     private bool compareCombinations;
     private bool manualCheckOpen;
     private float manualCheckPosition = .5f;
+    private float radarPosition=-1f;
     private int curvaturePresentation;
     private Vector2 resultsScroll;
     private string auditExportStatus;
@@ -65,6 +66,16 @@ public partial class ElementResultsPanel : MonoBehaviour
         if (active != null) active.ResetFor(element);
     }
 
+    public static void OpenFromRadar(ElementSelectable element,int component,float position)
+    {
+        if(active==null)return;
+        if(active.selected!=element)active.ResetFor(element);
+        active.expanded=true;active.forceIndex=Mathf.Clamp(component,0,4);
+        active.manualCheckPosition=Mathf.Clamp01(position);
+        active.radarPosition=Mathf.Clamp01(position);
+        active.SetView(ResultView.Forces);
+    }
+
     private void OnEnable()
     {
         active = this;
@@ -73,6 +84,7 @@ public partial class ElementResultsPanel : MonoBehaviour
 
     private void OnDisable()
     {
+        memberPreview?.Dispose(); memberPreview=null;
         ClearResultVisualization();
         if (active == this) active = null;
         if (background != null) Destroy(background);
@@ -96,6 +108,7 @@ public partial class ElementResultsPanel : MonoBehaviour
     {
         ElementSelectable current = SelectedElement();
         if (current != selected) ResetFor(current);
+        UpdateMemberPlayback();
     }
 
     private void ResetFor(ElementSelectable element)
@@ -109,7 +122,14 @@ public partial class ElementResultsPanel : MonoBehaviour
         compareCombinations = false;
         manualCheckOpen = false;
         manualCheckPosition = .5f;
+        radarPosition=-1f;
         curvaturePresentation = 0;
+        reinforcementCalculationOpen = false;
+        reinforcementReverse = false;
+        reinforcementRotate = false;
+        reinforcementUseAxial = true;
+        memberPreview?.Hide();memberPlaying=true;memberProgress=0;memberClock=0;
+        memberPlaybackMode=0;memberVisualScale=1;memberSlice=.5f;
         resultsScroll = Vector2.zero;
         auditExportStatus = null;
         auditExportPath = null;
@@ -118,6 +138,7 @@ public partial class ElementResultsPanel : MonoBehaviour
 
     private void ClearResultVisualization()
     {
+        memberPreview?.Hide();
         if (diagrams != null) diagrams.ClearSelectedComponentDiagram();
         if (view == ResultView.Deformed && diagrams != null)
             diagrams.SetResultMode("None");
@@ -235,7 +256,7 @@ public partial class ElementResultsPanel : MonoBehaviour
         {
             case ResultView.ModelEditor: return optionHeight + 490f;
             case ResultView.Interaction: return optionHeight + 350f;
-            case ResultView.Fibers: return optionHeight + 350f;
+            case ResultView.Fibers: return optionHeight + reinforcementContentHeight;
             case ResultView.MomentCurvature:
                 return optionHeight + (curvaturePresentation == 0 ? 390f : 315f);
             case ResultView.StressStrain: return optionHeight + 430f;
@@ -407,6 +428,12 @@ public partial class ElementResultsPanel : MonoBehaviour
         // themselves are never modified.
         Vector2 mouse = Event.current.mousePosition;
         Rect interactivePlot = new Rect(plot.x + 5f, plot.y, plot.width - 10f, plot.height);
+        if(radarPosition>=0)
+        {
+            float radarX=Mathf.Lerp(interactivePlot.x,interactivePlot.xMax,radarPosition);
+            DrawLine(new Vector2(radarX,plot.y+3),new Vector2(radarX,plot.yMax-3),Color.cyan,1.5f);
+            GUI.Label(new Rect(Mathf.Clamp(radarX+4,plot.x,plot.xMax-110),plot.y+3,110,19),$"RADAR {100*radarPosition:0.#}%",mutedStyle);
+        }
         if (interactivePlot.Contains(mouse))
         {
             float t = Mathf.Clamp01((mouse.x - interactivePlot.x) / interactivePlot.width);
@@ -776,6 +803,8 @@ public partial class ElementResultsPanel : MonoBehaviour
             GUI.Label(new Rect(x+8f,section.yMax+46f,width-16f,58f),
                 $"Estribos: {material.stirrupCount} dobles Ø{material.stirrupDiameter_mm:0.#} cada {material.stirrupSpacing_mm/10f:0.#} cm · {material.stirrupLegs} ramas\n"+
                 $"Tramo entre primero y último: {(material.stirrupCount-1)*material.stirrupSpacing_mm/1000f:0.###} m. Sin confinamiento ni capacidad de corte calculados.",mutedStyle);
+        float laboratoryHeight=DrawMemberPlayback(element,material,curve,x,y+335f,width);
+        DrawReinforcementAssessment(element, material, curve, x, y + 335f + laboratoryHeight, width);
     }
 
     private void DrawFiberSection(Rect rect, SectionMaterialData material)

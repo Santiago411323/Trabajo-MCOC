@@ -1,6 +1,7 @@
 """Contrato de armadura, conservación de resultados y edición por elemento."""
 import json
 import math
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -13,9 +14,9 @@ materials={m['sectionId']:m for m in data['p1l4']['sectionMaterials']}
 curves={c['sectionId']:c for c in data['p1l4']['pmCurves']}
 for cid in ('V60/80','V40/80','V30/80','V30/45'):
     m=materials[cid];curve=curves[cid]
-    assert m['steelBars']==4 and m['topBars']==m['bottomBars']==2
-    assert m['sideBarsEach']==0 and m['barDiameter_mm']==10
-    assert math.isclose(m['Ast_mm2'],4*math.pi*10**2/4)
+    assert m['steelBars']==12 and m['topBars']==m['bottomBars']==4
+    assert m['sideBarsEach']==2 and m['barDiameter_mm']==25
+    assert math.isclose(m['Ast_mm2'],12*math.pi*25**2/4)
     assert m['stirrupCount']==17 and m['stirrupSpacing_mm']==100 and m['stirrupLegs']==4
     assert math.isclose((m['stirrupCount']-1)*m['stirrupSpacing_mm']/1000,1.6)
     assert math.isclose(curve['points'][-1]['P_kN'],-m['Ast_mm2']*m['fy_MPa']/1000)
@@ -42,3 +43,39 @@ with tempfile.TemporaryDirectory() as tmp:
         if e['id']!=beam['id']: assert e==before[e['id']]
     assert before[beam['id']]['nodeI']==beam['nodeI'] and before[beam['id']]['nodeJ']==beam['nodeJ']
 print('PASS edición individual: barras/estribos transmitidos; resto de elementos intacto.')
+
+# Ambos destinos deben conservar exactamente el análisis y geometría publicados.
+root = Path(__file__).resolve().parents[2]
+for relative in ('P1L4/unity_visualizador/Assets/Resources/estructura_p1l4_unity.json',
+                 'P1L4/desktop_model/estructura_p1l4_desktop.json'):
+    current = exporter.load_json(root/relative)
+    previous = json.loads(subprocess.check_output(['git','show','HEAD:'+relative], cwd=root))
+    for key in previous:
+        if key != 'p1l4': assert current[key] == previous[key], (relative,key)
+    for key in previous['p1l4']:
+        if key not in ('sectionMaterials','pmCurves'):
+            assert current['p1l4'][key] == previous['p1l4'][key], (relative,key)
+    old_materials = {m['sectionId']:m for m in previous['p1l4']['sectionMaterials']}
+    capacities = {c['sectionId']:c for c in current['p1l4']['pmCurves']}
+    for material in current['p1l4']['sectionMaterials']:
+        old = old_materials[material['sectionId']]
+        if material.get('elementType') != 'viga':
+            assert material == old
+            continue
+        assert material['steelBars'] == 12
+        assert material['topBars'] == material['bottomBars'] == 4
+        assert material['sideBarsEach'] == 2 and material['barDiameter_mm'] == 25
+        assert math.isclose(material['Ast_mm2'],12*math.pi*25**2/4)
+        for key in ('stirrupCount','stirrupDiameter_mm','stirrupSpacing_mm','stirrupLegs',
+                    'b_m','h_m','fc_MPa','fy_MPa','cover_mm'):
+            assert material[key] == old[key], (relative,material['sectionId'],key)
+        curve = capacities[material['sectionId']]
+        assert curve['steelBars'] == 12 and math.isclose(curve['Ast_mm2'],material['Ast_mm2'])
+        assert len(curve['momentCurvature']) == 400
+        assert all(math.isfinite(p['M_kN_m']) for p in curve['momentCurvature'])
+    edits=json.loads((root/'P1L4/model_edits.json').read_text(encoding='utf-8'))
+    for edit in edits['elements']:
+        if edit['elementType'] == 'viga':
+            assert edit['topBars'] == edit['bottomBars'] == 4
+            assert edit['sideBarsEach'] == 2 and edit['barDiameter_mm'] == 25
+    print('PASS',relative,': 12 Ø25, curvas consistentes, estribos/análisis/geometría intactos.')

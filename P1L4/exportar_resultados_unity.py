@@ -149,10 +149,11 @@ def load_json(path):
 
 def beam_reinforcement_defaults(material):
     """Armadura inicial solicitada; cover es distancia al centro longitudinal."""
-    return dict(material, steelBars=4, barDiameter_mm=10.0, topBars=2,
-                bottomBars=2, sideBarsEach=0, cover_mm=50.0,
-                Ast_mm2=math.pi * 100.0, Es_MPa=200000.0,
-                rho_percent=100 * math.pi * 100 / (material['b_m'] * material['h_m'] * 1e6),
+    ast_mm2 = 12 * math.pi * 25.0**2 / 4
+    return dict(material, steelBars=12, barDiameter_mm=25.0, topBars=4,
+                bottomBars=4, sideBarsEach=2, cover_mm=50.0,
+                Ast_mm2=ast_mm2, Es_MPa=200000.0,
+                rho_percent=100 * ast_mm2 / (material['b_m'] * material['h_m'] * 1e6),
                 effectiveDepth_mm=material['h_m']*1000-50,
                 stirrupCount=17, stirrupDiameter_mm=10.0,
                 stirrupSpacing_mm=100.0, stirrupLegs=4,
@@ -160,7 +161,7 @@ def beam_reinforcement_defaults(material):
                 epsc0=-.002, fcu_MPa=-.85*material['fc_MPa'], epscu=-.003,
                 steelModel='Steel01', steelYieldStrain=material['fy_MPa']/200000,
                 steelHardeningRatio=.01,
-                note='4 Ø10: 2 superiores y 2 inferiores. 17 estribos dobles Ø10@100 mm (4 ramas), tramo 1.60 m; ubicación longitudinal no definida. Sin confinamiento ni capacidad de corte evaluados.')
+                note='12 Ø25: 4 superiores, 4 inferiores y 2 por cada lado. 17 estribos dobles Ø10@100 mm (4 ramas), tramo 1.60 m; ubicación longitudinal no definida. Sin confinamiento ni capacidad de corte evaluados.')
 
 
 SECTION_MATERIALS = [beam_reinforcement_defaults(m) if m['elementType']=='viga' else m

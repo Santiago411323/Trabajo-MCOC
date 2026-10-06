@@ -50,7 +50,9 @@ public sealed class StructuralAuditReport
         string tag = member != null ? member.elementTag : "Muro " + selected.wallId;
         report.Add($"{tag} · ID interno {(member != null ? member.id : selected.wallId)} · ID Unity {selected.gameObject.name}");
         report.Add($"Tipo {(member != null ? member.type : "muro")} · edificio {(member != null ? member.sourceBuilding : selected.wallSourceBuilding)} · piso {selected.visualFloor}");
-        report.Add($"Fuente: Assets/Resources/estructura_p1l4_unity.json · exportación P1L4 v{(extras != null ? extras.version : "?")} · fuerzas {(extras != null ? extras.elementForceCoordinates : "no informadas")}");
+        report.Add(UnityData.ActiveCombo!=null && UnityData.ActiveCombo.StartsWith("LRFD_")?
+            "Fuente: P1L4/lrfd_results/resultados_unity.json · OpenSees localForce · escenario independiente LRFD":
+            $"Fuente: Assets/Resources/estructura_p1l4_unity.json · exportación P1L4 v{(extras != null ? extras.version : "?")} · fuerzas {(extras != null ? extras.elementForceCoordinates : "no informadas")}");
         report.Add($"Caso mostrado: {UnityData.GetActiveLoadLabel()}" +
             (UnityData.MobileForces.Count > 0 ? " + incremento móvil OpenSees" : ""));
         if (extras != null && extras.analysisModel != null)

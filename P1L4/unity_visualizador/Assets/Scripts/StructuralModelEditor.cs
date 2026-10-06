@@ -153,7 +153,7 @@ public class StructuralModelEditor : MonoBehaviour
         diameterText = Field(right + 10f, ref ry, columnWidth - 20f, "Diámetro [mm]", diameterText);
         topText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras superiores", topText);
         bottomText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras inferiores", bottomText);
-        sideText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras por lado", sideText);
+        sideText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras por lado (×2)", sideText);
         coverText = Field(right + 10f, ref ry, columnWidth - 20f, "Al centro barra [mm]", coverText);
 
         y += 184f;
@@ -231,10 +231,10 @@ public class StructuralModelEditor : MonoBehaviour
         float fc = saved != null ? saved.fc_MPa : material != null && material.fc_MPa > 0f ? material.fc_MPa : bound.isWall ? 30f : 25f;
         float fy = saved != null ? saved.fy_MPa : material != null && material.fy_MPa > 0f ? material.fy_MPa : 420f;
         bool beam=bound.data!=null && bound.data.type=="viga";
-        float diameter = saved != null ? saved.barDiameter_mm : material != null && material.barDiameter_mm > 0f ? material.barDiameter_mm : beam ? 10f : 25f;
-        int top = saved != null ? saved.topBars : material != null && material.steelBars > 0 ? material.topBars : beam ? 2 : 5;
-        int bottom = saved != null ? saved.bottomBars : material != null && material.steelBars > 0 ? material.bottomBars : beam ? 2 : 5;
-        int side = saved != null ? saved.sideBarsEach : material != null && material.steelBars > 0 ? material.sideBarsEach : beam ? 0 : 4;
+        float diameter = saved != null ? saved.barDiameter_mm : material != null && material.barDiameter_mm > 0f ? material.barDiameter_mm : 25f;
+        int top = saved != null ? saved.topBars : material != null && material.steelBars > 0 ? material.topBars : beam ? 4 : 5;
+        int bottom = saved != null ? saved.bottomBars : material != null && material.steelBars > 0 ? material.bottomBars : beam ? 4 : 5;
+        int side = saved != null ? saved.sideBarsEach : material != null && material.steelBars > 0 ? material.sideBarsEach : beam ? 2 : 4;
         float cover = saved != null ? saved.cover_mm : material != null && material.cover_mm > 0f ? material.cover_mm : 50f;
 
         widthText = Format(width); heightText = Format(height); fcText = Format(fc); fyText = Format(fy);

@@ -18,9 +18,22 @@ public class OrbitCamera : MonoBehaviour
     public float fastNavigationMultiplier = 3f;
     public float minDistance = 1.5f;
     public float maxDistance = 250f;
+    private StructureViewer guiViewer;
 
     private float x = 45f;
     private float y = 28f;
+    private bool radarFocus;
+    private Vector3 radarFocusStart,radarFocusEnd;
+    private float radarDistanceStart,radarDistanceEnd,radarFocusElapsed;
+
+    public void BeginRadarFocus(Vector3 point,float newDistance)
+    {
+        if(target==null)FocusOn(point,newDistance);
+        radarFocusStart=target.position;radarFocusEnd=point;
+        radarDistanceStart=distance;radarDistanceEnd=Mathf.Clamp(newDistance,minDistance,maxDistance);
+        radarFocusElapsed=0;radarFocus=true;
+    }
+    public void CancelRadarFocus(){radarFocus=false;}
 
     private void Start()
     {
@@ -36,6 +49,14 @@ public class OrbitCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(radarFocus)
+        {
+            radarFocusElapsed+=Time.unscaledDeltaTime;
+            float t=Mathf.SmoothStep(0,1,Mathf.Clamp01(radarFocusElapsed/.85f));
+            FocusOn(Vector3.Lerp(radarFocusStart,radarFocusEnd,t),Mathf.Lerp(radarDistanceStart,radarDistanceEnd,t));
+            if(t>=1)radarFocus=false;
+            return;
+        }
 #if ENABLE_INPUT_SYSTEM
         Mouse mouse = Mouse.current;
         Keyboard keyboard = Keyboard.current;
@@ -110,6 +131,19 @@ public class OrbitCamera : MonoBehaviour
         float scroll = Mathf.Abs(rawScroll) > 0.0001f ? Mathf.Sign(rawScroll) : 0f;
 #endif
         if (scroll != 0f && SelectedBeamDiagramPanel.BlocksPointer()) scroll = 0f;
+        if(scroll!=0f)
+        {
+            if(guiViewer==null)guiViewer=FindFirstObjectByType<StructureViewer>();
+#if ENABLE_INPUT_SYSTEM
+            Vector2 pointer=Mouse.current!=null?Mouse.current.position.ReadValue():Vector2.zero;
+#else
+            Vector2 pointer=Input.mousePosition;
+#endif
+            pointer.y=Screen.height-pointer.y;
+            if(guiViewer!=null && ((guiViewer.IsLeftPanelVisible() && guiViewer.GetLeftPanelRect().Contains(pointer)) ||
+                (guiViewer.IsTopBarVisible() && guiViewer.GetTopBarRect().Contains(pointer))))scroll=0;
+            if(ElementResultsPanel.BlocksPointer(pointer))scroll=0;
+        }
         ApplyZoom(scroll, speedMultiplier);
 
         UpdatePosition();

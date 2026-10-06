@@ -51,6 +51,7 @@ P1L4/seismic/runtime.local.json
 
 # Desktop-only regenerated transient responses
 P1L4/seismic/desktop_results/
+P1L4/lrfd_results/
 
 # Recovery checkpoint and temporary alignment calculation outputs.
 revisiones/punto_inicio_alineacion_e2_20261006/

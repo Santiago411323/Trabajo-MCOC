@@ -5,6 +5,20 @@ using UnityEngine;
 [ExecuteAlways]
 public class StructureViewer : MonoBehaviour
 {
+    private bool[] laboratoryVisibility;
+    public void SetLaboratoryInterior(bool visible)
+    {
+        if(visible)
+        {
+            if(laboratoryVisibility==null)laboratoryVisibility=new[]{showVisualFacades,showVisualRoof};
+            showVisualFacades=false;showVisualRoof=false;
+        }
+        else if(laboratoryVisibility!=null)
+        {
+            showVisualFacades=laboratoryVisibility[0];showVisualRoof=laboratoryVisibility[1];laboratoryVisibility=null;
+        }
+        if(!SeismicPlaybackController.IsActive)RefreshVisibility();
+    }
     // Set by StructuralModelEditor after a successful external OpenSees run.
     // It lets the reloaded scene consume the new JSON immediately, without
     // depending on the timing of Unity's AssetDatabase refresh.
@@ -221,7 +235,7 @@ public class StructureViewer : MonoBehaviour
         CreateDiagramController();
         CreatePMPanel();
         CreateMobileLoadController();
-        if (Application.isPlaying && !Application.isMobilePlatform && GetComponent<SeismicPlaybackController>() == null)
+        if (Application.isPlaying && (Application.isEditor || !Application.isMobilePlatform) && GetComponent<SeismicPlaybackController>() == null)
             gameObject.AddComponent<SeismicPlaybackController>();
 
         BuildComboOptions();
@@ -877,6 +891,39 @@ public class StructureViewer : MonoBehaviour
             gameObject.AddComponent<ElementResultsPanel>();
         if (GetComponent<StructuralModelEditor>() == null)
             gameObject.AddComponent<StructuralModelEditor>();
+        var radar=GetComponent<StructuralDemandRadar>() ?? gameObject.AddComponent<StructuralDemandRadar>();
+        radar.Initialize(selectables);
+        var laboratory=GetComponent<LrfdLaboratory>() ?? gameObject.AddComponent<LrfdLaboratory>();
+        laboratory.Initialize(this,loadedData);
+    }
+
+    public void ApplyLaboratoryLoads(float permanentFactor,float liveFactor)
+    {
+        UnityData.FactorG=permanentFactor;UnityData.FactorQ=liveFactor;
+        UnityData.FactorEX=0;UnityData.FactorEY=0;ActivateBaseSuperposition();
+    }
+
+    public void ActivateLrfdCase(string name)
+    {
+        if(!UnityData.ElementForcesByCombo.ContainsKey(name))return;
+        GetComponent<MobileLoadController>()?.SetPanelVisible(false);
+        UnityData.ActiveCombo=name;UnityData.SelectedPresetCombo=null;UnityData.UseBaseCaseFactors=false;comboIndex=-1;
+        RefreshActiveResults();
+    }
+
+    public void ActivateRadarCombination(string combo,float[] factors=null)
+    {
+        int index=System.Array.IndexOf(comboOptions,combo);
+        if(index<0)return;
+        if(factors!=null && factors.Length==4)
+        {
+            comboIndex=index;UnityData.SelectedPresetCombo=combo;
+            UnityData.FactorG=factors[0];UnityData.FactorQ=factors[1];
+            UnityData.FactorEX=factors[2];UnityData.FactorEY=factors[3];
+            ActivateBaseSuperposition();return;
+        }
+        if(UnityData.UseBaseCaseFactors && UnityData.SelectedPresetCombo==combo)return;
+        ApplyCombo(index);
     }
 
     private void CreatePMPanel()
@@ -1435,8 +1482,23 @@ public class StructureViewer : MonoBehaviour
         float innerX = x + 12f;
         float innerY = y + 26f;
         float innerW = w - 24f;
-        leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, h - 34f), leftScroll,
-            new Rect(x + 4f, innerY, w - 24f, 650f));
+        // El acceso al sismo permanece fijo: no desaparece al expandir el radar.
+        if(Application.isPlaying && (Application.isEditor || !Application.isMobilePlatform))
+        {
+            var seismic=GetComponent<SeismicPlaybackController>();
+            if(seismic==null)seismic=gameObject.AddComponent<SeismicPlaybackController>();
+            if(GUI.Button(new Rect(innerX,innerY,innerW,28),"SIMULACIÓN SÍSMICA — OPENSEES"))seismic.TogglePanel();
+            innerY+=36f;
+        }
+        var lrfd=GetComponent<LrfdLaboratory>();
+        if(Application.isPlaying && lrfd!=null)
+        {
+            if(GUI.Button(new Rect(innerX,innerY,innerW,28),lrfd.IsOpen?"CERRAR MÉTODO LRFD":"MÉTODO LRFD"))lrfd.Toggle();
+            innerY+=36f;
+        }
+        leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, Mathf.Max(60,h-(innerY-y)-8f)), leftScroll,
+            new Rect(x + 4f, innerY, w - 24f, 650f+(GetComponent<StructuralDemandRadar>()?.ContentHeight??0)+(lrfd?.ContentHeight??0)));
+        if(Application.isPlaying && lrfd!=null)innerY+=lrfd.Draw(innerX,innerY,innerW);
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Visibilidad");
         innerY += 22f;
@@ -1486,13 +1548,8 @@ public class StructureViewer : MonoBehaviour
         GUI.enabled = mobileGuiEnabled;
         innerY += 40f;
 
-        SeismicPlaybackController seismic = GetComponent<SeismicPlaybackController>();
-        if (Application.isPlaying && seismic != null)
-        {
-            if (GUI.Button(new Rect(innerX, innerY, innerW, 28f), "SIMULACIÓN SÍSMICA — OPENSEES"))
-                seismic.TogglePanel();
-            innerY += 36f;
-        }
+        var demandRadar=GetComponent<StructuralDemandRadar>();
+        if(Application.isPlaying && demandRadar!=null)innerY+=demandRadar.Draw(innerX,innerY,innerW);
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Filtro por piso");
         innerY += 22f;
