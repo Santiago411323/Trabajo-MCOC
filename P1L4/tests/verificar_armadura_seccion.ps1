@@ -12,10 +12,12 @@ $taskBinary=Join-Path $taskOutput 'ReinforcementChecks.dll'
 $taskArgs=@('-nologo','-target:exe','-langversion:9.0','-nostdlib+',('-out:"'+$taskBinary+'"'))
 foreach($reference in $taskReferences){ $taskArgs+='-r:"'+$reference.FullName+'"' }
 $taskArgs+='-r:"'+$taskCore+'"'
-foreach($source in @('StructureData.cs','ReinforcementAssessment.cs','MemberMaterialPlayback.cs','MemberPreviewKinematics.cs','FrameForces.cs','UnityData.cs','DemandRadarRanking.cs','LrfdScenario.cs','LrfdDataset.cs','LrfdDesignCapacity.cs')){
+foreach($source in @('StructureData.cs','ReinforcementAssessment.cs','MemberMaterialPlayback.cs','MemberPreviewKinematics.cs','FrameForces.cs','UnityData.cs','DemandRadarRanking.cs','LrfdScenario.cs','LrfdDataset.cs','LrfdDesignCapacity.cs','StructuralSearchIndex.cs','DiaphragmKinematics.cs','DesignComparisonData.cs','IncrementalResponseNetwork.cs','XrayTributaryRegion.cs')){
     $taskArgs+='"'+(Join-Path $taskRoot ('P1L4/unity_visualizador/Assets/Scripts/'+$source))+'"'
 }
 $taskArgs+='"'+(Join-Path $PSScriptRoot 'ReinforcementChecks.cs')+'"'
+$taskArgs+='"'+(Join-Path $PSScriptRoot 'DesignComparisonChecks.cs')+'"'
+$taskArgs+='"'+(Join-Path $PSScriptRoot 'XrayNetworkChecks.cs')+'"'
 $taskRsp=Join-Path $taskOutput 'checks.rsp'
 Set-Content -LiteralPath $taskRsp -Value $taskArgs -Encoding utf8
 & $taskRuntime $taskCompiler.FullName ('@'+$taskRsp)

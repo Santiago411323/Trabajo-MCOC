@@ -6,7 +6,7 @@ using UnityEngine;
 // It only presents data that is actually exported by OpenSees/P1L4.
 public partial class ElementResultsPanel : MonoBehaviour
 {
-    private enum ResultView { None, ModelEditor, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature, Audit }
+    private enum ResultView { None, ModelEditor, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature, Audit, DesignComparison, XRay }
 
     private static ElementResultsPanel active;
     private readonly float[,] samples = new float[6, 61];
@@ -51,6 +51,8 @@ public partial class ElementResultsPanel : MonoBehaviour
                 return Mathf.Min(420f, Mathf.Max(330f, Screen.height * .40f));
             if (active.view == ResultView.ModelEditor)
                 return Mathf.Min(470f, Mathf.Max(390f, Screen.height * .46f));
+            if (active.view == ResultView.DesignComparison)
+                return Mathf.Min(470f, Mathf.Max(390f, Screen.height * .46f));
             return 360f;
         }
     }
@@ -76,6 +78,16 @@ public partial class ElementResultsPanel : MonoBehaviour
         active.SetView(ResultView.Forces);
     }
 
+    public static void SuspendForXRay()
+    {
+        if(active==null)return;active.ClearResultVisualization();active.expanded=false;active.view=ResultView.None;
+    }
+    public static void OpenXRayExplanation(ElementSelectable element)
+    {
+        if(active==null)return;if(active.selected!=element)active.ResetFor(element);
+        active.expanded=true;active.SetView(ResultView.XRay);
+    }
+
     private void OnEnable()
     {
         active = this;
@@ -89,6 +101,7 @@ public partial class ElementResultsPanel : MonoBehaviour
         if (active == this) active = null;
         if (background != null) Destroy(background);
         if (cardBackground != null) Destroy(cardBackground);
+        panelStyle=null;cardStyle=null;background=null;cardBackground=null;
     }
 
     private void Bind()
@@ -109,6 +122,7 @@ public partial class ElementResultsPanel : MonoBehaviour
         ElementSelectable current = SelectedElement();
         if (current != selected) ResetFor(current);
         UpdateMemberPlayback();
+        UpdateDesignComparison();
     }
 
     private void ResetFor(ElementSelectable element)
@@ -134,10 +148,12 @@ public partial class ElementResultsPanel : MonoBehaviour
         auditExportStatus = null;
         auditExportPath = null;
         auditContentHeight = 1050f;
+        designPlaying=false;designBlend=0;designClock=0;designForce=3;
     }
 
     private void ClearResultVisualization()
     {
+        ClearDesignComparison();
         memberPreview?.Hide();
         if (diagrams != null) diagrams.ClearSelectedComponentDiagram();
         if (view == ResultView.Deformed && diagrams != null)
@@ -232,6 +248,11 @@ public partial class ElementResultsPanel : MonoBehaviour
                 break;
             case ResultView.Forces: DrawForces(element, x, y, width); break;
             case ResultView.Audit: DrawAudit(element, x, y, width); break;
+            case ResultView.DesignComparison: DrawDesignComparison(element,x,y,width); break;
+            case ResultView.XRay:
+                GUI.Label(new Rect(x,y,width,25),"STRUCTURAL X-RAY · ¿POR QUÉ ESTA PIEZA?",titleStyle);
+                GUI.Label(new Rect(x,y+32,width,650),GetComponent<StructuralXRayController>()?.ExplainSelected(element)??"Activa Structural X-Ray en Capas.",textStyle);
+                break;
             case ResultView.Deformed: DrawDeformed(element, x, y, width); break;
             case ResultView.Interaction: DrawInteraction(element, x, y, width); break;
             case ResultView.Fibers: DrawFibers(element, x, y, width); break;
@@ -251,10 +272,12 @@ public partial class ElementResultsPanel : MonoBehaviour
 
     private float ResultsContentHeight(ElementSelectable element)
     {
-        float optionHeight = 89f;
+        float optionHeight = IsBeam(element)||IsColumn(element)?89f:118f;
         switch (view)
         {
             case ResultView.ModelEditor: return optionHeight + 490f;
+            case ResultView.DesignComparison: return optionHeight + (designEffects?1370f:1180f);
+            case ResultView.XRay: return optionHeight+700f;
             case ResultView.Interaction: return optionHeight + 350f;
             case ResultView.Fibers: return optionHeight + reinforcementContentHeight;
             case ResultView.MomentCurvature:
@@ -272,14 +295,14 @@ public partial class ElementResultsPanel : MonoBehaviour
         if (IsColumn(element) || IsBeam(element))
         {
             string[] labels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "TENSIÓN–DEFORMACIÓN",
-                "DIAGRAMAS DE ESFUERZOS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD" };
+                "DIAGRAMAS DE ESFUERZOS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD", "ANTES ↔ DESPUÉS", "X-RAY · ¿POR QUÉ?" };
             ResultView[] views = { ResultView.Interaction, ResultView.Fibers, ResultView.StressStrain,
-                ResultView.Forces, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit };
+                ResultView.Forces, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit, ResultView.DesignComparison, ResultView.XRay };
             return DrawGrid(x, y, width, labels, views, 3);
         }
 
-        string[] wallLabels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD" };
-        ResultView[] wallViews = { ResultView.Interaction, ResultView.Fibers, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit };
+        string[] wallLabels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD", "ANTES ↔ DESPUÉS", "X-RAY · ¿POR QUÉ?" };
+        ResultView[] wallViews = { ResultView.Interaction, ResultView.Fibers, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit, ResultView.DesignComparison, ResultView.XRay };
         return DrawGrid(x, y, width, wallLabels, wallViews, 2);
     }
 
@@ -302,6 +325,7 @@ public partial class ElementResultsPanel : MonoBehaviour
 
     private void SetView(ResultView next)
     {
+        if(next!=ResultView.DesignComparison)ClearDesignComparison();
         if (view == ResultView.Forces && next != ResultView.Forces && diagrams != null)
             diagrams.ClearSelectedComponentDiagram();
         if (view == ResultView.Deformed && next != ResultView.Deformed && diagrams != null)
@@ -1655,11 +1679,11 @@ public partial class ElementResultsPanel : MonoBehaviour
     {
         if (panelStyle != null) return;
         background = new Texture2D(1, 1);
-        background.SetPixel(0, 0, new Color(.045f, .06f, .09f, .97f));
+        background.SetPixel(0, 0, new Color(.045f, .06f, .09f, 1f));
         background.Apply();
         panelStyle = new GUIStyle(GUI.skin.box); panelStyle.normal.background = background;
         cardBackground = new Texture2D(1, 1);
-        cardBackground.SetPixel(0, 0, new Color(.075f, .105f, .14f, .98f));
+        cardBackground.SetPixel(0, 0, new Color(.075f, .105f, .14f, 1f));
         cardBackground.Apply();
         cardStyle = new GUIStyle(GUI.skin.box); cardStyle.normal.background = cardBackground;
         textStyle = new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true };

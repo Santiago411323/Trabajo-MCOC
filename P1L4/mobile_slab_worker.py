@@ -7,11 +7,16 @@ linear weights. This is a nodal approximation, not a shell or beam point load.
 No changes to the permanent G/Q cases are made.
 """
 import json
+import hashlib
 import math
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+_plot_cache=ROOT/'P1L4'/'seismic'/'cache'
+_plot_cache.mkdir(parents=True,exist_ok=True)
+os.environ.setdefault('MPLCONFIGDIR',str(_plot_cache))
 sys.path.insert(0, str(ROOT / '.venv' / 'Lib' / 'site-packages'))
 sys.path.insert(0, str(ROOT / 'P1L3'))
 
@@ -84,9 +89,11 @@ def transfer(data, slab_id, x, y, p):
 
 
 class Solver:
-    def __init__(self,data):
+    def __init__(self,data,source_hash=''):
         import carga_viva_sismo as cv
         self.cv,self.data,self.cache=cv,data,{}
+        self.reaction_cache={}
+        self.source_hash=source_hash
 
     def unit(self,node):
         if node in self.cache: return self.cache[node]
@@ -107,6 +114,8 @@ class Solver:
         ops.reactions()
         rz=sum(ops.nodeReaction(node,3) for node in model_nodes)
         if abs(rz-1)>1e-5: raise ValueError('FAIL: equilibrio global de reacciones')
+        # Extra exported observations only: same analysis, loads and unit cache.
+        self.reaction_cache[node]={int(tag):list(ops.nodeReaction(tag)) for tag in ops.getFixedNodes()}
         self.cache[node]=(forces,disp)
         return forces,disp
 
@@ -114,24 +123,32 @@ class Solver:
         nodal,receivers,error=transfer(self.data,request['slab'],request['x'],request['y'],request['p'])
         forces={e['id']:[0.]*12 for e in self.data['elements']}
         disp={n['id']:[0.]*6 for n in self.data['nodes']}
+        reactions={}
         for node,p in nodal.items():
             if p==0: continue
             f,u=self.unit(node)
             for k in forces: forces[k]=[a+p*b for a,b in zip(forces[k],f[k])]
             for k in disp:
                 if k in u: disp[k]=[a+p*b for a,b in zip(disp[k],u[k])]
-        if not all(math.isfinite(v) for rows in (forces,disp) for row in rows.values() for v in row):
+            for tag,values in self.reaction_cache[node].items():
+                reactions.setdefault(tag,[0.]*6)
+                reactions[tag]=[a+p*b for a,b in zip(reactions[tag],values)]
+        if not all(math.isfinite(v) for rows in (forces,disp,reactions) for row in rows.values() for v in row):
             raise ValueError('Respuesta no finita')
-        return dict(ok=True,seq=request['seq'],slab=request['slab'],x=request['x'],y=request['y'],p=request['p'],
+        declared={s['node'] for s in self.data.get('supports',[])}
+        return dict(ok=True,seq=request['seq'],slab=request['slab'],x=request['x'],y=request['y'],p=request['p'],sourceHash=self.source_hash,
                     error=error,transferred=sum(nodal.values()),receivers=receivers,
                     nodes=[dict(node=k,p=v) for k,v in nodal.items()],
                     forces=[dict(id=k,f=v) for k,v in forces.items()],
-                    displacements=[dict(node=k,ux=v[0],uy=v[1],uz=v[2]) for k,v in disp.items()])
+                    displacements=[dict(node=k,ux=v[0],uy=v[1],uz=v[2]) for k,v in disp.items()],
+                    reactionsAvailable=bool(reactions),
+                    reactions=[dict(node=k,fx=v[0],fy=v[1],fz=v[2],mx=v[3],my=v[4],mz=v[5],declared=k in declared) for k,v in sorted(reactions.items())])
 
 
 if __name__=='__main__':
-    data=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8-sig'))
-    solver=Solver(data)
+    model_bytes=Path(sys.argv[1]).read_bytes()
+    data=json.loads(model_bytes.decode('utf-8-sig'))
+    solver=Solver(data,hashlib.sha256(model_bytes).hexdigest())
     for line in sys.stdin:
         request={}
         try:

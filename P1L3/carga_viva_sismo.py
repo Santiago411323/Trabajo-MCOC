@@ -1438,7 +1438,11 @@ def build_model(data):
             ops.node(master, cx, cy, z_exact)
             ops.fix(master, 0, 0, 1, 1, 1, 0)
             ops.rigidDiaphragm(3, master, *sorted(slaves))
-            DIAPHRAGMS.append({"z": z, "master": master, "slaves": len(slaves)})
+            # Export the exact constraint membership; legacy diaphragmList is visual only.
+            DIAPHRAGMS.append({"z": z, "master": master, "slaves": len(slaves),
+                               "x": cx, "y": cy, "normalAxis": 3,
+                               "slaveTags": sorted(slaves), "constrainedDofs": [1, 2, 6],
+                               "masterFixity": [0, 0, 1, 1, 1, 0]})
         if DIAPHRAGMS:
             CONSTRAINT_HANDLER = "Transformation"
 

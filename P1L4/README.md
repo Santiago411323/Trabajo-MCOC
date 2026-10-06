@@ -11,6 +11,16 @@ Etapa del proyecto MCOC que implementa el visualizador 3D mejorado en Unity con:
 
 ## Estructura
 
+Para preparar la demostración final y la explicación individual, consultar
+[Semana 7 — Guía de defensa individual](DEFENSA_SEMANA7.md), con el flujo completo,
+los 14 requisitos, preguntas probables, hipótesis y checklist de entrega.
+
+La vista [Duelo de diseños — Antes ↔ Después](COMPARACION_DISENOS.md) compara
+dos estados calculados tras editar y reanalizar, con barra gráfica y evidencia numérica.
+
+[Structural X-Ray](STRUCTURAL_XRAY.md) muestra la red afectada por la carga móvil,
+con incrementos OpenSees, regiones tributarias, pulsos, ranking y recorrido explicativo.
+
 - `exportar_resultados_unity.py` — Exportador Python que genera el JSON enriquecido desde OpenSeesPy (requiere venv con `openseespy`).
 - `unity_visualizador/` — Proyecto Unity completo, autocontenido. Ver `unity_visualizador/README_Unity.md` para instrucciones de uso.
 

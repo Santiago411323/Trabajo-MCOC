@@ -72,6 +72,9 @@ public class MobileLoadController : MonoBehaviour
         public bool ok; public int seq; public string slab,message; public float x,y,p,error,transferred;
         public Nodal[] nodes; public Receiver[] receivers; public ElementForceRecord[] forces;
         public DisplacementRecord[] displacements;
+        public string sourceHash;
+        public bool reactionsAvailable;
+        public SupportReactionRecord[] reactions;
     }
     private class Peak { public float value; public Vector2 at; public int element; }
     private class HistoryPoint
@@ -81,9 +84,12 @@ public class MobileLoadController : MonoBehaviour
         public bool hasValue;
     }
     public static Rect PanelRect() => PanelLayout.Get("MobileLoad",new Rect(330,55,500,Mathf.Min(735,Screen.height-70)));
-    public bool IsPanelVisible() => visible;
+    public bool PresentationSuppressed {get;private set;}
+    public void SetPresentationSuppressed(bool value){PresentationSuppressed=value;}
+    public bool IsPanelVisible() => visible && !PresentationSuppressed;
     public void SetPanelVisible(bool value)
     {
+        if(value)PresentationSuppressed=false;
         if (visible == value) return;
         visible = value;
         place = chooseDestination = dragging = false;
@@ -117,6 +123,22 @@ public class MobileLoadController : MonoBehaviour
     public Vector2 CurrentWalkDirection => walkDirection;
     public string AnalysisStatus => status;
     public bool LoadActive => active;
+    // Restart the analysis process without moving/removing the load or avatar.
+    public bool RestartIncrementalAnalysis()
+    {
+        if(!enabled||!active||slab==null)return false;
+        selectionVersion++;
+        var abandoned=pending;pending=null;
+        if(abandoned!=null)abandoned.ContinueWith(t=>{var ignored=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);
+        if(worker!=null)
+        {
+            try{if(!worker.HasExited)worker.Kill();}catch{}
+            worker.Dispose();worker=null;
+        }
+        workerError="";ClearResponse();sentLoad=float.NaN;nextRequest=Time.unscaledTime;
+        status="Actualizando proceso OpenSees; se conserva la carga y su posición.";
+        return true;
+    }
     public string LiveMovementStatus => routeComplete ? "STOPPED" : IsMoving ? "PLAYING" : slab != null && active ? "PAUSED" : "STOPPED";
     public void SetLoadActive(bool value)
     {
@@ -617,7 +639,7 @@ public class MobileLoadController : MonoBehaviour
     }
     private void OnGUI()
     {
-        if(!visible||MobileLoadLivePanel.OwnsMobilePanel) return;
+        if(!visible||PresentationSuppressed||MobileLoadLivePanel.OwnsMobilePanel) return;
         EnsureStyles();
         Rect panel=PanelLayout.Apply("MobileLoad",PanelRect());
         GUI.DrawTexture(panel,panelTexture);

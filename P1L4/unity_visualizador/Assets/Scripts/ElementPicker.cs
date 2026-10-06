@@ -58,6 +58,15 @@ public class ElementPicker : MonoBehaviour
             RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, selectableLayer, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
+            // Diafragma markers are explicit inspection targets, even over a beam/slab.
+            foreach (var candidate in hits)
+            {
+                var marker = candidate.collider.GetComponent<DiaphragmSelectable>();
+                if (marker == null) continue;
+                SelectInfo(marker);
+                return;
+            }
+
             MobileLoadController mobileLoad = MobileLoadController.Instance;
             RaycastHit slabHit;
             SlabSelectable clickedSlab = FindNearestSlab(hits, out slabHit);
@@ -209,6 +218,7 @@ foreach (RaycastHit candidate in hits)
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
         if (SeismicPlaybackController.BlocksPointer(guiMouse)) return true;
+        if (StructuralXRayController.BlocksPointer(guiMouse)) return true;
 
         SelectedBeamDiagramPanel beamDiagrams = FindObjectOfType<SelectedBeamDiagramPanel>();
         if (beamDiagrams != null && beamDiagrams.ContainsMouse(guiMouse))
@@ -313,6 +323,12 @@ StructureViewer viewer = FindObjectOfType<StructureViewer>();
             scroll = Vector2.zero;
             info.OnSelected();
         }
+    }
+
+    public void SelectInfo(InfoSelectable info)
+    {
+        SetElementSelection(null);
+        SetInfoSelection(info);
     }
 
     private static SlabSelectable FindNearestSlab(RaycastHit[] hits, out RaycastHit slabHit)

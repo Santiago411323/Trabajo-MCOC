@@ -21,6 +21,42 @@ public static class ReinforcementChecks
     static void Close(double a,double b,double tolerance,string message) { Check(Math.Abs(a-b)<tolerance,message); }
     public static void Main(string[] args)
     {
+        if(args.Length>0)
+        {
+            string xrayFolder=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(args[0]),"..","xray_validation"));
+            if(File.Exists(Path.Combine(xrayFolder,"frame.json")))
+            {
+                var opts=new JsonSerializerOptions{IncludeFields=true};opts.Converters.Add(new ExportedString());XrayNetworkChecks.Run(xrayFolder,opts);
+            }
+            else Console.WriteLine("SKIP: generate actual mobile-response fixture with tests/test_xray_network.py.");
+        }
+        if(args.Length>0)
+        {
+            string comparisonFolder=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(args[0]),"..","design_comparison_validation"));
+            if(File.Exists(Path.Combine(comparisonFolder,"expected.json")))
+            {
+                var options=new JsonSerializerOptions{IncludeFields=true};options.Converters.Add(new ExportedString());
+                DesignComparisonChecks.Run(comparisonFolder,options);
+            }
+            else Console.WriteLine("SKIP: generate isolated OpenSees fixture with tests/test_design_comparison.py for before/after checks.");
+        }
+        var searchItems=new System.Collections.Generic.List<StructuralSearchIndex.Item> {
+            new StructuralSearchIndex.Item {Kind="viga",Id="72",Tag="E1_72",SourceId="B3072"},
+            new StructuralSearchIndex.Item {Kind="viga",Id="272",Tag="E1_272"},
+            new StructuralSearchIndex.Item {Kind="muro",Id="72",Tag="Muro_72"},
+            new StructuralSearchIndex.Item {Kind="columna",Id="229",Tag="E1_229"},
+            new StructuralSearchIndex.Item {Kind="losa",Id="L72",Tag="L72"}
+        };
+        Check(StructuralSearchIndex.Find(searchItems,"  e1_72  ",null).Count==1,"Trim/case-insensitive elementTag search");
+        var numericMatches=StructuralSearchIndex.Find(searchItems,"72",null);
+        Check(numericMatches.Count==2 && numericMatches.TrueForAll(m=>m.Id=="72"),"Exact IDs preferred; beam/wall ambiguity retained");
+        Check(StructuralSearchIndex.Find(searchItems,"72","viga").Count==1,"Type resolves ambiguous numeric ID");
+        Check(StructuralSearchIndex.Find(searchItems,"b3072",null).Count==1,"Original source identifier search");
+        Check(StructuralSearchIndex.Find(searchItems,"L72","losa").Count==1,"Slab string identifier search");
+        Check(StructuralSearchIndex.Find(searchItems,"E1_",null).Count==3,"Partial tags retain every candidate");
+        Check(StructuralSearchIndex.Find(searchItems,"E1_229","viga").Count==0,"Type mismatch never selects another object");
+        Check(StructuralSearchIndex.Find(searchItems,"",null).Count==0,"Empty input does not select first object");
+        Check(StructuralSearchIndex.Find(searchItems,"999999",null).Count==0,"Missing ID does not return fake object");
         Close(LrfdScenario.SnowPressure(.1f,300),.2941995,.000001,"Snow depth/density to kN/m²");
         Close(LrfdScenario.WaterPressure(.1f),.980665,.000001,"Retained water depth to kN/m²");
         Close(LrfdScenario.WindPressure(10,1),.0613,.000001,"Reference velocity pressure");

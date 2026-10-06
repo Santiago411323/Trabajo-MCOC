@@ -67,6 +67,8 @@ public class DiagramController : MonoBehaviour
     public float MaximumRealDisplacement => maximumRealDisplacement;
     public int MaximumDisplacementNode => maximumDisplacementNode;
     public float DeformationVisualScale => currentMode == DiagramMode.DeformedReal ? 1f : deformedMultiplier;
+    public float DiaphragmDisplayScale => currentMode == DiagramMode.DeformedReal ? 1f :
+        currentMode == DiagramMode.Deformed ? deformedMultiplier * (animateDeformation ? deformationAnimationFactor : 1f) : 0f;
     private Dictionary<string, float> currentMaxByBuilding = new Dictionary<string, float>();
     private GUIStyle tableBoxStyle;
     private GUIStyle tableTextStyle;
@@ -138,6 +140,8 @@ public class DiagramController : MonoBehaviour
 
     private bool PressedKey(KeyCode key)
     {
+        if(StructuralXRayController.Rendering)return false;
+        if(StructuralElementSearch.CapturesKeyboard)return false;
 #if ENABLE_INPUT_SYSTEM
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)

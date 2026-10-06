@@ -25,15 +25,25 @@ public class OrbitCamera : MonoBehaviour
     private bool radarFocus;
     private Vector3 radarFocusStart,radarFocusEnd;
     private float radarDistanceStart,radarDistanceEnd,radarFocusElapsed;
+    private bool traceAngle;
+    private float traceStartYaw,traceEndYaw,traceStartPitch,traceEndPitch,focusDuration=.85f;
+    public float TraceYaw=>x;
+    public float TracePitch=>y;
 
     public void BeginRadarFocus(Vector3 point,float newDistance)
     {
+        traceAngle=false;focusDuration=.85f;
         if(target==null)FocusOn(point,newDistance);
         radarFocusStart=target.position;radarFocusEnd=point;
         radarDistanceStart=distance;radarDistanceEnd=Mathf.Clamp(newDistance,minDistance,maxDistance);
         radarFocusElapsed=0;radarFocus=true;
     }
     public void CancelRadarFocus(){radarFocus=false;}
+    public void BeginTraceFocus(Vector3 point,float newDistance,float yaw,float pitch)
+    {
+        BeginRadarFocus(point,newDistance);traceAngle=true;focusDuration=1.25f;
+        traceStartYaw=x;traceEndYaw=yaw;traceStartPitch=y;traceEndPitch=pitch;
+    }
 
     private void Start()
     {
@@ -49,10 +59,12 @@ public class OrbitCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(StructuralElementSearch.CapturesKeyboard)return;
         if(radarFocus)
         {
             radarFocusElapsed+=Time.unscaledDeltaTime;
-            float t=Mathf.SmoothStep(0,1,Mathf.Clamp01(radarFocusElapsed/.85f));
+            float t=Mathf.SmoothStep(0,1,Mathf.Clamp01(radarFocusElapsed/focusDuration));
+            if(traceAngle){x=Mathf.LerpAngle(traceStartYaw,traceEndYaw,t);y=Mathf.Lerp(traceStartPitch,traceEndPitch,t);}
             FocusOn(Vector3.Lerp(radarFocusStart,radarFocusEnd,t),Mathf.Lerp(radarDistanceStart,radarDistanceEnd,t));
             if(t>=1)radarFocus=false;
             return;

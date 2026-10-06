@@ -50,12 +50,13 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         savedNear=cameraView.nearClipPlane;savedFov=cameraView.fieldOfView;
         savedLock=Cursor.lockState;savedCursor=Cursor.visible;
         viewer.SetWalkthroughView(true);
+        viewer.GetComponent<StructuralXRayController>()?.RefreshContextForWalk();
         savedBehaviours.Clear();
         foreach(var behaviour in viewer.GetComponents<Behaviour>().Concat(cameraView.GetComponents<Behaviour>()))
         {
             if(behaviour is OrbitCamera || behaviour is ElementPicker || behaviour is ElementResultsPanel ||
                 behaviour is SelectedBeamDiagramPanel || behaviour is PMPanel || behaviour is StructuralModelEditor ||
-                behaviour is MobileLoadLivePanel || behaviour is MobileLoadController || behaviour is SeismicPlaybackController)
+                behaviour is MobileLoadLivePanel || behaviour is MobileLoadResultsDashboard || behaviour is MobileLoadController || behaviour is SeismicPlaybackController)
             {savedBehaviours[behaviour]=behaviour.enabled;behaviour.enabled=false;}
         }
         BuildCollisionWorld();
@@ -244,6 +245,11 @@ public sealed class DesktopWalkthrough : MonoBehaviour
 
     public void SetPaused(bool value)
     {Paused=value;Cursor.lockState=value?CursorLockMode.None:CursorLockMode.Locked;Cursor.visible=value;}
+    public void SetRestoredBehaviourState(Behaviour behaviour,bool value)
+    {
+        if(Active&&savedBehaviours.ContainsKey(behaviour))savedBehaviours[behaviour]=value;
+        else if(behaviour!=null)behaviour.enabled=value;
+    }
 
     private void OnApplicationFocus(bool focus){if(!focus && Active)SetPaused(true);}
 
@@ -289,6 +295,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         if(player!=null){player.SetActive(false);Release(player);player=null;Body=null;}
         Cursor.lockState=savedLock;Cursor.visible=savedCursor;Paused=false;
         if(viewer!=null)viewer.SetWalkthroughView(false);
+        if(viewer!=null)viewer.GetComponent<StructuralXRayController>()?.RefreshContextForWalk();
     }
     private static void Release(Object target){if(Application.isPlaying)Destroy(target);else DestroyImmediate(target);}
     private void OnDisable(){Exit();}

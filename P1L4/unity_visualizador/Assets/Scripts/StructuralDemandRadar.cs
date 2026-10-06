@@ -26,7 +26,7 @@ public sealed class StructuralDemandRadar : MonoBehaviour
     private string navigationStatus;
     private GUIStyle heading,small,row;
     public float ContentHeight => active?720:37;
-    private bool Paused=>SeismicPlaybackController.IsActive || (metric==0 && UnityData.ActiveCombo!=null && UnityData.ActiveCombo.StartsWith("LRFD_"));
+    private bool Paused=>StructuralXRayController.Rendering || DesignComparisonSession.Rendering || SeismicPlaybackController.IsActive || (metric==0 && UnityData.ActiveCombo!=null && UnityData.ActiveCombo.StartsWith("LRFD_"));
 
     public void Initialize(List<ElementSelectable> elements)
     {
@@ -45,6 +45,8 @@ public sealed class StructuralDemandRadar : MonoBehaviour
         nextRefresh=0;
     }
     private void StopTour(){touring=false;orbit?.CancelRadarFocus();}
+    public void CancelNavigation(){StopTour();}
+    public void SuspendForComparison(){Restore();StopTour();}
     private void OnDisable(){Restore();StopTour();}
     private void Update()
     {

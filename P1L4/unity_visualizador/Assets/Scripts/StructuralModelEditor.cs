@@ -49,6 +49,7 @@ public class StructuralModelEditor : MonoBehaviour
     private readonly List<StructuralElementEdit> edits = new List<StructuralElementEdit>();
     private ElementSelectable bound;
     private Process analysisProcess;
+    private DateTime previousResultsWriteUtc;
     private string status = "Sin cambios pendientes.";
     private Vector3 originalScale;
     private float originalWidth, originalHeight;
@@ -94,6 +95,7 @@ public class StructuralModelEditor : MonoBehaviour
 
         if (exitCode != 0)
         {
+            DesignComparisonSession.Failed();
             ResultsStale = true;
             status = "ERROR DE ANÁLISIS — revise la consola de Python/OpenSees.";
             UnityEngine.Debug.LogError("[StructuralModelEditor] El exportador terminó con código " + exitCode + ".");
@@ -102,7 +104,10 @@ public class StructuralModelEditor : MonoBehaviour
 
         try
         {
+            if(!File.Exists(ResultsPath)||File.GetLastWriteTimeUtc(ResultsPath)<=previousResultsWriteUtc)
+                throw new InvalidOperationException("No se generó un archivo de resultados nuevo; se conserva ANTES.");
             string json = File.ReadAllText(ResultsPath);
+            DesignComparisonSession.AcceptAfter(JsonUtility.FromJson<StructureData>(json),ResultsPath);
             StructureViewer.RuntimeJsonOverride = json;
             ResultsStale = false;
             status = "ANÁLISIS COMPLETO — recargando modelo y resultados.";
@@ -111,6 +116,7 @@ public class StructuralModelEditor : MonoBehaviour
         }
         catch (Exception exception)
         {
+            DesignComparisonSession.Failed();
             ResultsStale = true;
             status = "OpenSees terminó, pero Unity no pudo recargar el JSON.";
             UnityEngine.Debug.LogError("[StructuralModelEditor] " + exception);
@@ -256,6 +262,7 @@ public class StructuralModelEditor : MonoBehaviour
         }
 
         int index = edits.FindIndex(existing => SameElement(existing, bound));
+        DesignComparisonSession.PreparingEdit(bound.isWall?"W_"+bound.wallId:DesignComparisonSnapshot.Key(bound.data));
         if (index >= 0) edits[index] = edit; else edits.Add(edit);
         SaveEdits();
         ApplyPreview(edit);
@@ -319,6 +326,7 @@ public class StructuralModelEditor : MonoBehaviour
         }
 
         string arguments = $"\"{ExporterPath}\" --model-edits \"{ConfigPath}\"";
+        previousResultsWriteUtc=File.Exists(ResultsPath)?File.GetLastWriteTimeUtc(ResultsPath):DateTime.MinValue;
         foreach (string candidate in PythonCandidates())
         {
             analysisProcess = StartPython(candidate, arguments);

@@ -94,6 +94,7 @@ public class StructureViewer : MonoBehaviour
     private int resultIndex = 0;
     private string[] floorOptions = new string[] { "Todos" };
     private int floorIndex = 0;
+    public string DiaphragmFloorFilter => floorOptions.Length == 0 ? "Todos" : floorOptions[Mathf.Clamp(floorIndex,0,floorOptions.Length-1)];
     private string statusMessage = "Click sobre un elemento para ver informacion y P-M.";
     private Vector2 leftScroll;
     private bool showTopBar = true;
@@ -166,6 +167,7 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateStructure()
     {
+        GetComponent<StructuralXRayController>()?.Shutdown();
         GetComponent<DesktopWalkthrough>()?.Exit();
         CreateDefaultMaterials();
 
@@ -236,6 +238,9 @@ public class StructureViewer : MonoBehaviour
         }
         CreateGlobalAxes();
         CreateDiagramController();
+        var diaphragmViewer = GetComponent<StructuralDiaphragmViewer>();
+        if (diaphragmViewer == null) diaphragmViewer = gameObject.AddComponent<StructuralDiaphragmViewer>();
+        diaphragmViewer.Initialize(loadedData, this);
         CreatePMPanel();
         CreateMobileLoadController();
         if (Application.isPlaying && (Application.isEditor || !Application.isMobilePlatform) && GetComponent<SeismicPlaybackController>() == null)
@@ -243,6 +248,15 @@ public class StructureViewer : MonoBehaviour
 
         BuildComboOptions();
         BuildFloorOptions();
+        var elementSearch=GetComponent<StructuralElementSearch>();
+        if(elementSearch==null)elementSearch=gameObject.AddComponent<StructuralElementSearch>();
+        elementSearch.Initialize(this,selectables,diaphragmObjects);
+        if(Application.isPlaying&&(Application.isEditor||!Application.isMobilePlatform))
+        {
+            var xray=GetComponent<StructuralXRayController>();
+            if(xray==null)xray=gameObject.AddComponent<StructuralXRayController>();
+            xray.Initialize(this,loadedData);
+        }
 
         if (comboOptions.Length > 0)
         {
@@ -1301,6 +1315,43 @@ public class StructureViewer : MonoBehaviour
         objectFloor[go] = NormalizeFloor(floor);
     }
 
+    public void RevealSearchTarget(ElementSelectable member, SlabSelectable slab)
+    {
+        floorIndex=0;
+        if(slab!=null)showDiaphragms=true;
+        else if(member!=null)
+        {
+            if(member.isWall)showWalls=true;
+            else if(member.data?.type=="columna")showColumns=true;
+            else showBeams=true;
+        }
+        RefreshVisibility();
+    }
+
+    private bool[] xraySavedVisibility;
+    private int xraySavedFloor;
+    public void SetXRayView(bool active)
+    {
+        if(active)
+        {
+            if(xraySavedVisibility==null)
+            {
+                xraySavedFloor=floorIndex;xraySavedVisibility=new[]{showColumns,showBeams,showWalls,showSupports,showDiaphragms,
+                    showVisualTerrain,showUpperTerrace,showVisualFacades,showVisualRoof,showVisualStairs,showVisualCafe};
+            }
+            floorIndex=0;showColumns=showBeams=showWalls=showSupports=showDiaphragms=true;
+        }
+        else if(xraySavedVisibility!=null)
+        {
+            var s=xraySavedVisibility;floorIndex=xraySavedFloor;
+            showColumns=s[0];showBeams=s[1];showWalls=s[2];showSupports=s[3];showDiaphragms=s[4];
+            showVisualTerrain=s[5];showUpperTerrace=s[6];showVisualFacades=s[7];showVisualRoof=s[8];showVisualStairs=s[9];showVisualCafe=s[10];
+            if(DesktopWalkthrough.IsActive&&walkSavedVisibility!=null){walkSavedVisibility=(bool[])s.Clone();walkSavedFloor=xraySavedFloor;}
+            xraySavedVisibility=null;
+        }
+        RefreshVisibility();
+    }
+
     private bool PassesFloorFilter(GameObject go)
     {
         if (floorOptions == null || floorOptions.Length == 0 || floorIndex <= 0)
@@ -1344,7 +1395,7 @@ public class StructureViewer : MonoBehaviour
         bool previousGuiEnabled = GUI.enabled;
         if (showTopBar)
         {
-            GUI.enabled = previousGuiEnabled && !SeismicPlaybackController.IsActive;
+            GUI.enabled = previousGuiEnabled && !SeismicPlaybackController.IsActive && !StructuralXRayController.Rendering;
             DrawTopBar();
             GUI.enabled = previousGuiEnabled;
         }
@@ -1500,8 +1551,23 @@ public class StructureViewer : MonoBehaviour
             if(GUI.Button(new Rect(innerX,innerY,innerW,28),lrfd.IsOpen?"CERRAR MÉTODO LRFD":"MÉTODO LRFD"))lrfd.Toggle();
             innerY+=36f;
         }
+        var search=GetComponent<StructuralElementSearch>();
+        var xray=GetComponent<StructuralXRayController>();
+        if(Application.isPlaying&&xray!=null)
+        {
+            if(GUI.Button(new Rect(innerX,innerY,innerW,28),xray.IsOpen?"CERRAR STRUCTURAL X-RAY":"STRUCTURAL X-RAY · TRAZA LA CARGA"))xray.Toggle();
+            innerY+=36f;
+        }
+        bool searchGuiEnabled=GUI.enabled;
+        GUI.enabled=searchGuiEnabled && !SeismicPlaybackController.IsActive;
+        if(search!=null)innerY+=search.DrawPinned(innerX,innerY,innerW);
+        GUI.enabled=searchGuiEnabled;
         leftScroll = GUI.BeginScrollView(new Rect(x + 4f, innerY, w - 8f, Mathf.Max(60,h-(innerY-y)-8f)), leftScroll,
-            new Rect(x + 4f, innerY, w - 24f, 650f+(GetComponent<StructuralDemandRadar>()?.ContentHeight??0)+(lrfd?.ContentHeight??0)));
+            new Rect(x + 4f, innerY, w - 24f, 650f+(GetComponent<StructuralDemandRadar>()?.ContentHeight??0)+(lrfd?.ContentHeight??0)+(GetComponent<StructuralDiaphragmViewer>()?.ContentHeight??0)+(search?.ContentHeight??0)+(xray?.ContentHeight??0)));
+        if(Application.isPlaying&&xray!=null)innerY+=xray.Draw(innerX,innerY,innerW);
+        GUI.enabled=searchGuiEnabled && !SeismicPlaybackController.IsActive;
+        if(search!=null)innerY+=search.DrawResults(innerX,innerY,innerW);
+        GUI.enabled=searchGuiEnabled;
         if(Application.isPlaying && lrfd!=null)innerY+=lrfd.Draw(innerX,innerY,innerW);
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Visibilidad");
@@ -1523,6 +1589,9 @@ public class StructureViewer : MonoBehaviour
             UpdateVisualTerrainVisibility();
         }
         innerY += 34f;
+
+        var diaphragmMode=GetComponent<StructuralDiaphragmViewer>();
+        if(diaphragmMode!=null)innerY+=diaphragmMode.Draw(innerX,innerY,innerW);
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Entorno visual");
         innerY += 22f;
