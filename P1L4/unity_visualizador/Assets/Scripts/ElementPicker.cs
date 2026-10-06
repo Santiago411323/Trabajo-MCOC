@@ -208,6 +208,7 @@ foreach (RaycastHit candidate in hits)
     public bool IsMouseOverViewerGui()
     {
         Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        if (SeismicPlaybackController.BlocksPointer(guiMouse)) return true;
 
         SelectedBeamDiagramPanel beamDiagrams = FindObjectOfType<SelectedBeamDiagramPanel>();
         if (beamDiagrams != null && beamDiagrams.ContainsMouse(guiMouse))

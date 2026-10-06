@@ -4,9 +4,9 @@ using UnityEngine;
 
 // Compact, opt-in results area placed directly below the element inspector.
 // It only presents data that is actually exported by OpenSees/P1L4.
-public class ElementResultsPanel : MonoBehaviour
+public partial class ElementResultsPanel : MonoBehaviour
 {
-    private enum ResultView { None, ModelEditor, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature }
+    private enum ResultView { None, ModelEditor, Forces, Deformed, Interaction, Fibers, StressStrain, MomentCurvature, Audit }
 
     private static ElementResultsPanel active;
     private readonly float[,] samples = new float[6, 61];
@@ -22,8 +22,13 @@ public class ElementResultsPanel : MonoBehaviour
     private bool expanded;
     private int forceIndex = 4;
     private bool compareCombinations;
+    private bool manualCheckOpen;
+    private float manualCheckPosition = .5f;
     private int curvaturePresentation;
     private Vector2 resultsScroll;
+    private string auditExportStatus;
+    private string auditExportPath;
+    private float auditContentHeight = 1050f;
     private ResultView view;
     private Rect panelRect;
     private GUIStyle panelStyle, cardStyle, titleStyle, textStyle, mutedStyle, valueStyle, successStyle, failureStyle;
@@ -38,6 +43,8 @@ public class ElementResultsPanel : MonoBehaviour
             if (active.view == ResultView.Interaction)
                 return Mathf.Min(410f, Mathf.Max(300f, Screen.height * .38f));
             if (active.view == ResultView.MomentCurvature)
+                return Mathf.Min(440f, Mathf.Max(340f, Screen.height * .42f));
+            if (active.view == ResultView.Audit)
                 return Mathf.Min(440f, Mathf.Max(340f, Screen.height * .42f));
             if (active.view == ResultView.StressStrain)
                 return Mathf.Min(420f, Mathf.Max(330f, Screen.height * .40f));
@@ -100,8 +107,13 @@ public class ElementResultsPanel : MonoBehaviour
         view = ResultView.None;
         forceIndex = 4;
         compareCombinations = false;
+        manualCheckOpen = false;
+        manualCheckPosition = .5f;
         curvaturePresentation = 0;
         resultsScroll = Vector2.zero;
+        auditExportStatus = null;
+        auditExportPath = null;
+        auditContentHeight = 1050f;
     }
 
     private void ClearResultVisualization()
@@ -198,6 +210,7 @@ public class ElementResultsPanel : MonoBehaviour
                 else DrawUnavailable(x, y, width, "EDITOR PARAMÉTRICO", "No se encontró StructuralModelEditor.");
                 break;
             case ResultView.Forces: DrawForces(element, x, y, width); break;
+            case ResultView.Audit: DrawAudit(element, x, y, width); break;
             case ResultView.Deformed: DrawDeformed(element, x, y, width); break;
             case ResultView.Interaction: DrawInteraction(element, x, y, width); break;
             case ResultView.Fibers: DrawFibers(element, x, y, width); break;
@@ -217,16 +230,17 @@ public class ElementResultsPanel : MonoBehaviour
 
     private float ResultsContentHeight(ElementSelectable element)
     {
-        float optionHeight = IsBeam(element) ? 31f : 60f;
+        float optionHeight = 89f;
         switch (view)
         {
-            case ResultView.ModelEditor: return optionHeight + 390f;
+            case ResultView.ModelEditor: return optionHeight + 490f;
             case ResultView.Interaction: return optionHeight + 350f;
-            case ResultView.Fibers: return optionHeight + 290f;
+            case ResultView.Fibers: return optionHeight + 350f;
             case ResultView.MomentCurvature:
                 return optionHeight + (curvaturePresentation == 0 ? 390f : 315f);
             case ResultView.StressStrain: return optionHeight + 430f;
-            case ResultView.Forces:
+            case ResultView.Forces: return optionHeight + (manualCheckOpen ? 730f : 235f);
+            case ResultView.Audit: return optionHeight + auditContentHeight;
             case ResultView.Deformed: return optionHeight + 190f;
             default: return optionHeight + 115f;
         }
@@ -234,25 +248,17 @@ public class ElementResultsPanel : MonoBehaviour
 
     private float DrawResultOptions(ElementSelectable element, float x, float y, float width)
     {
-        if (IsBeam(element))
-        {
-            string[] labels = { "DIAGRAMAS DE ESFUERZOS", "MOMENTO–CURVATURA", "DEFORMADA" };
-            ResultView[] views = { ResultView.Forces, ResultView.MomentCurvature, ResultView.Deformed };
-            DrawGrid(x, y, width, labels, views, 3);
-            return y + 31f;
-        }
-
-        if (IsColumn(element))
+        if (IsColumn(element) || IsBeam(element))
         {
             string[] labels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "TENSIÓN–DEFORMACIÓN",
-                "DIAGRAMAS DE ESFUERZOS", "MOMENTO–CURVATURA", "DEFORMADA" };
+                "DIAGRAMAS DE ESFUERZOS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD" };
             ResultView[] views = { ResultView.Interaction, ResultView.Fibers, ResultView.StressStrain,
-                ResultView.Forces, ResultView.MomentCurvature, ResultView.Deformed };
+                ResultView.Forces, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit };
             return DrawGrid(x, y, width, labels, views, 3);
         }
 
-        string[] wallLabels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "MOMENTO–CURVATURA", "DEFORMADA" };
-        ResultView[] wallViews = { ResultView.Interaction, ResultView.Fibers, ResultView.MomentCurvature, ResultView.Deformed };
+        string[] wallLabels = { "INTERACCIÓN P–M", "SECCIÓN DE FIBRAS", "MOMENTO–CURVATURA", "DEFORMADA", "TRAZABILIDAD" };
+        ResultView[] wallViews = { ResultView.Interaction, ResultView.Fibers, ResultView.MomentCurvature, ResultView.Deformed, ResultView.Audit };
         return DrawGrid(x, y, width, wallLabels, wallViews, 2);
     }
 
@@ -404,6 +410,7 @@ public class ElementResultsPanel : MonoBehaviour
         if (interactivePlot.Contains(mouse))
         {
             float t = Mathf.Clamp01((mouse.x - interactivePlot.x) / interactivePlot.width);
+            manualCheckPosition = t;
             float samplePosition = t * (count - 1);
             int lower = Mathf.Clamp(Mathf.FloorToInt(samplePosition), 0, count - 1);
             int upper = Mathf.Min(lower + 1, count - 1);
@@ -491,6 +498,7 @@ public class ElementResultsPanel : MonoBehaviour
                     new Color(1f, .38f, .46f));
             }
         }
+        DrawManualCheck(element, x, y + 175f, width);
     }
 
     private void DrawMetricCard(Rect rect, string label, float value, string unit, Color color)
@@ -529,6 +537,12 @@ public class ElementResultsPanel : MonoBehaviour
     private void DrawInteraction(ElementSelectable element, float x, float y, float width)
     {
         PMCurveData curve = UnityData.GetPMCurve(element.pmSectionId);
+        SectionMaterialData reinforcement=UnityData.GetMaterial(element.pmSectionId);
+        if(IsBeam(element) && reinforcement!=null && reinforcement.topBars!=reinforcement.bottomBars)
+        {
+            DrawUnavailable(x,y,width,"INTERACCIÓN P–M","Armadura superior/inferior asimétrica: faltan curvas independientes por signo. No se refleja una curva positiva como capacidad negativa. La sección de fibras y M–Φ positivo siguen disponibles.");
+            return;
+        }
         if (curve == null || curve.points == null || curve.points.Length < 2)
         {
             DrawUnavailable(x, y, width, "INTERACCIÓN P–M", "No existe una curva P–M exportada para esta sección.");
@@ -731,7 +745,7 @@ public class ElementResultsPanel : MonoBehaviour
         int bars = material != null ? material.steelBars : curve != null ? curve.steelBars : 0;
         float diameter = material != null ? material.barDiameter_mm : curve != null ? curve.barDiameter_mm : 0f;
         GUI.Label(new Rect(x, y, width, 22f), "SECCIÓN DE FIBRAS — " + sectionId, valueStyle);
-        if (material == null || b <= 0f || h <= 0f || material.topBars <= 0 || material.bottomBars <= 0)
+        if (material == null || b <= 0f || h <= 0f || material.steelBars <= 0)
         {
             GUI.Label(new Rect(x, y + 27f, width, 64f),
                 $"Dimensiones exportadas: {b:0.###} × {h:0.###} m\n" +
@@ -758,6 +772,10 @@ public class ElementResultsPanel : MonoBehaviour
             $"Recubrimiento al centro: {material.cover_mm:0.#} mm", valueStyle);
         GUI.Label(new Rect(x + 8f, section.yMax + 7f, width - 16f, 34f),
             "Azul: fibras de hormigón · Rojo: fibras de acero. Las barras de esquina pertenecen a las filas superior e inferior y no se duplican.", mutedStyle);
+        if(IsBeam(element) && material.stirrupCount>0)
+            GUI.Label(new Rect(x+8f,section.yMax+46f,width-16f,58f),
+                $"Estribos: {material.stirrupCount} dobles Ø{material.stirrupDiameter_mm:0.#} cada {material.stirrupSpacing_mm/10f:0.#} cm · {material.stirrupLegs} ramas\n"+
+                $"Tramo entre primero y último: {(material.stirrupCount-1)*material.stirrupSpacing_mm/1000f:0.###} m. Sin confinamiento ni capacidad de corte calculados.",mutedStyle);
     }
 
     private void DrawFiberSection(Rect rect, SectionMaterialData material)
@@ -788,6 +806,16 @@ public class ElementResultsPanel : MonoBehaviour
         float top = rect.y + coverY;
         float bottom = rect.yMax - coverY;
         Color steel = new Color(.95f, .22f, .18f);
+        if(material.stirrupCount>0)
+        {
+            Color transverse=new Color(1f,.72f,.2f);
+            DrawLine(new Vector2(left,top),new Vector2(right,top),transverse,2f);
+            DrawLine(new Vector2(right,top),new Vector2(right,bottom),transverse,2f);
+            DrawLine(new Vector2(right,bottom),new Vector2(left,bottom),transverse,2f);
+            DrawLine(new Vector2(left,bottom),new Vector2(left,top),transverse,2f);
+            for(int leg=1;leg<material.stirrupLegs-1;leg++)
+            {float lx=Mathf.Lerp(left,right,leg/(float)(material.stirrupLegs-1));DrawLine(new Vector2(lx,top),new Vector2(lx,bottom),transverse,1.5f);}
+        }
         DrawBarRow(left, right, top, material.topBars, steel);
         DrawBarRow(left, right, bottom, material.bottomBars, steel);
         for (int i = 1; i <= material.sideBarsEach; i++)
@@ -990,7 +1018,7 @@ public class ElementResultsPanel : MonoBehaviour
             DrawFlexuralFailureAnimation(element, fiberCurve, x, y, width, curvaturePresentation);
             return;
         }
-        if (IsColumn(element) && fiberCurve != null && fiberCurve.momentCurvature != null &&
+        if ((IsColumn(element) || IsBeam(element)) && fiberCurve != null && fiberCurve.momentCurvature != null &&
             fiberCurve.momentCurvature.Length > 1)
         {
             DrawFiberMomentCurvature(element, fiberCurve, x, y, width);
@@ -1368,7 +1396,7 @@ public class ElementResultsPanel : MonoBehaviour
             ratio <= 1f ? successStyle : failureStyle);
         GUI.Label(new Rect(detailX, y + 190f, detailWidth, 72f),
             material != null
-                ? $"Sección {material.b_m:0.###}×{material.h_m:0.###} m\n18 barras Ø25 · As={material.Ast_mm2:0.0} mm²\n5 superior · 5 inferior · 4 por lado"
+                ? $"Sección {material.b_m:0.###}×{material.h_m:0.###} m\n{material.steelBars} barras Ø{material.barDiameter_mm:0.#} · As={material.Ast_mm2:0.0} mm²\n{material.topBars} superior · {material.bottomBars} inferior · {material.sideBarsEach} por lado"
                 : "Sección COL70/70_FIBER · 18 barras Ø25", textStyle);
         GUI.Label(new Rect(detailX, y + 270f, detailWidth, 82f),
             "Curva calculada fibra a fibra con compatibilidad de deformaciones, Concrete01/Steel01 y P objetivo aproximadamente nulo. " +
@@ -1380,6 +1408,13 @@ public class ElementResultsPanel : MonoBehaviour
         if (element == null || element.data == null) return 0f;
         float[] forces = UnityData.GetElementForces(UnityData.ActiveCombo, element.data.id);
         if (forces == null || forces.Length < 12) return 0f;
+        if(IsBeam(element))
+        {
+            float maximum=0;
+            for(int i=0;i<=40;i++) if(UnityData.TryGetSectionForces(element.data.id,UnityData.ActiveCombo,i/40f,out var section))
+                maximum=Mathf.Max(maximum,Mathf.Abs(section.My));
+            return maximum;
+        }
         float atI = Mathf.Sqrt(forces[4] * forces[4] + forces[5] * forces[5]);
         float atJ = Mathf.Sqrt(forces[10] * forces[10] + forces[11] * forces[11]);
         return Mathf.Max(atI, atJ);
@@ -1535,6 +1570,18 @@ public class ElementResultsPanel : MonoBehaviour
         if (element.data != null)
         {
             float[] f = UnityData.GetElementForces(UnityData.ActiveCombo, element.data.id);
+            if(IsBeam(element) && f!=null && f.Length>=12)
+            {
+                Vector2 worst=Vector2.zero;float ratio=-1;
+                for(int i=0;i<=40;i++)
+                {
+                    if(!UnityData.TryGetSectionForces(element.data.id,UnityData.ActiveCombo,i/40f,out var section)) continue;
+                    float p=-section.N,m=Mathf.Abs(section.My);
+                    float candidate=UnityData.CapacityRatio(curve,p,m);
+                    if(candidate>ratio){ratio=candidate;worst=new Vector2(p,m);}
+                }
+                return worst;
+            }
             return f != null && f.Length >= 6
                 ? new Vector2(f[0], Mathf.Sqrt(f[4] * f[4] + f[5] * f[5])) : Vector2.zero;
         }

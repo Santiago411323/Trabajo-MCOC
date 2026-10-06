@@ -25,6 +25,8 @@ public class StructureViewer : MonoBehaviour
     public bool showVisualFacades = true;
     public bool showVisualRoof = true;
     public bool showVisualStairs = true;
+    public bool showVisualCafe = true;
+    private GameObject visualCafe;
     private GameObject visualTerrain;
     private readonly List<GameObject> visualFacadeObjects = new List<GameObject>();
     private readonly List<GameObject> visualRoofObjects = new List<GameObject>();
@@ -176,10 +178,13 @@ public class StructureViewer : MonoBehaviour
         CreateVisualFacades();
         CreateVisualRoof();
         CreateVisualStairs();
+        CreateVisualCafe();
         CreateGlobalAxes();
         CreateDiagramController();
         CreatePMPanel();
         CreateMobileLoadController();
+        if (Application.isPlaying && GetComponent<SeismicPlaybackController>() == null)
+            gameObject.AddComponent<SeismicPlaybackController>();
 
         BuildComboOptions();
         BuildFloorOptions();
@@ -345,7 +350,7 @@ public class StructureViewer : MonoBehaviour
             selectable.nodeISupport = UnityData.GetNodeSupport(element.nodeI);
             selectable.nodeJSupport = UnityData.GetNodeSupport(element.nodeJ);
 
-            if (isColumn)
+            if (isColumn || element.type == "viga")
             {
                 string secName = GetSectionName(element);
                 selectable.pmSectionId = ResolvePMSection(secName);
@@ -868,6 +873,12 @@ public class StructureViewer : MonoBehaviour
         }
     }
 
+    public void SuspendStaticDiagramsForSeismic()
+    {
+        resultIndex = 0;
+        diagramController?.SetResultMode("None");
+    }
+
     private void CreateSupports(StructureData data)
     {
         if (data.supports == null || data.supports.Length == 0)
@@ -975,7 +986,7 @@ public class StructureViewer : MonoBehaviour
         RenderSettings.ambientLight = new Color(0.82f, 0.86f, 0.88f);
         RenderSettings.fog = true;
         RenderSettings.fogColor = new Color(0.58f, 0.78f, 0.96f);
-        RenderSettings.fogDensity = 0.006f;
+        RenderSettings.fogDensity = 0.002f;
     }
 
     private void CreateAxis(string name, Vector3 start, Vector3 direction, Color color)
@@ -993,7 +1004,7 @@ public class StructureViewer : MonoBehaviour
 
     private void CreateVisualFacades()
     {
-        GameObject root = new GameObject("Muros_salmon_solo_visuales");
+        GameObject root = new GameObject("Ventanas_fachada_solo_visuales");
         root.transform.SetParent(transform, false);
         VisualFrameFacade facade = root.AddComponent<VisualFrameFacade>();
         facade.Build(selectables, loadedData, (panel, floor) => RegisterFloor(panel, floor));
@@ -1021,6 +1032,16 @@ public class StructureViewer : MonoBehaviour
         float terraceX = visualTerrain.GetComponent<VisualSiteTerrain>().TerraceContactX;
         stairs.Build(loadedData,terraceX,(piece,floor)=>RegisterFloor(piece,floor));
         visualStairObjects.AddRange(stairs.Pieces);
+    }
+
+    private void CreateVisualCafe()
+    {
+        var terrain=visualTerrain.GetComponent<VisualSiteTerrain>();
+        visualCafe=new GameObject("Cafeteria_terraza_nivel_menos4");
+        visualCafe.transform.SetParent(terrain.BaseGround.transform,false);
+        RegisterFloor(visualCafe,"FOUNDATION");
+        visualCafe.AddComponent<VisualCafe>().Build(loadedData,terrain.TerraceContactX,(piece,floor)=>
+        {visualStairObjects.Add(piece);RegisterFloor(piece,floor);});
     }
 
     // Metodos de visualizacion opcional (nodulos, IDs, ejes locales)
@@ -1157,6 +1178,7 @@ public class StructureViewer : MonoBehaviour
         SetGroupVisible(idLabelObjects, showIds);
         SetGroupVisible(localAxisObjects, showLocalAxes);
         SetGroupVisible(visualFacadeObjects, showVisualFacades);
+        if(visualCafe!=null)visualCafe.SetActive(showVisualCafe && PassesFloorFilter(visualCafe));
         SetGroupVisible(visualRoofObjects, showVisualRoof);
         SetGroupVisible(visualStairObjects, showVisualStairs);
         UpdateVisualTerrainVisibility();
@@ -1221,17 +1243,20 @@ public class StructureViewer : MonoBehaviour
 
     private void OnGUI()
     {
+        bool previousGuiEnabled = GUI.enabled;
         if (showTopBar)
         {
+            GUI.enabled = previousGuiEnabled && !SeismicPlaybackController.IsActive;
             DrawTopBar();
+            GUI.enabled = previousGuiEnabled;
         }
         if (showLeftPanel)
         {
             DrawLeftPanel();
         }
-        DrawViewportHint();
+        if (!SeismicPlaybackController.IsActive) DrawViewportHint();
         DrawPanelToggleButtons();
-        RefreshVisibility();
+        if (!SeismicPlaybackController.IsActive) RefreshVisibility();
     }
 
     private void DrawPanelToggleButtons()
@@ -1300,10 +1325,13 @@ public class StructureViewer : MonoBehaviour
         }
 
         float bx = x + w - 245f;
+        bool cameraGuiEnabled = GUI.enabled;
+        if (SeismicPlaybackController.IsActive) GUI.enabled = true;
         if (GUI.Button(new Rect(bx, cy, 55f, 22f), "ISO")) SetCameraPreset("ISO");
         if (GUI.Button(new Rect(bx + 60f, cy, 55f, 22f), "TOP")) SetCameraPreset("TOP");
         if (GUI.Button(new Rect(bx + 120f, cy, 55f, 22f), "FRONT")) SetCameraPreset("FRONT");
         if (GUI.Button(new Rect(bx + 180f, cy, 55f, 22f), "RIGHT")) SetCameraPreset("RIGHT");
+        GUI.enabled = cameraGuiEnabled;
 
         DrawBaseCaseSliders(x + 12f, y + 58f, Mathf.Min(820f, w - 24f));
     }
@@ -1386,16 +1414,20 @@ public class StructureViewer : MonoBehaviour
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Entorno visual");
         innerY += 22f;
         showUpperTerrace = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showUpperTerrace, "Terraza Y=4");
-        showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Muros salmon");
+        showVisualFacades = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualFacades, "Ventanas");
         innerY += 24f;
         showVisualRoof = GUI.Toggle(new Rect(innerX, innerY, 145f, 22f), showVisualRoof, "Techo gris");
         showVisualStairs = GUI.Toggle(new Rect(innerX + 150f, innerY, 160f, 22f), showVisualStairs, "Escaleras");
+        innerY += 24f;
+        showVisualCafe = GUI.Toggle(new Rect(innerX,innerY,160f,22f),showVisualCafe,"Cafetería / terraza");
         innerY += 32f;
 
         bool mobilePanelVisible = mobileLoadController != null && mobileLoadController.IsPanelVisible();
         string mobileButtonLabel = mobilePanelVisible ? "OCULTAR CARGA MÓVIL" : "ACTIVAR CARGA MÓVIL";
         Color previousBackground = GUI.backgroundColor;
         GUI.backgroundColor = mobilePanelVisible ? new Color(0.72f, 0.78f, 0.84f) : new Color(0.15f, 0.78f, 0.92f);
+        bool mobileGuiEnabled = GUI.enabled;
+        GUI.enabled = mobileGuiEnabled && !SeismicPlaybackController.IsActive;
         if (GUI.Button(new Rect(innerX, innerY, innerW, 28f), mobileButtonLabel))
         {
             mobileLoadController?.SetPanelVisible(!mobilePanelVisible);
@@ -1404,7 +1436,16 @@ public class StructureViewer : MonoBehaviour
                 : "Carga móvil activada: seleccione una losa para colocar la persona.";
         }
         GUI.backgroundColor = previousBackground;
+        GUI.enabled = mobileGuiEnabled;
         innerY += 40f;
+
+        SeismicPlaybackController seismic = GetComponent<SeismicPlaybackController>();
+        if (Application.isPlaying && seismic != null)
+        {
+            if (GUI.Button(new Rect(innerX, innerY, innerW, 28f), "SIMULACIÓN SÍSMICA — OPENSEES"))
+                seismic.TogglePanel();
+            innerY += 36f;
+        }
 
         GUI.Label(new Rect(innerX, innerY, innerW, 20f), "Filtro por piso");
         innerY += 22f;
@@ -1419,7 +1460,7 @@ public class StructureViewer : MonoBehaviour
         if (GUI.Button(new Rect(innerX, innerY, 102f, 24f), "Mostrar todo"))
         {
             showColumns = showBeams = showWalls = showSupports = showDiaphragms = true;
-            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = true;
+            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = showVisualCafe = true;
             showNodeMarkers = showIds = showLocalAxes = false;
             floorIndex = 0;
             statusMessage = "Vista restablecida.";
@@ -1428,7 +1469,7 @@ public class StructureViewer : MonoBehaviour
         {
             showColumns = showBeams = showWalls = true;
             showSupports = showDiaphragms = showNodeMarkers = showIds = showLocalAxes = false;
-            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = false;
+            showVisualTerrain = showUpperTerrace = showVisualFacades = showVisualRoof = showVisualStairs = showVisualCafe = false;
             statusMessage = "Capas auxiliares ocultas.";
         }
         innerY += 34f;

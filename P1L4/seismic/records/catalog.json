@@ -1,0 +1,13 @@
+{
+  "records": [
+    {
+      "id": "el_centro_1940_ns",
+      "name": "El Centro 1940 — N/S (ejemplo OpenSees)",
+      "file": "elCentro.at2",
+      "format": "AT2",
+      "units": "g",
+      "source": "https://github.com/OpenSees/OpenSees/blob/master/EXAMPLES/verification/elCentro.at2",
+      "note": "Version Peknold distribuida por OpenSees. Registro educativo; no equivale a una selección normativa para este emplazamiento. Sin filtrado ni correccion de linea base adicional."
+    }
+  ]
+}

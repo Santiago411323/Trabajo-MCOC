@@ -147,6 +147,26 @@ def load_json(path):
         return json.load(f)
 
 
+def beam_reinforcement_defaults(material):
+    """Armadura inicial solicitada; cover es distancia al centro longitudinal."""
+    return dict(material, steelBars=4, barDiameter_mm=10.0, topBars=2,
+                bottomBars=2, sideBarsEach=0, cover_mm=50.0,
+                Ast_mm2=math.pi * 100.0, Es_MPa=200000.0,
+                rho_percent=100 * math.pi * 100 / (material['b_m'] * material['h_m'] * 1e6),
+                effectiveDepth_mm=material['h_m']*1000-50,
+                stirrupCount=17, stirrupDiameter_mm=10.0,
+                stirrupSpacing_mm=100.0, stirrupLegs=4,
+                concreteFibersX=20, concreteFibersY=20, concreteModel='Concrete01',
+                epsc0=-.002, fcu_MPa=-.85*material['fc_MPa'], epscu=-.003,
+                steelModel='Steel01', steelYieldStrain=material['fy_MPa']/200000,
+                steelHardeningRatio=.01,
+                note='4 Ø10: 2 superiores y 2 inferiores. 17 estribos dobles Ø10@100 mm (4 ramas), tramo 1.60 m; ubicación longitudinal no definida. Sin confinamiento ni capacidad de corte evaluados.')
+
+
+SECTION_MATERIALS = [beam_reinforcement_defaults(m) if m['elementType']=='viga' else m
+                     for m in SECTION_MATERIALS]
+
+
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -239,11 +259,15 @@ def apply_model_edits(data, path):
             "barDiameter_mm": diameter,
             "Ast_mm2": ast,
             "rho_percent": rho,
-            "effectiveDepth_mm": max(1.0, height * 1000.0 - cover - diameter / 2.0),
+            "effectiveDepth_mm": max(1.0, height * 1000.0 - cover),
             "topBars": top,
             "bottomBars": bottom,
             "sideBarsEach": side,
             "cover_mm": cover,
+            "stirrupCount": int(edit.get("stirrupCount", 0)),
+            "stirrupDiameter_mm": float(edit.get("stirrupDiameter_mm", 0)),
+            "stirrupSpacing_mm": float(edit.get("stirrupSpacing_mm", 0)),
+            "stirrupLegs": int(edit.get("stirrupLegs", 0)),
             "concreteFibersX": 20,
             "concreteFibersY": 20,
             "concreteModel": "Concrete01",
@@ -314,7 +338,7 @@ def custom_capacity_curve(edit, cvm):
         mphi.append(point)
 
     tag = str(edit.get("elementTag") or edit.get("elementId") or "SECTION")
-    section_id = "EDIT_" + re.sub(r"[^A-Za-z0-9_]+", "_", tag).strip("_")
+    section_id = edit.get("capacitySectionId") or "EDIT_" + re.sub(r"[^A-Za-z0-9_]+", "_", tag).strip("_")
     ast_mm2 = ast * 1e6
     return {
         "sectionId": section_id, "elementType": edit.get("elementType") or "elemento",
@@ -325,6 +349,14 @@ def custom_capacity_curve(edit, cvm):
         "momentCurvature": mphi, "momentCurvatureFirstYield": first_yield,
         "points": [{"label": p["estado"], "P_kN": p["Pn_kN"], "M_kN_m": p["Mn_kN_m"]} for p in pm]
     }
+
+
+def beam_capacity_curve(material, cvm):
+    edit = dict(material, width_m=material['b_m'], height_m=material['h_m'],
+                capacitySectionId=material['sectionId'])
+    curve = custom_capacity_curve(edit, cvm)
+    curve['interpretation'] += ' Flexión My nominal; hormigón no confinado. Estribos no incluidos en resistencia flexural.'
+    return curve
 
 
 def main():
@@ -538,6 +570,9 @@ def main():
         curve = custom_capacity_curve(edit, cvm)
         if curve is not None:
             pm_curves.append(curve)
+    for material in SECTION_MATERIALS:
+        if material['elementType']=='viga':
+            pm_curves.append(beam_capacity_curve(material,cvm))
 
     # ── Demandas por muro desde el analisis ─────────────────────────
     # Cada panel del JSON apunta a las barras "muro_eq" que lo representan

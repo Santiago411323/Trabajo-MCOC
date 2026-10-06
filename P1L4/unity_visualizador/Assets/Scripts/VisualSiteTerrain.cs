@@ -13,9 +13,13 @@ public sealed class VisualSiteTerrain : MonoBehaviour
     public GameObject UpperTerrace { get; private set; }
     public float TerraceContactX { get; private set; }
     private Transform groupParent;
+    private VisualCafe.Layout cafeLayout;
+    private float cafeStairStartX;
 
     public void Build(StructureData data, IEnumerable<Renderer> buildingRenderers = null)
     {
+        VisualCafe.TryLayout(data,out cafeLayout);
+        cafeStairStartX=data.nodes.Where(n=>Mathf.Abs(n.z-4)<.02f).Select(n=>n.x).DefaultIfEmpty(20).Max()+1;
         BaseGround = new GameObject("Pasto_y_talud_niveles_base");
         BaseGround.transform.SetParent(transform, false); groupParent = BaseGround.transform;
         var nodes = data.nodes.ToDictionary(n => n.id, n => new Vector3(n.x, n.z, n.y));
@@ -88,6 +92,8 @@ public sealed class VisualSiteTerrain : MonoBehaviour
             SlopeCount++;
         }
         BuildUpperTerrace(nodes, bases, levels[levels.Count - 1].Key - Clearance, bottom, grass, rock, buildingRenderers);
+        var campus=new GameObject("Entorno_campus_referencia");campus.transform.SetParent(BaseGround.transform,false);
+        campus.AddComponent<VisualCampusSite>().Build(data,Clearance,UpperTerrace!=null?4f:levels[levels.Count-1].Key-Clearance);
     }
 
     private void BuildUpperTerrace(Dictionary<int, Vector3> nodes, List<Vector3> bases,
@@ -164,6 +170,8 @@ public sealed class VisualSiteTerrain : MonoBehaviour
     private void Surface(string name, float minX, float maxX, float minZ, float maxZ,
         System.Func<float, float, float> height, Material material, int columns, int rows)
     {
+        if(cafeLayout!=null && minX<cafeStairStartX+1 && maxX>cafeLayout.Left-.4f && minZ<cafeLayout.Back+.3f && maxZ>cafeLayout.PatioFront-.3f)
+        {columns=Mathf.Max(columns,Mathf.CeilToInt((maxX-minX)/.7f));rows=Mathf.Max(rows,Mathf.CeilToInt((maxZ-minZ)/.7f));}
         Vector3[] vertices = new Vector3[(columns + 1) * (rows + 1)];
         Vector2[] uv = new Vector2[vertices.Length];
         int[] triangles = new int[columns * rows * 6];
@@ -171,7 +179,7 @@ public sealed class VisualSiteTerrain : MonoBehaviour
         {
             float px = Mathf.Lerp(minX, maxX, x / (float)columns), pz = Mathf.Lerp(minZ, maxZ, z / (float)rows);
             int index = z * (columns + 1) + x;
-            vertices[index] = new Vector3(px, height(px, pz), pz); uv[index] = new Vector2(px, pz) * .65f;
+            vertices[index] = new Vector3(px, VisualCafe.CutHeight(cafeLayout,px,pz,height(px,pz),cafeStairStartX), pz); uv[index] = new Vector2(px, pz) * .65f;
         }
         int k = 0;
         for (int z = 0; z < rows; z++) for (int x = 0; x < columns; x++)
@@ -204,9 +212,17 @@ public sealed class VisualSiteTerrain : MonoBehaviour
 
     private void Edge(string name, Vector3 a, Vector3 b, float bottom, Material material)
     {
-        DrawMesh(name, new[] { a, b, new Vector3(a.x, bottom, a.z), new Vector3(b.x, bottom, b.z) },
-            new[] { new Vector2(0, a.y), new Vector2(Vector3.Distance(a, b), b.y), Vector2.zero, new Vector2(Vector3.Distance(a,b),0) },
-            new[] { 0, 2, 1, 1, 2, 3 }, material);
+        int segments=Mathf.Max(1,Mathf.CeilToInt(Vector3.Distance(a,b)/.7f));
+        var vertices=new List<Vector3>();var uv=new List<Vector2>();var triangles=new List<int>();
+        for(int s=0;s<segments;s++)
+        {
+            Vector3 p=Vector3.Lerp(a,b,s/(float)segments),q=Vector3.Lerp(a,b,(s+1f)/segments);
+            p.y=VisualCafe.CutHeight(cafeLayout,p.x,p.z,p.y,cafeStairStartX);q.y=VisualCafe.CutHeight(cafeLayout,q.x,q.z,q.y,cafeStairStartX);
+            int i=vertices.Count;vertices.AddRange(new[]{p,q,new Vector3(p.x,bottom,p.z),new Vector3(q.x,bottom,q.z)});
+            uv.AddRange(new[]{new Vector2(s,p.y),new Vector2(s+1,q.y),new Vector2(s,bottom),new Vector2(s+1,bottom)});
+            triangles.AddRange(new[]{i,i+2,i+1,i+1,i+2,i+3});
+        }
+        DrawMesh(name,vertices.ToArray(),uv.ToArray(),triangles.ToArray(),material);
     }
 
     private void DrawMesh(string name, Vector3[] vertices, Vector2[] uv, int[] triangles, Material material)

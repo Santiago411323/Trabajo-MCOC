@@ -1,0 +1,46 @@
+{
+    "version": "1.0",
+    "savedAtUtc": "2026-10-06T01:04:10.3470513Z",
+    "elements": [
+        {
+            "elementId": 423,
+            "elementTag": "B3066_V60/80.1",
+            "sourceId": "B3066_V60/80",
+            "elementType": "viga",
+            "isWall": false,
+            "width_m": 0.6000000238418579,
+            "height_m": 0.800000011920929,
+            "fc_MPa": 25.0,
+            "fy_MPa": 420.0,
+            "barDiameter_mm": 10.0,
+            "topBars": 4,
+            "bottomBars": 4,
+            "sideBarsEach": 4,
+            "cover_mm": 50.0,
+            "stirrupCount": 17,
+            "stirrupDiameter_mm": 20.0,
+            "stirrupSpacing_mm": 100.0,
+            "stirrupLegs": 4
+        },
+        {
+            "elementId": 402,
+            "elementTag": "B3045_V60/80.1",
+            "sourceId": "B3045_V60/80",
+            "elementType": "viga",
+            "isWall": false,
+            "width_m": 0.6000000238418579,
+            "height_m": 0.800000011920929,
+            "fc_MPa": 25.0,
+            "fy_MPa": 420.0,
+            "barDiameter_mm": 25.0,
+            "topBars": 2,
+            "bottomBars": 2,
+            "sideBarsEach": 0,
+            "cover_mm": 50.0,
+            "stirrupCount": 17,
+            "stirrupDiameter_mm": 10.0,
+            "stirrupSpacing_mm": 100.0,
+            "stirrupLegs": 4
+        }
+    ]
+}

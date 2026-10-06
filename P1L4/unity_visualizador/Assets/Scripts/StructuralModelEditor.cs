@@ -32,6 +32,10 @@ public class StructuralElementEdit
     public int bottomBars;
     public int sideBarsEach;
     public float cover_mm;
+    public int stirrupCount;
+    public float stirrupDiameter_mm;
+    public float stirrupSpacing_mm;
+    public int stirrupLegs;
 }
 
 // Parametric editor shared by the inspector and the OpenSees exporter.
@@ -52,6 +56,7 @@ public class StructuralModelEditor : MonoBehaviour
 
     private string widthText, heightText, fcText, fyText, diameterText;
     private string topText, bottomText, sideText, coverText;
+    private string stirrupCountText, stirrupDiameterText, stirrupSpacingText, stirrupLegsText;
 
     private string ConfigPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "model_edits.json"));
     private string ResultsPath => Path.GetFullPath(Path.Combine(Application.dataPath, "Resources", "estructura_p1l4_unity.json"));
@@ -149,9 +154,20 @@ public class StructuralModelEditor : MonoBehaviour
         topText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras superiores", topText);
         bottomText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras inferiores", bottomText);
         sideText = Field(right + 10f, ref ry, columnWidth - 20f, "Barras por lado", sideText);
-        coverText = Field(right + 10f, ref ry, columnWidth - 20f, "Recubrimiento [mm]", coverText);
+        coverText = Field(right + 10f, ref ry, columnWidth - 20f, "Al centro barra [mm]", coverText);
 
         y += 184f;
+        if (bound.data != null && bound.data.type == "viga")
+        {
+            GUI.Label(new Rect(x,y,width,22f),"ARMADURA TRANSVERSAL — tramo de estribos; no implica cobertura de todo el vano"); y+=26f;
+            float sy=y;
+            stirrupCountText=Field(left,ref sy,columnWidth,"Cantidad de estribos",stirrupCountText);
+            stirrupDiameterText=Field(left,ref sy,columnWidth,"Diámetro [mm]",stirrupDiameterText);
+            sy=y;
+            stirrupSpacingText=Field(right,ref sy,columnWidth,"Separación [mm]",stirrupSpacingText);
+            stirrupLegsText=Field(right,ref sy,columnWidth,"Ramas resistentes",stirrupLegsText);
+            y+=57f;
+        }
         if (TryReadFields(out StructuralElementEdit candidate, out string error))
         {
             int bars = candidate.topBars + candidate.bottomBars + 2 * candidate.sideBarsEach;
@@ -214,15 +230,20 @@ public class StructuralModelEditor : MonoBehaviour
         float height = saved != null ? saved.height_m : Mathf.Max(.01f, originalHeight);
         float fc = saved != null ? saved.fc_MPa : material != null && material.fc_MPa > 0f ? material.fc_MPa : bound.isWall ? 30f : 25f;
         float fy = saved != null ? saved.fy_MPa : material != null && material.fy_MPa > 0f ? material.fy_MPa : 420f;
-        float diameter = saved != null ? saved.barDiameter_mm : material != null && material.barDiameter_mm > 0f ? material.barDiameter_mm : 25f;
-        int top = saved != null ? saved.topBars : material != null && material.topBars > 0 ? material.topBars : 5;
-        int bottom = saved != null ? saved.bottomBars : material != null && material.bottomBars > 0 ? material.bottomBars : 5;
-        int side = saved != null ? saved.sideBarsEach : material != null && material.sideBarsEach > 0 ? material.sideBarsEach : 4;
+        bool beam=bound.data!=null && bound.data.type=="viga";
+        float diameter = saved != null ? saved.barDiameter_mm : material != null && material.barDiameter_mm > 0f ? material.barDiameter_mm : beam ? 10f : 25f;
+        int top = saved != null ? saved.topBars : material != null && material.steelBars > 0 ? material.topBars : beam ? 2 : 5;
+        int bottom = saved != null ? saved.bottomBars : material != null && material.steelBars > 0 ? material.bottomBars : beam ? 2 : 5;
+        int side = saved != null ? saved.sideBarsEach : material != null && material.steelBars > 0 ? material.sideBarsEach : beam ? 0 : 4;
         float cover = saved != null ? saved.cover_mm : material != null && material.cover_mm > 0f ? material.cover_mm : 50f;
 
         widthText = Format(width); heightText = Format(height); fcText = Format(fc); fyText = Format(fy);
         diameterText = Format(diameter); topText = top.ToString(); bottomText = bottom.ToString();
         sideText = side.ToString(); coverText = Format(cover);
+        stirrupCountText=(saved!=null && saved.stirrupCount>0 ? saved.stirrupCount : material!=null && material.stirrupCount>0 ? material.stirrupCount : 17).ToString();
+        stirrupDiameterText=Format(saved!=null && saved.stirrupDiameter_mm>0 ? saved.stirrupDiameter_mm : material!=null && material.stirrupDiameter_mm>0 ? material.stirrupDiameter_mm : 10);
+        stirrupSpacingText=Format(saved!=null && saved.stirrupSpacing_mm>0 ? saved.stirrupSpacing_mm : material!=null && material.stirrupSpacing_mm>0 ? material.stirrupSpacing_mm : 100);
+        stirrupLegsText=(saved!=null && saved.stirrupLegs>0 ? saved.stirrupLegs : material!=null && material.stirrupLegs>0 ? material.stirrupLegs : 4).ToString();
         status = ResultsStale ? "CAMBIOS GUARDADOS — resultados pendientes de reanálisis." : "Modelo y resultados sincronizados.";
     }
 
@@ -272,9 +293,11 @@ public class StructuralModelEditor : MonoBehaviour
             b_m = edit.width_m, h_m = edit.height_m, steelBars = bars,
             barDiameter_mm = edit.barDiameter_mm, Ast_mm2 = ast,
             rho_percent = 100f * ast / Mathf.Max(1f, edit.width_m * edit.height_m * 1e6f),
-            effectiveDepth_mm = edit.height_m * 1000f - edit.cover_mm - edit.barDiameter_mm * .5f,
+            effectiveDepth_mm = edit.height_m * 1000f - edit.cover_mm,
             topBars = edit.topBars, bottomBars = edit.bottomBars, sideBarsEach = edit.sideBarsEach,
             cover_mm = edit.cover_mm, concreteFibersX = 20, concreteFibersY = 20,
+            stirrupCount=edit.stirrupCount,stirrupDiameter_mm=edit.stirrupDiameter_mm,
+            stirrupSpacing_mm=edit.stirrupSpacing_mm,stirrupLegs=edit.stirrupLegs,
             concreteModel = "Concrete01", steelModel = "Steel01",
             note = "Vista previa paramétrica; ejecutar OpenSees para actualizar resultados."
         });
@@ -313,10 +336,15 @@ public class StructuralModelEditor : MonoBehaviour
     {
         try
         {
-            return Process.Start(new ProcessStartInfo {
+            var start=new ProcessStartInfo {
                 FileName = executable, Arguments = arguments, WorkingDirectory = RootPath,
                 UseShellExecute = false, CreateNoWindow = true
-            });
+            };
+            string packages=Path.Combine(RootPath,".venv","Lib","site-packages");
+            if(Directory.Exists(packages)) start.EnvironmentVariables["PYTHONPATH"]=packages+Path.PathSeparator+(Environment.GetEnvironmentVariable("PYTHONPATH") ?? "");
+            string cache=Path.Combine(Path.GetDirectoryName(ExporterPath),"seismic","cache");
+            Directory.CreateDirectory(cache);start.EnvironmentVariables["MPLCONFIGDIR"]=cache;
+            return Process.Start(start);
         }
         catch { return null; }
     }
@@ -325,6 +353,12 @@ public class StructuralModelEditor : MonoBehaviour
     {
         string configured = Environment.GetEnvironmentVariable("MCOC_PYTHON");
         if (!string.IsNullOrWhiteSpace(configured)) yield return configured.Trim();
+        string runtimePath=Path.Combine(Path.GetDirectoryName(ExporterPath),"seismic","runtime.local.json");
+        if(File.Exists(runtimePath))
+        {
+            var runtime=JsonUtility.FromJson<SeismicPythonRuntime>(File.ReadAllText(runtimePath));
+            if(runtime!=null && File.Exists(runtime.executable)) yield return runtime.executable;
+        }
         string pathFile = Path.Combine(Path.GetDirectoryName(ExporterPath) ?? "", "python_path.txt");
         if (File.Exists(pathFile))
         {
@@ -351,6 +385,13 @@ public class StructuralModelEditor : MonoBehaviour
         if (!int.TryParse(topText, out int top) || top < 0 || top > 40 || !int.TryParse(bottomText, out int bottom) || bottom < 0 || bottom > 40 || !int.TryParse(sideText, out int side) || side < 0 || side > 40) { error = "cantidad de barras inválida"; return false; }
         if (top + bottom + 2 * side < 2) { error = "se requieren al menos dos barras"; return false; }
         if (!TryFloat(coverText, out float cover) || cover < 10f || cover > 200f || 2f * cover >= Mathf.Min(width, height) * 1000f) { error = "recubrimiento incompatible con la sección"; return false; }
+        int stirrupCount=0,legs=0;float stirrupDiameter=0,spacing=0;
+        if(bound.data!=null && bound.data.type=="viga" &&
+            (!int.TryParse(stirrupCountText,out stirrupCount) || stirrupCount<1 || stirrupCount>1000 ||
+            !int.TryParse(stirrupLegsText,out legs) || legs<2 || legs>12 ||
+            !TryFloat(stirrupDiameterText,out stirrupDiameter) || stirrupDiameter<6 || stirrupDiameter>32 ||
+            !TryFloat(stirrupSpacingText,out spacing) || spacing<20 || spacing>1000))
+        {error="estribos: cantidad 1–1000, ramas 2–12, Ø6–32 mm, separación 20–1000 mm";return false;}
 
         edit = new StructuralElementEdit {
             elementId = bound.isWall ? bound.wallId : bound.data.id,
@@ -358,7 +399,8 @@ public class StructuralModelEditor : MonoBehaviour
             elementType = bound.isWall ? "muro" : bound.data.type, isWall = bound.isWall,
             width_m = width, height_m = height, fc_MPa = fc, fy_MPa = fy,
             barDiameter_mm = diameter, topBars = top, bottomBars = bottom,
-            sideBarsEach = side, cover_mm = cover
+            sideBarsEach = side, cover_mm = cover,
+            stirrupCount=stirrupCount,stirrupDiameter_mm=stirrupDiameter,stirrupSpacing_mm=spacing,stirrupLegs=legs
         };
         return true;
     }

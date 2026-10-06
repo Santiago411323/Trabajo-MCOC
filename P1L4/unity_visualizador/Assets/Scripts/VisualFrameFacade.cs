@@ -6,7 +6,7 @@ using UnityEngine;
 public sealed class VisualFrameFacade : MonoBehaviour
 {
     public readonly List<GameObject> Panels = new List<GameObject>();
-    private Material material;
+    private Material material, frameMaterial, rearCladding;
     private sealed class FramePost
     {
         public Vector3 Point;
@@ -47,8 +47,17 @@ public sealed class VisualFrameFacade : MonoBehaviour
             }
         }
         Shader shader = Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Sprites/Default");
-        material = new Material(shader) { name = "Salmon_fachada_visual", color = new Color(1f, .49f, .38f) };
-        if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", .12f);
+        material = new Material(shader) { name = "Vidrio_fachada_visual", color = new Color(.20f,.37f,.42f,.55f) };
+        if(material.HasProperty("_Mode"))
+        {
+            material.SetFloat("_Mode",3);material.SetInt("_SrcBlend",(int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend",(int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);material.SetInt("_ZWrite",0);
+            material.EnableKeyword("_ALPHAPREMULTIPLY_ON");material.renderQueue=3000;
+        }
+        if(material.HasProperty("_Surface")){material.SetFloat("_Surface",1);material.renderQueue=3000;}
+        if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", .78f);
+        frameMaterial=new Material(shader){name="Marcos_ventanas",color=new Color(.11f,.15f,.17f)};
+        rearCladding=new Material(shader){name="Revestimiento_naranja_posterior",color=new Color(.79f,.25f,.11f)};
         for (int a = 0; a < posts.Count; a++) for (int b = a + 1; b < posts.Count; b++)
         {
             FramePost first = posts[a], second = posts[b];
@@ -105,23 +114,56 @@ public sealed class VisualFrameFacade : MonoBehaviour
             float width = right-left-insetA-insetB;
             float low = bottom+bottomDepth+.04f, high=top-topDepth-.04f;
             if (width < .1f || high-low < .1f) continue;
-            GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            panel.name = "Cerramiento_visual_" + first.Tag + "_" + second.Tag;
-            panel.layer=2; panel.transform.SetParent(transform,false);
             float leftInset = (alongX ? p.x : p.z) < (alongX ? q.x : q.z) ? insetA : insetB;
             float rightInset = leftInset == insetA ? insetB : insetA;
             float center=(left+leftInset+right-rightInset)*.5f;
-            panel.transform.localPosition = alongX ? new Vector3(center,(low+high)*.5f,fixedAxis) : new Vector3(fixedAxis,(low+high)*.5f,center);
-            panel.transform.localScale = alongX ? new Vector3(width,high-low,.08f) : new Vector3(.08f,high-low,width);
-            panel.GetComponent<Renderer>().sharedMaterial=material;
-            var collider=panel.GetComponent<Collider>(); collider.enabled=false;
-            if(Application.isPlaying) Destroy(collider); else DestroyImmediate(collider);
-            Panels.Add(panel); register(panel,first.Floor);
+            var cuts=new SortedDictionary<float,float>{{bottom,bottomDepth},{top,topDepth}};
+            foreach(var beam in beams)
+            {
+                Vector3 i=beam.startPoint,j=beam.endPoint;
+                if(Mathf.Abs(i.y-j.y)>.01f || i.y<=bottom+.01f || i.y>=top-.01f) continue;
+                if(Mathf.Abs((alongX?i.z:i.x)-fixedAxis)>.01f || Mathf.Abs((alongX?j.z:j.x)-fixedAxis)>.01f) continue;
+                float from=alongX?Mathf.Min(i.x,j.x):Mathf.Min(i.z,j.z),to=alongX?Mathf.Max(i.x,j.x):Mathf.Max(i.z,j.z);
+                if(to<=left+.01f || from>=right-.01f)continue;
+                cuts[i.y]=Mathf.Max(cuts.ContainsKey(i.y)?cuts[i.y]:0,beam.data.height_m*.5f);
+            }
+            var heights=cuts.Keys.ToList();
+            for(int level=0;level<heights.Count-1;level++)
+            {
+                float lower=heights[level]+cuts[heights[level]]+.04f,upper=heights[level+1]-cuts[heights[level+1]]-.04f;
+                if(upper-lower<.1f)continue;
+                string floor=data.slabs.FirstOrDefault(s=>Mathf.Abs(s.z-heights[level+1])<.02f)?.nivel ?? first.Floor;
+                GameObject panel=new GameObject("Ventanas_"+first.Tag+"_"+second.Tag+"_nivel_"+level);panel.layer=2;
+                panel.transform.SetParent(transform,false);
+                panel.transform.localPosition=alongX?new Vector3(center,(lower+upper)*.5f,fixedAxis):new Vector3(fixedAxis,(lower+upper)*.5f,center);
+                if(!alongX)panel.transform.localRotation=Quaternion.Euler(0,90,0);
+                WindowPiece(panel,"Vidrio",Vector3.zero,new Vector3(width,upper-lower,.035f),material);
+                float h=upper-lower;
+                int panes=Mathf.CeilToInt(width/1.4f);
+                for(int m=0;m<=panes;m++)WindowPiece(panel,"Montante",new Vector3(-width/2+width*m/panes,0,0),new Vector3(.045f,h,.07f),frameMaterial);
+                if(alongX && Mathf.Abs(fixedAxis-maxZ)<.02f)
+                    for(int m=0;m<panes;m++)WindowPiece(panel,"Franja_naranja_fachada_posterior",new Vector3(-width/2+width*(m+.5f)/panes,0,.065f),
+                        new Vector3(Mathf.Min(.45f,width/panes*.35f),h,.06f),rearCladding);
+                foreach(float y in new[]{-h/2,h/2})WindowPiece(panel,"Marco",new Vector3(0,y,0),new Vector3(width,.055f,.07f),frameMaterial);
+                // A horizontal transom keeps long column segments from producing giant panes.
+                if(h>2.2f)WindowPiece(panel,"Travesaño",new Vector3(0,h*.22f,0),new Vector3(width,.04f,.07f),frameMaterial);
+                Panels.Add(panel);register(panel,floor);
+            }
         }
+    }
+    private void WindowPiece(GameObject parent,string name,Vector3 position,Vector3 size,Material mat)
+    {
+        var piece=GameObject.CreatePrimitive(PrimitiveType.Cube);piece.name=name;piece.layer=2;
+        piece.transform.SetParent(parent.transform,false);piece.transform.localPosition=position;piece.transform.localScale=size;
+        piece.GetComponent<Renderer>().sharedMaterial=mat;
+        var collider=piece.GetComponent<Collider>();collider.enabled=false;
+        if(Application.isPlaying)Destroy(collider);else DestroyImmediate(collider);
     }
     private void OnDestroy()
     {
         if (material == null) return;
         if (Application.isPlaying) Destroy(material); else DestroyImmediate(material);
+        if(frameMaterial!=null){if(Application.isPlaying)Destroy(frameMaterial);else DestroyImmediate(frameMaterial);}
+        if(rearCladding!=null){if(Application.isPlaying)Destroy(rearCladding);else DestroyImmediate(rearCladding);}
     }
 }

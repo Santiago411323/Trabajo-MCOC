@@ -40,3 +40,9 @@ P1L4/unity_visualizador_ios/Builds/
 P1L4/unity_visualizador_ios/Entregables/
 P1L4/entregables_ios/
 /xc/
+
+# Simulación sísmica: respuestas binarias y configuración del computador.
+P1L4/seismic/results/
+P1L4/seismic/validation/
+P1L4/seismic/cache/
+P1L4/seismic/runtime.local.json

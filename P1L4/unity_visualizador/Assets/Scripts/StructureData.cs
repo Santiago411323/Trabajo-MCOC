@@ -46,12 +46,15 @@ public class DiaphragmData
 [Serializable]
 public class P1L4Extras
 {
+    public string version;
     // Missing in legacy exports: eleForce in GLOBAL structural coordinates.
     // A future exporter may explicitly set this to "local" for localForce.
     public string elementForceCoordinates;
+    public AnalysisModelRecord analysisModel;
     public ComboInfo[] combinations;
     public DisplacementRecord[] displacements;
     public ElementForceRecord[] elementForces;
+    public ElementLoadRecord[] elementLoads;
     public PMCurveData[] pmCurves;
     public SectionMaterialData[] sectionMaterials;
     public WallRegistryEntry[] wallRegistry;
@@ -111,6 +114,48 @@ public class PMCurveData
 }
 
 [Serializable]
+public class AnalysisModelRecord
+{
+    public string gravedad, sismo, pesoPropio, torsionAccidental;
+    public GlobalEquilibriumRecords equilibrio;
+}
+
+[Serializable]
+public class GlobalEquilibriumRecords
+{
+    public GlobalEquilibriumRecord G, Q, EX, EY, C1, C2, C3;
+
+    public GlobalEquilibriumRecord For(string name)
+    {
+        switch (name)
+        {
+            case "G": return G;
+            case "Q": return Q;
+            case "EX": return EX;
+            case "EY": return EY;
+            case "C1": return C1;
+            case "C2": return C2;
+            case "C3": return C3;
+            default: return null;
+        }
+    }
+}
+
+[Serializable]
+public class GlobalEquilibriumRecord
+{
+    public float[] carga_total_kN, reaccion_total_kN, desbalance_kN;
+}
+
+[Serializable]
+public class ElementLoadRecord
+{
+    public string @case;
+    public int id;
+    public float wx, wy, wz;
+}
+
+[Serializable]
 public class MomentCurvaturePoint
 {
     public float phi_1_m;
@@ -151,6 +196,10 @@ public class SectionMaterialData
     public int bottomBars;
     public int sideBarsEach;
     public float cover_mm;
+    public int stirrupCount;
+    public float stirrupDiameter_mm;
+    public float stirrupSpacing_mm;
+    public int stirrupLegs;
     public int concreteFibersX;
     public int concreteFibersY;
     public string concreteModel;
