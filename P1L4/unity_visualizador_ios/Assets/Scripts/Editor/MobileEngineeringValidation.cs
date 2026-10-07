@@ -48,7 +48,11 @@ public static class MobileEngineeringValidation
         Require(screen.sharedMaterial.shader.name=="MCOC/VR Inspector Surface","RGB inspection shader missing");
         tools.PlotMode=2;tools.UpdatePreview(member.data,"C1",0);Require(tools.Plot!=null,"Design P-My plot absent");tools.PlotMode=0;tools.UpdatePreview(member.data,"C1",0);
         Capture((Camera)Field("vrCamera"),"armadura");
+        Set("vrEngineeringPage",3);Set("nextEngineering",0f);Call("UpdateEngineeringVR");
+        Require(((TextMesh)Field("engineeringInfo")).text.Contains("Maestro"),"VR diaphragm page missing real membership");
+        Require(!((Transform)Field("engineeringRoot")).Find("Accion 0").gameObject.activeInHierarchy,"Diaphragm page retained unrelated actions");
         Set("vrEngineeringPage",1);Set("nextEngineering",0f);Call("UpdateEngineeringVR");Call("EngineeringAction",6);Set("nextEngineering",0f);Call("UpdateEngineeringVR");
+        Require(((Transform)Field("engineeringRoot")).Find("Accion 0").gameObject.activeInHierarchy,"Actions not restored after diaphragm page");
         Call("EngineeringAction",4);Require(((ElementSelectable)Field("selected"))!=null,"Gaze radar selection failed");
         Capture((Camera)Field("vrCamera"),"radar");
         Set("vrEngineeringPage",2);Call("EngineeringAction",3);Call("EngineeringAction",6);

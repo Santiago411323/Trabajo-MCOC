@@ -8,6 +8,14 @@ public static class MobileEnvironmentRevisionValidation
     public static void Validate(GameObject world)
     {
         var data=UnityData.Structure;
+        var facade=world.GetComponentInChildren<VisualFrameFacade>();
+        Func<GameObject,string,string,bool> pair=(p,a,b)=>p.name.Contains(a+"_")&&p.name.Contains(b+"_");
+        Require(!facade.Panels.Any(p=>pair(p,"E1_271","E1_259")),"Old upper cantilever window remains");
+        foreach(var tags in new[]{new[]{"E1_259","E1_310"},new[]{"E1_271","E1_311"},new[]{"E1_311","E1_310"},new[]{"E1_245","E1_259"},new[]{"E1_271","E1_283"}})
+            Require(facade.Panels.Any(p=>pair(p,tags[0],tags[1])),"Upper/neighbor window missing: "+tags[0]+" "+tags[1]);
+        var analyticalNodes=data.nodes.ToDictionary(n=>n.id);
+        Require(data.p1l4.analysisModel.diafragmas.Length==5&&data.p1l4.analysisModel.diafragmas.All(g=>DiaphragmKinematics.Validate(g,analyticalNodes)==null),"Real diaphragm membership invalid");
+        Require(MobileDiaphragmInfo.Describe(data.elements.Single(e=>e.elementTag=="E1_259"),"C1").Contains("Maestro"),"Mobile diaphragm report absent");
         var nodes=data.nodes.ToDictionary(n=>n.id,n=>new Vector3(n.x,n.z,n.y));
         foreach(var wall in data.walls.Where(w=>w.id>=31&&w.id<=35))
             Require(Mathf.Abs(nodes[wall.nodeI].z-6.99f)<.001f&&Mathf.Abs(nodes[wall.nodeJ].z-6.99f)<.001f,"Wall33 family not in corrected positive Z position");

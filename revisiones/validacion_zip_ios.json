@@ -1,9 +1,9 @@
 {
   "status": "PASS",
-  "zip": "C:\\Users\\chuntley\\Desktop\\Proyecto MCOC\\P1L4\\unity_visualizador_ios\\Entregables\\MCOC_iOS_Xcode_20261006_210635_093_78fb4a.zip",
-  "build": "16",
-  "size_mib": 597.8,
-  "sha256": "b5c19988f7f2c7d7a79d04a7f39f87b4e48e13fd513b13bc4a4e5857997d4917",
+  "zip": "C:\\Users\\chuntley\\Desktop\\Proyecto MCOC\\P1L4\\unity_visualizador_ios\\Entregables\\MCOC_iOS_Xcode_20261007_020306_951_50306c.zip",
+  "build": "17",
+  "size_mib": 597.9,
+  "sha256": "878cf9ec12e3d66068cc33d30adc4e5a2837182eadfd01060c2fa9e17a343d94",
   "checks": [
     "CRC completo",
     "proyecto Xcode",

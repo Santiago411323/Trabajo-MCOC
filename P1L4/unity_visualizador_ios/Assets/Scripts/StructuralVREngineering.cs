@@ -27,8 +27,8 @@ public sealed partial class StructuralVRController
         menu.Find("Detalle").gameObject.SetActive(false);menu.Find("Detalle texto").gameObject.SetActive(false);
         engineeringRoot=new GameObject("Herramientas por mirada").transform;engineeringRoot.SetParent(menu,false);
         engineeringRoot.localPosition=Vector3.up*1.25f;
-        string[] pages={"Armadura","Radar","LRFD"};
-        for(int i=0;i<3;i++){int page=i;EngineeringButton(pages[i],engineeringRoot,new Vector3((i-1)*.54f,.37f,0),()=>{vrEngineeringPage=page;radarTour=lrfdTour=false;nextEngineering=0;});}
+        string[] pages={"Armadura","Radar","LRFD","Diafragmas"};
+        for(int i=0;i<pages.Length;i++){int page=i;EngineeringButton(pages[i],engineeringRoot,new Vector3((i-1.5f)*.5f,.37f,0),()=>{vrEngineeringPage=page;radarTour=lrfdTour=false;nextEngineering=0;});}
         for(int i=0;i<12;i++)
         {
             int index=i;var label=EngineeringButton("Accion "+i,engineeringRoot,new Vector3((i%4-1.5f)*.47f,.12f-(i/4)*.23f,0),()=>EngineeringAction(index));
@@ -67,6 +67,7 @@ public sealed partial class StructuralVRController
     private void EngineeringAction(int index)
     {
         if(MobileSeismicPlayback.IsActive)return;
+        if(vrEngineeringPage==3)return;
         nextEngineering=0;
         if(vrEngineeringPage==0)
         {
@@ -176,7 +177,17 @@ public sealed partial class StructuralVRController
         string[] labels=vrEngineeringPage==0?new[]{"Play/Pausa","Inicio","Modo","Girar","Zoom","My/Mz","Cara ±","P activa/0","Corte −","Corte +","MΦ / P-M","Fisuras"}:
             vrEngineeringPage==1?new[]{"Métrica","Caso","Top −","Top +","Seleccionar","Recorrer","Mapa","Parar","—","—","—","—"}:
             new[]{"Variable","−","+","Evaluar","U −","U +","Gobernante","Escenario","Clima","Acciones","Interior","Recorrer"};
-        for(int i=0;i<labels.Length;i++)engineeringButtons[i].text=labels[i];
+        for(int i=0;i<labels.Length;i++)
+        {
+            engineeringButtons[i].text=labels[i];
+            engineeringButtons[i].gameObject.SetActive(vrEngineeringPage!=3);
+            engineeringRoot.Find("Accion "+i).gameObject.SetActive(vrEngineeringPage!=3);
+        }
+        if(vrEngineeringPage==3)
+        {
+            engineeringInfo.text=string.Join("\n",MobileDiaphragmInfo.Describe(selected?.data,combo).Split('\n').Take(13));
+            engineeringFooter.text="Membresía real rigidDiaphragm(3)\nConsulta estática de C1/C2/C3 y casos LRFD evaluados.";return;
+        }
         if(vrEngineeringPage==0)
         {
             string full=engineeringDetails?vrEngineering.Calculation(selected?.data,combo)+"\n"+string.Join("\n",vrEngineering.Inspect(selected?.data,combo).Split('\n').Skip(8)):

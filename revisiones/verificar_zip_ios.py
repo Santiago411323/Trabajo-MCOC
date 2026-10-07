@@ -22,7 +22,7 @@ with zipfile.ZipFile(archive_path) as archive:
     assert any(n.endswith("Unity-iPhone.xcodeproj/project.pbxproj") for n in names)
     plist_name = next(n for n in names if n.endswith("/Info.plist") and n.count("/") == 1)
     plist = plistlib.loads(archive.read(plist_name))
-    assert plist["CFBundleVersion"] == "16"
+    assert plist["CFBundleVersion"] == "17"
     assert plist.get("NSCameraUsageDescription"), "Falta descripcion de permiso de camara"
     scripts = [entry for entry in archive.infolist() if entry.filename.endswith(".sh")]
     assert scripts and all((entry.external_attr >> 16) & 0o111 for entry in scripts)
@@ -36,7 +36,7 @@ with zipfile.ZipFile(archive_path) as archive:
         del content
     assert set(found) == set(patterns), f"Faltan recursos: {set(patterns) - set(found)}"
 report = {
-    "status": "PASS", "zip": str(archive_path), "build": "16",
+    "status": "PASS", "zip": str(archive_path), "build": "17",
     "size_mib": round(archive_path.stat().st_size / 2**20, 1),
     "sha256": hashlib.file_digest(archive_path.open("rb"), "sha256").hexdigest(),
     "checks": ["CRC completo", "proyecto Xcode", "permiso de camara", "permisos ejecutables", "modelo exacto", "nueve unidades LRFD exactas", "ocho metadatos y ocho binarios exactos"],

@@ -1,6 +1,6 @@
 {
     "version": "1.0",
-    "savedAtUtc": "2026-10-06T22:12:28.3559655Z",
+    "savedAtUtc": "2026-10-07T01:37:16.5266105Z",
     "elements": [
         {
             "elementId": 423,
@@ -86,6 +86,26 @@
             "elementId": 231,
             "elementTag": "E1_231",
             "sourceId": "231",
+            "elementType": "columna",
+            "isWall": false,
+            "width_m": 0.699999988079071,
+            "height_m": 0.699999988079071,
+            "fc_MPa": 25.0,
+            "fy_MPa": 420.0,
+            "barDiameter_mm": 25.0,
+            "topBars": 5,
+            "bottomBars": 5,
+            "sideBarsEach": 4,
+            "cover_mm": 50.0,
+            "stirrupCount": 0,
+            "stirrupDiameter_mm": 0.0,
+            "stirrupSpacing_mm": 0.0,
+            "stirrupLegs": 0
+        },
+        {
+            "elementId": 241,
+            "elementTag": "E1_241",
+            "sourceId": "241",
             "elementType": "columna",
             "isWall": false,
             "width_m": 0.699999988079071,

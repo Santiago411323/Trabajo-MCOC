@@ -7,6 +7,7 @@ public class StructureData
     public string units;
     public float q_G;
     public float Q_kN_m2;
+    public float seismic_coefficient;
     public string p1l4_version;
     public NodeData[] nodes;
     public ElementData[] elements;
@@ -116,8 +117,17 @@ public class PMCurveData
 [Serializable]
 public class AnalysisModelRecord
 {
+    public RigidDiaphragmRecord[] diafragmas;
     public string gravedad, sismo, pesoPropio, torsionAccidental;
     public GlobalEquilibriumRecords equilibrio;
+}
+
+[Serializable]
+public class RigidDiaphragmRecord
+{
+    public int master, slaves, normalAxis;
+    public float x, y, z;
+    public int[] slaveTags, constrainedDofs, masterFixity;
 }
 
 [Serializable]
@@ -282,6 +292,7 @@ public class ElementData
 [Serializable]
 public class WallData
 {
+    public int[] analysisElements;
     public int id;
     public int nodeI;
     public int nodeJ;
@@ -293,6 +304,14 @@ public class WallData
     public string sourceBuilding;
     public string sourceId;
     public DemandRecord[] demands;
+}
+
+[Serializable]
+public class SupportReactionRecord
+{
+    public int node;
+    public float fx, fy, fz, mx, my, mz;
+    public bool declared;
 }
 
 [Serializable]

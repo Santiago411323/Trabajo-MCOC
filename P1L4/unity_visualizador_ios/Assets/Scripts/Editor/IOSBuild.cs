@@ -40,7 +40,7 @@ public static class IOSBuild
         PlayerSettings.iOS.cameraUsageDescription =
             "La camara permite colocar elementos estructurales y consultar sus resultados en realidad aumentada.";
         PlayerSettings.iOS.targetOSVersionString = "15.0";
-        PlayerSettings.iOS.buildNumber = "16";
+        PlayerSettings.iOS.buildNumber = "17";
         PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly;
         PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.iOS, ScriptingImplementation.IL2CPP);

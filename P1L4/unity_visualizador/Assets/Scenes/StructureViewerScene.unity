@@ -274,7 +274,7 @@ MonoBehaviour:
   animateDeformation: 1
   showOriginalDeformationReference: 1
   auditSingleElementDiagrams: 0
-  drawGlobalForceDiagrams: 0
+  drawGlobalForceDiagrams: 1
 --- !u!114 &14378520
 MonoBehaviour:
   m_ObjectHideFlags: 0

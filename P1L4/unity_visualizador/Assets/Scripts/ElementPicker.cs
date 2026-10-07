@@ -40,6 +40,7 @@ public class ElementPicker : MonoBehaviour
 
     void Update()
     {
+        if(DesktopWalkthrough.IsActive)return;
         if(MobileLoadController.CapturesPointer || MobileLoadLivePanel.BlocksPointer() || Input.GetKey(KeyCode.LeftShift)) return;
         if (cam == null)
         {

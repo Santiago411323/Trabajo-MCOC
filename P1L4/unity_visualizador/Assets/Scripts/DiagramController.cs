@@ -32,7 +32,7 @@ public class DiagramController : MonoBehaviour
     public bool animateDeformation = true;
     public bool showOriginalDeformationReference = true;
     public bool auditSingleElementDiagrams = false;
-    public bool drawGlobalForceDiagrams = false;
+    public bool drawGlobalForceDiagrams = true;
 
     private readonly List<ElementSelectable> elements = new List<ElementSelectable>();
     private readonly List<ElementSelectable> structuralElements = new List<ElementSelectable>();
@@ -140,6 +140,7 @@ public class DiagramController : MonoBehaviour
 
     private bool PressedKey(KeyCode key)
     {
+        if(DesktopWalkthrough.IsActive && key==KeyCode.Alpha1)return false;
         if(StructuralXRayController.Rendering)return false;
         if(StructuralElementSearch.CapturesKeyboard)return false;
 #if ENABLE_INPUT_SYSTEM

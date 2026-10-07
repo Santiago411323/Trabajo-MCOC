@@ -9,8 +9,9 @@ public sealed partial class StructuralARController
     private void DrawEngineering()
     {
         if(MobileSeismicPlayback.IsActive){GUILayout.Label("Herramientas estáticas pausadas durante el sismo.",WrapStyle());return;}
-        engineeringPage=GUILayout.Toolbar(engineeringPage,new[]{"Armadura","Radar","LRFD"},GUILayout.Height(32));
+        engineeringPage=GUILayout.Toolbar(engineeringPage,new[]{"Armadura","Radar","LRFD","Diafragmas"},GUILayout.Height(32));
         if(engineeringPage!=0)engineering.Preview?.Hide();
+        if(engineeringPage==3){GUILayout.Label(MobileDiaphragmInfo.Describe(selectedElement,activeCombo),WrapStyle());return;}
         if(engineeringPage==0)
         {
             GUILayout.Label(engineering.Inspect(selectedElement,activeCombo),WrapStyle());

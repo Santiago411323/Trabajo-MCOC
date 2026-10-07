@@ -13,6 +13,11 @@ public sealed class DesktopWalkthrough : MonoBehaviour
     public CharacterController Body {get;private set;}
     public GameObject CollisionWorld {get;private set;}
     public bool Paused {get;private set;}
+    public bool GazeSelectionEnabled {get;private set;}
+    public ElementSelectable GazeTarget {get;private set;}
+    private ElementPicker gamePicker;
+    private ElementSelectable savedSelection;
+    private readonly Dictionary<Collider,ElementSelectable> collisionMembers=new Dictionary<Collider,ElementSelectable>();
     public DesktopSkateController Skate {get;private set;}
     private StructureViewer viewer;
     private StructureData data;
@@ -52,6 +57,9 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         viewer.SetWalkthroughView(true);
         viewer.GetComponent<StructuralXRayController>()?.RefreshContextForWalk();
         savedBehaviours.Clear();
+        gamePicker=viewer.GetComponent<ElementPicker>() ?? cameraView.GetComponent<ElementPicker>();
+        savedSelection=gamePicker!=null?gamePicker.Selected:null;
+        GazeSelectionEnabled=false;GazeTarget=null;
         foreach(var behaviour in viewer.GetComponents<Behaviour>().Concat(cameraView.GetComponents<Behaviour>()))
         {
             if(behaviour is OrbitCamera || behaviour is ElementPicker || behaviour is ElementResultsPanel ||
@@ -77,6 +85,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         CollisionWorld.transform.SetParent(viewer.transform,false);
         // Disable original selection colliders only while walking; retain exact enabled states.
         savedColliders.Clear();
+        collisionMembers.Clear();
         foreach(var collider in viewer.GetComponentsInChildren<Collider>(true))
         {savedColliders[collider]=collider.enabled;collider.enabled=false;}
         foreach(var source in viewer.GetComponentsInChildren<MeshFilter>(true))
@@ -98,6 +107,9 @@ public sealed class DesktopWalkthrough : MonoBehaviour
                 var box=proxy.AddComponent<BoxCollider>();box.center=source.sharedMesh.bounds.center;box.size=source.sharedMesh.bounds.size;
             }
             else proxy.AddComponent<MeshCollider>().sharedMesh=source.sharedMesh;
+            var member=source.GetComponent<ElementSelectable>();
+            if(member!=null && !member.isWall && member.data!=null && (member.data.type=="viga" || member.data.type=="columna"))
+                collisionMembers[proxy.GetComponent<Collider>()]=member;
         }
         // Walk at the finish level already used by the slab caps and stair landings.
         float finish=data.elements.Where(e=>e.type=="viga").Select(e=>e.height_m/2).DefaultIfEmpty(.4f).Max()+.14f;
@@ -203,6 +215,7 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         bool jump=k.spaceKey.wasPressedThisFrame,sprint=k.leftShiftKey.isPressed || k.rightShiftKey.isPressed,reset=k.rKey.wasPressedThisFrame;
         bool skateToggle=k.eKey.wasPressedThisFrame;
         bool kickflip=k.qKey.wasPressedThisFrame,shoveIt=k.tKey.wasPressedThisFrame;
+        bool inspect=k.digit1Key.wasPressedThisFrame || k.numpad1Key.wasPressedThisFrame;
         Vector2 look=mouse!=null?mouse.delta.ReadValue()*.12f:Vector2.zero;
 #else
         bool toggle=Input.GetKeyDown(KeyCode.F),escape=Input.GetKeyDown(KeyCode.Escape);
@@ -210,12 +223,14 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         bool jump=Input.GetKeyDown(KeyCode.Space),sprint=Input.GetKey(KeyCode.LeftShift),reset=Input.GetKeyDown(KeyCode.R);
         bool skateToggle=Input.GetKeyDown(KeyCode.E);
         bool kickflip=Input.GetKeyDown(KeyCode.Q),shoveIt=Input.GetKeyDown(KeyCode.T);
+        bool inspect=Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1);
         Vector2 look=new Vector2(Input.GetAxis("Mouse X"),Input.GetAxis("Mouse Y"))*2;
 #endif
         if(toggle && (Active || GUIUtility.keyboardControl==0)){if(Active)Exit();else Enter();return;}
         if(!Active)return;
         if(escape)SetPaused(!Paused);
         if(Paused)return;
+        if(inspect)SetGazeSelection(!GazeSelectionEnabled);
         if(skateToggle)ToggleSkate();
         if(Skate!=null && Skate.Mounted)
         {
@@ -243,6 +258,29 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         return true;
     }
 
+    public void SetGazeSelection(bool value)
+    {
+        if(!Active)return;
+        GazeSelectionEnabled=value;GazeTarget=null;
+        foreach(var item in savedBehaviours)
+            if(item.Key!=null && (item.Key is ElementPicker || item.Key is ElementResultsPanel || item.Key is SelectedBeamDiagramPanel))
+                item.Key.enabled=value;
+        if(!value && gamePicker!=null)gamePicker.SelectElement(savedSelection,false);
+    }
+
+    private void LateUpdate(){RefreshGazeSelection();}
+    public void RefreshGazeSelection()
+    {
+        if(!Active || !GazeSelectionEnabled || Paused || cameraView==null || gamePicker==null)return;
+        GazeTarget=null;
+        // Use the same nearest collision as walking: walls, glass and floors occlude inspection.
+        if(!Physics.Raycast(cameraView.transform.position,cameraView.transform.forward,out var hit,50,1<<2,QueryTriggerInteraction.Ignore))return;
+        if(!collisionMembers.TryGetValue(hit.collider,out var member) || !member.gameObject.activeInHierarchy)return;
+        var renderer=member.GetComponent<Renderer>();if(renderer==null || !renderer.enabled)return;
+        GazeTarget=member;
+        if(gamePicker.Selected!=member)gamePicker.SelectElement(member,false);
+    }
+
     public void SetPaused(bool value)
     {Paused=value;Cursor.lockState=value?CursorLockMode.None:CursorLockMode.Locked;Cursor.visible=value;}
     public void SetRestoredBehaviourState(Behaviour behaviour,bool value)
@@ -265,7 +303,12 @@ public sealed class DesktopWalkthrough : MonoBehaviour
         bool skating=Skate!=null && Skate.Mounted;
         string controls=skating?"SKATE · W impulsar · S frenar · A/D girar · Espacio ollie · Q kickflip · T shove-it · E bajarse":"WASD mover · Ratón mirar · Espacio saltar · Shift correr · E subir al skate";
         string state=skating?" · "+(Skate.Speed*3.6f).ToString("F0")+" km/h · "+Skate.Status:"";
-        GUI.Box(new Rect(12,12,Mathf.Min(850,Screen.width-24),58),controls+"\n"+(skating?"Ratón cámara · ":"")+"Esc menú / cursor · R volver al inicio · F salir"+state);
+        GUI.Box(new Rect(12,12,Mathf.Min(1000,Screen.width-24),58),controls+"\n"+(skating?"Ratón cámara · ":"")+"1 selección por mirada: "+(GazeSelectionEnabled?"ON":"OFF")+" · Esc menú / cursor · R volver al inicio · F salir"+state);
+        if(GazeSelectionEnabled && !Paused)
+        {
+            var previous=GUI.color;GUI.color=GazeTarget!=null?Color.yellow:Color.white;
+            GUI.Label(new Rect(Screen.width/2f-5,Screen.height/2f-10,18,24),"+");GUI.color=previous;
+        }
         if(!Paused)return;
         float x=(Screen.width-340)/2f,y=90;
         GUI.Box(new Rect(x,y,340,250+FloorHeights.Length*30),"Modo juego · caminar / skate");
@@ -282,6 +325,8 @@ public sealed class DesktopWalkthrough : MonoBehaviour
     public void Exit()
     {
         if(!Active)return;
+        if(GazeSelectionEnabled)SetGazeSelection(false);
+        collisionMembers.Clear();
         Active=IsActive=false;
         if(Skate!=null){Skate.Dispose();Skate=null;}
         if(cameraView!=null)

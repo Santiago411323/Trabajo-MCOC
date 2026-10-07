@@ -14,7 +14,8 @@ public sealed class VisualFrameFacade : MonoBehaviour
         => (a.Tag==first && b.Tag==second) || (a.Tag==second && b.Tag==first);
     private static bool CafeCantileverFrame(FramePost a,FramePost b)
         => Between(a,b,"E1_241","E1_254") || Between(a,b,"E1_254","E1_255") || Between(a,b,"E1_241","E1_243") ||
-           Between(a,b,"E1_230","E1_243") || Between(a,b,"E1_255","E1_257");
+           Between(a,b,"E1_230","E1_243") || Between(a,b,"E1_255","E1_257") ||
+           Between(a,b,"E1_259","E1_310") || Between(a,b,"E1_271","E1_311") || Between(a,b,"E1_311","E1_310");
     private sealed class FramePost
     {
         public Vector3 Point;
@@ -34,7 +35,8 @@ public sealed class VisualFrameFacade : MonoBehaviour
         // Foundation perimeter defines the main facade, so columns standing on
         // projected balconies in Z do not close those cantilevers with walls.
         columns = columns.Where(c => (c.startPoint.z >= minZ - .01f && c.startPoint.z <= maxZ + .01f) ||
-            (VisualCafe.UseDesktopLayout && (c.data.elementTag=="E1_241" || c.data.elementTag=="E1_254"))).ToList();
+            (VisualCafe.UseDesktopLayout && (c.data.elementTag=="E1_241" || c.data.elementTag=="E1_254" ||
+                c.data.elementTag=="E1_310" || c.data.elementTag=="E1_311"))).ToList();
         var posts = columns.Select(c => new FramePost {
             Point=c.startPoint, Bottom=Mathf.Min(c.startPoint.y,c.endPoint.y), Top=Mathf.Max(c.startPoint.y,c.endPoint.y),
             Inset=Mathf.Max(c.data.width_m,c.data.height_m)*.5f+.035f, Tag=c.data.elementTag, Floor=c.visualFloor
@@ -72,6 +74,7 @@ public sealed class VisualFrameFacade : MonoBehaviour
         {
             FramePost first = posts[a], second = posts[b];
             if(VisualCafe.UseDesktopLayout && Between(first,second,"E1_243","E1_255")) continue;
+            if(VisualCafe.UseDesktopLayout && Between(first,second,"E1_271","E1_259")) continue;
             float bottom = first.Bottom, top = first.Top;
             if (Mathf.Abs(bottom-second.Bottom)>.01f || Mathf.Abs(top-second.Top)>.01f) continue;
             Vector3 p = first.Point, q = second.Point;
@@ -89,6 +92,9 @@ public sealed class VisualFrameFacade : MonoBehaviour
             bool lowerSide = false, upperSide = false;
             foreach (var c in story)
             {
+                // Projected upper posts close only their three requested frames;
+                // they must not reclassify neighboring foundation-perimeter windows.
+                if((c.Tag=="E1_310" || c.Tag=="E1_311") && first.Tag!="E1_310" && first.Tag!="E1_311" && second.Tag!="E1_310" && second.Tag!="E1_311")continue;
                 Vector3 v = c.Point; float span = alongX ? v.x : v.z, cross = alongX ? v.z : v.x;
                 if (span < left-.01f || span > right+.01f) continue;
                 lowerSide |= cross < fixedAxis-.01f; upperSide |= cross > fixedAxis+.01f;
